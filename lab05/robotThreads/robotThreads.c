@@ -18,15 +18,8 @@
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
 
-//#define USE_RTAI
-
-#ifdef USE_RTAI
 
 #include <rtai_lxrt.h>
-
-//#define DESIRED_TICK 1000000
-
-#endif //USE_RTAI
 
 //! Defined used in jitter calculations and the like.
 #define CALC_DATA
@@ -121,16 +114,11 @@ static void *robotSimulation(void *ptr)
 	st_robotShared *shared = ptr;
 	st_robotMainArrays *robot;
 	double currentT = 0;
-#ifdef USE_RTAI
+	
 	RT_TASK *simtask;
 	struct sched_param simsched;
 	unsigned long simtask_name = nam2num("SIMULATION");
 	int period;
-#else	
-	/*Other variables*/
-	double tInit;
-	double lastT;
-#endif
 
 	/* Allocates memory to robot structure */
 	if ( (robot = (st_robotMainArrays*) malloc(sizeof(st_robotMainArrays)) ) == NULL ) { 
@@ -139,8 +127,6 @@ static void *robotSimulation(void *ptr)
 	}
 
 	robotInit(robot);
-
-#ifdef USE_RTAI 
 
 	/*set root permissions to user space*/
 	rt_allow_nonroot_hrt();
@@ -166,49 +152,31 @@ static void *robotSimulation(void *ptr)
 	currentT = count2nano(rt_get_time());
 
 	do {
+		/* Entering in crictical section */
+		pthread_mutex_lock(&mutexShared);
 
-#else
-	/*time init*/
-	tInit = getTimeMilisec();
-	lastT = 0;
-	do {
-		/* update the current Time */
-		currentT = getTimeMilisec() - tInit;
-		
-		if ( ((currentT - lastT) >= (STEPTIMESIM * 1000) ) ){
-#endif /*USE_RTAI*/
-	
-			/* Entering in crictical section */
-			pthread_mutex_lock(&mutexShared);
-			
-			/* New X value */
-			robotNewX(robot);
-					
-			/* Get u values from shared */
-			getUFromShared(robot, shared);
+		/* New X value */
+		robotNewX(robot);
 
-			/* Calculates x' from x and u*/
-			robotDxSim(robot);
-			
-			/* Calculates y from x and the inputs */
-			robotCalcYFromX(robot);
+		/* Get u values from shared */
+		getUFromShared(robot, shared);
 
-			/* Copy y values into shared memory */
-			cpYIntoShared(robot, shared);
-			
-			/* Leaving crictical section */
-			pthread_mutex_unlock(&mutexShared);
-			
-			robot->kIndex++;
-#ifdef USE_RTAI
-			rt_task_wait_period();
-			robot->timeInstant[robot->kIndex] = currentT / 1000000;
-#else	
-			/* saves the last time */
-			lastT = currentT;
-			robot->timeInstant[robot->kIndex] = currentT / 1000;
-		}
-#endif
+		/* Calculates x' from x and u*/
+		robotDxSim(robot);
+
+		/* Calculates y from x and the inputs */
+		robotCalcYFromX(robot);
+
+		/* Copy y values into shared memory */
+		cpYIntoShared(robot, shared);
+
+		/* Leaving crictical section */
+		pthread_mutex_unlock(&mutexShared);
+
+		robot->kIndex++;
+		rt_task_wait_period();
+		robot->timeInstant[robot->kIndex] = currentT / 1000000;
+
 	} while (currentT < (double)TOTAL_TIME * 1000);
 
 #ifdef CALC_DATA
@@ -218,10 +186,7 @@ static void *robotSimulation(void *ptr)
 	}
 #endif /*CALC_DATA*/
 
-#ifdef USE_RTAI
 	rt_task_delete(simtask);
-#endif
-
 	free(robot);
 	pthread_exit(NULL);
 }
@@ -238,15 +203,11 @@ static void *robotGeneration(void *ptr)
 	st_robotSample *sample;
 	double t = 0;
 	double currentT = 0;
-#ifdef USE_RTAI
+
 	RT_TASK *calctask;
 	struct sched_param calcsched;
 	unsigned long calctask_name = nam2num("CONTROL");
 	int period;
-#else	
-	double tInit;
-	double lastT;
-#endif
 	
 	/* Allocates memory to robot structure */
 	if ( (sample = (st_robotSample*) malloc(sizeof(st_robotSample)) ) == NULL ) { 
@@ -256,8 +217,6 @@ static void *robotGeneration(void *ptr)
 
 	/*sample init*/
 	memset(sample, 0, sizeof(st_robotSample) );
-
-#ifdef USE_RTAI
 
 	/*set root permissions to user space*/
 	rt_allow_nonroot_hrt();
@@ -282,54 +241,32 @@ static void *robotGeneration(void *ptr)
 	rt_task_make_periodic(calctask, rt_get_time()+period, period);
 	do {
 
-#else
-	/*time init*/
-	tInit = getTimeMilisec();
-	lastT = 0;
+		/* Entering in crictical section */
+		pthread_mutex_lock(&mutexShared);
 
-	do {
-		/* update the current Time */
-		currentT = getTimeMilisec() - tInit;
-		
-		if ( ((currentT - lastT) >= (STEPTIMECALC * 1000) ) ){
-#endif /*USE_RTAI*/
-	
-			/* Entering in crictical section */
-			pthread_mutex_lock(&mutexShared);
-		
-			/* Calculates the inputs: u[n] */
-			robotInputCalc(shared, t);
-			
-			/* Sample y and copy it into buffer */
-			robotSampleYf(shared, sample, t);
-			
-			/* Leaving crictical section */
-			pthread_mutex_unlock(&mutexShared);
-			
-			sample->kIndex++;
-			
-#ifdef USE_RTAI
-			currentT = count2nano(rt_get_time()) / 1000;
-			t = currentT / 1000;
-			rt_task_wait_period();
-#else
-			/* saves the last time */
-			lastT = currentT;
-			
-			t = currentT / 1000;
-		}
-#endif
-	
+		/* Calculates the inputs: u[n] */
+		robotInputCalc(shared, t);
+
+		/* Sample y and copy it into buffer */
+		robotSampleYf(shared, sample, t);
+
+		/* Leaving crictical section */
+		pthread_mutex_unlock(&mutexShared);
+
+		sample->kIndex++;
+
+		currentT = count2nano(rt_get_time()) / 1000;
+		t = currentT / 1000;
+		rt_task_wait_period();
+
 	} while (currentT < (double)TOTAL_TIME * 1000);
 	
 	/*log data*/
 	if(	robotLogData(sample) < 0) 
 		fprintf(stderr, "Error! It was not possible to log data!\n\r");
 
-#ifdef USE_RTAI
 	rt_task_delete(calctask);
-#endif
-
+	free(sample);
 	pthread_exit(NULL);
 }
 /*****************************************************************************/
@@ -338,15 +275,9 @@ void robotThreadsMain(void)
 {
 	void *shared; 
 	
-#ifdef USE_RTAI
 	int rt_simTask_thread;
 	int rt_calcTask_thread;
 	//int period;
-#else
-	pthread_t threadSimulation;
-	pthread_t threadGeneration;
-	pthread_attr_t attr;
-#endif 
 	
 	if ( (shared = (st_robotShared*) malloc(sizeof(st_robotShared)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to shared!\n\r");
@@ -355,8 +286,6 @@ void robotThreadsMain(void)
 	/* shared init */
 	memset(shared, 0, sizeof(st_robotShared) );
 
-#ifdef USE_RTAI
-	
 	/*Start timer*/
     rt_set_oneshot_mode();
 	//period=(int)nano2count((RTIME)DESIRED_TICK);
@@ -378,25 +307,6 @@ void robotThreadsMain(void)
 	rt_thread_join(rt_simTask_thread);
 	rt_thread_join(rt_calcTask_thread);
 	stop_rt_timer();
-
-#else
-	/* For portability, explicitly create threads in a joinable state */
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-	/*Create both threads*/
-	pthread_create(&threadSimulation, &attr, robotSimulation, shared);
-	pthread_create(&threadGeneration, &attr, robotGeneration, shared);
-
-	/* Wait for all threads to complete */
-	pthread_join(threadSimulation, NULL);
-	pthread_join(threadGeneration, NULL);
-
-	/* Clean up and exit */
-	pthread_mutex_destroy(&mutexShared);
-	pthread_attr_destroy(&attr);
-
-#endif
 }
 /*****************************************************************************/
 
