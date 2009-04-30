@@ -11,13 +11,13 @@
 #include <math.h>
 
 //! Macro that transforms the value in seconds to nanoseconds
-#define SEC2NANO(val)	(val * 1000000000)
+#define SEC2NANO(val)	(val * 1000000000.0)
 
 //! Initial Time of the simulation
-#define INIT_TIME			0
+#define INIT_TIME			0.0
 
 //! Final time of the simulation
-#define FINAL_TIME			30
+#define FINAL_TIME			30.0
 
 //! Total time of simulation
 #define TOTAL_TIME	 ( FINAL_TIME - INIT_TIME ) 
@@ -34,16 +34,13 @@
 //! Simulation time in nanoseconds
 #define STEPTIMESIMNANO		SEC2NANO(STEPTIMESIM)
 
-//! Main Task Priority
-#define MAINPRIORITY	0
-
 //! Simulation task Priority
-#define SIMPRIORITY		(MAINPRIORITY + 1)
+#define SIMPRIORITY		0
 
 //! Calculation task priority
-#define CALCPRIORITY	(MAINPRIORITY + 2)
+#define CALCPRIORITY	(SIMPRIORITY + 1)
 
-//! below this value I consider it equals to zero
+//! below this value I consider that it equals to zero
 #define	CALCERROR	0.0001
 
 //! XY Dimension used

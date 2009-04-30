@@ -25,7 +25,7 @@
 #include <rtai_sched.h>
 #include <rtai_lxrt.h>
 
-#define DESIRED_TICK 1000000
+//#define DESIRED_TICK 1000000
 
 #endif //USE_RTAI
 
@@ -124,6 +124,7 @@ static void *robotSimulation(void *ptr)
 	double currentT = 0;
 #ifdef USE_RTAI
 	RT_TASK *simtask;
+	struct sched_param simsched;
 	unsigned long simtask_name = nam2num("SIMULATION");
 	int period;
 #else	
@@ -141,6 +142,14 @@ static void *robotSimulation(void *ptr)
 	robotInit(robot);
 
 #ifdef USE_RTAI 
+
+	/*set root permissions to user space*/
+	rt_allow_nonroot_hrt();
+
+	/*set priority*/
+    mainsched.sched_priority = sched_get_priority_max(SCHED_FIFO)-1;
+
+    sched_setscheduler(0,SCHED_FIFO, &simsched);
 
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);
@@ -170,8 +179,6 @@ static void *robotSimulation(void *ptr)
 		if ( ((currentT - lastT) >= (STEPTIMESIM * 1000) ) ){
 #endif /*USE_RTAI*/
 	
-			/*common section(RTAI and Non-RTAI)*/			
-
 			/* Entering in crictical section */
 			pthread_mutex_lock(&mutexShared);
 			
@@ -252,6 +259,15 @@ static void *robotGeneration(void *ptr)
 
 #ifdef USE_RTAI
 
+	/*set root permissions to user space*/
+	rt_allow_nonroot_hrt();
+
+	/*set priority*/
+    mainsched.sched_priority = sched_get_priority_max(SCHED_FIFO)-1;
+	
+	/*set scheduler*/
+	sched_setscheduler(0,SCHED_FIFO, &simsched);
+
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);
 
@@ -323,12 +339,9 @@ void robotThreadsMain(void)
 	void *shared; 
 	
 #ifdef USE_RTAI
-	RT_TASK *maintask;
 	int rt_simTask_thread;
 	int rt_calcTask_thread;
-	unsigned long maintask_name = nam2num("MAIN");
-	struct sched_param mainsched;
-	int period;
+	//int period;
 #else
 	pthread_t threadSimulation;
 	pthread_t threadGeneration;
@@ -344,32 +357,11 @@ void robotThreadsMain(void)
 
 #ifdef USE_RTAI
 	
-	/*set root permissions to user space*/
-	rt_allow_nonroot_hrt();
-
-	/*set priority*/
-    mainsched.sched_priority = sched_get_priority_max(SCHED_FIFO)-1;
-
-    sched_setscheduler(0,SCHED_FIFO, &mainsched);
-
-
-	/*It Prevents the memory to be paged*/
-    mlockall(MCL_CURRENT | MCL_FUTURE);
-
-
-	if(!(maintask = rt_task_init(maintask_name, MAINPRIORITY, 0, 0))) {
-		fprintf(stderr, "Cannot Init Main Task!!\n");
-		fprintf(stderr, "Please, try to load the modules first!(./run)\n");
-		exit(1);
-	}
-
+	/*Start timer*/
     rt_set_oneshot_mode();
-     
-	period=(int)nano2count((RTIME)DESIRED_TICK);
-	
-	start_rt_timer(period);
-    
-	rt_make_hard_real_time();
+	//period=(int)nano2count((RTIME)DESIRED_TICK);
+	//start_rt_timer(period);
+	start_rt_timer(0);
 	
 	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, 10000))) {
 		fprintf(stderr, "Error Creating Simulation Thread!!\n");
@@ -386,7 +378,6 @@ void robotThreadsMain(void)
 	rt_thread_join(rt_simTask_thread);
 	rt_thread_join(rt_calcTask_thread);
 	stop_rt_timer();
-	rt_task_delete(maintask);
 
 #else
 	/* For portability, explicitly create threads in a joinable state */
