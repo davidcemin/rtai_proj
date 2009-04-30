@@ -53,7 +53,7 @@ all: $(OBJECTS)
 
 $(OBJECTS): $(CSOURCES)
 	$(QUIET)echo Creating object: $@
-	$(QUIET)$(CMP) $(CMPFLAGS) $(LXRT_CFLAGS) $(LIBS) -c $^
+	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $(LXRT_CFLAGS) $^
 
 -include $(DEPS)
 %.d: %.c

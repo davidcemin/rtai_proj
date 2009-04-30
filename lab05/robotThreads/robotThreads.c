@@ -18,11 +18,10 @@
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
 
-#define USE_RTAI
+//#define USE_RTAI
 
 #ifdef USE_RTAI
 
-#include <rtai_sched.h>
 #include <rtai_lxrt.h>
 
 //#define DESIRED_TICK 1000000
@@ -147,7 +146,7 @@ static void *robotSimulation(void *ptr)
 	rt_allow_nonroot_hrt();
 
 	/*set priority*/
-    mainsched.sched_priority = sched_get_priority_max(SCHED_FIFO)-1;
+    simsched.sched_priority = sched_get_priority_max(SCHED_FIFO)-1;
 
     sched_setscheduler(0,SCHED_FIFO, &simsched);
 
@@ -241,6 +240,7 @@ static void *robotGeneration(void *ptr)
 	double currentT = 0;
 #ifdef USE_RTAI
 	RT_TASK *calctask;
+	struct sched_param calcsched;
 	unsigned long calctask_name = nam2num("CONTROL");
 	int period;
 #else	
@@ -263,10 +263,10 @@ static void *robotGeneration(void *ptr)
 	rt_allow_nonroot_hrt();
 
 	/*set priority*/
-    mainsched.sched_priority = sched_get_priority_max(SCHED_FIFO)-1;
+    calcsched.sched_priority = sched_get_priority_max(SCHED_FIFO)-1;
 	
 	/*set scheduler*/
-	sched_setscheduler(0,SCHED_FIFO, &simsched);
+	sched_setscheduler(0,SCHED_FIFO, &calcsched);
 
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);

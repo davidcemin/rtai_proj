@@ -57,11 +57,11 @@ all: $(TARGET)
 # $< has the value of the first dependency file
 $(TARGET): $(OBJECTS)
 	$(QUIET)echo Compiling executable file: $@
-	$(QUIET)${CMP} $(LDFLAGS) -o $@  $^ $(LIBFILES)
+	$(QUIET)${CMP} $(LDFLAGS) -o $@  $^ $(LIBFILES) $(LXRT_LDFLAGS)
 
 $(OBJECTS): $(CSOURCES)
 	$(QUIET)echo Creating object: $@
-	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) $(LXRT_CFLAGS) -c $^
+	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $(LXRT_CFLAGS) $^
 
 -include $(DEPS)
 %.d: %.c
