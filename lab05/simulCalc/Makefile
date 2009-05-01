@@ -39,7 +39,7 @@ LXRT_CFLAGS = $(shell rtai-config --lxrt-cflags)
 LXRT_LDFLAGS = $(shell rtai-config --lxrt-ldflags)
 
 #General
-QUIET = 
+QUIET = @
 
 .PHONY: clean install distclean clobber install
 
@@ -50,7 +50,7 @@ all: $(OBJECTS)
 
 $(OBJECTS): $(CSOURCES)
 	$(QUIET)echo Creating object: $@
-	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $^ 
+	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $(LXRT_CFLAGS) $^ 
 
 -include $(DEPS)
 %.d: %.c

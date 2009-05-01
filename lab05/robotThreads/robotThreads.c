@@ -27,7 +27,7 @@
 /*****************************************************************************/
 
 //! Shared memory's mutex
-pthread_mutex_t mutexShared = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutexShared;
 
 /*****************************************************************************/
 
@@ -160,11 +160,9 @@ static void *robotSimulation(void *ptr)
 	st_robotMainArrays *robot;
 	double currentT = 0;
 	double lastT = 0;
-	double diff = 0;
 	double total = 0;
 	double tInit = 0;
 
-	
 	RT_TASK *simtask = NULL;
 	unsigned long simtask_name = nam2num("SIMULATION");
 	//int period;
@@ -185,7 +183,6 @@ static void *robotSimulation(void *ptr)
 	tInit = rt_get_time_ns();
 	do {
 		currentT = rt_get_time_ns() - tInit;
-		diff = currentT - lastT;
 		/* Entering in crictical section */
 		pthread_mutex_lock(&mutexShared);
 
@@ -207,23 +204,23 @@ static void *robotSimulation(void *ptr)
 		/* Leaving crictical section */
 		pthread_mutex_unlock(&mutexShared);
 
+		/*Timers procedure*/
 		lastT = currentT;
-		total+= diff/ SEC2NANO(1);
+		total = currentT / SEC2NANO(1);
 		robot->kIndex++;
-		rt_task_wait_period();
 
+		rt_task_wait_period();
 		robot->timeInstant[robot->kIndex] = currentT / SEC2NANO(1);
 	} while ( (fabs(total) - (double)TOTAL_TIME) < CALCERROR );
 
 #ifdef CALC_DATA
 	if ( robotCalcData(robot) < 0 ) {
-		free(robot);
+		rtai_taskFinish(simtask);
 		pthread_exit(NULL);
 	}
 #endif /*CALC_DATA*/
 
 	rtai_taskFinish(simtask);
-	free(robot);
 	pthread_exit(NULL);
 }
 /*****************************************************************************/
@@ -281,9 +278,9 @@ static void *robotGeneration(void *ptr)
 		sample->kIndex++;
 
 		lastT = currentT;
-		total+= diff / SEC2NANO(1);
 		t = currentT / SEC2NANO(1); 
-		
+	
+		total = currentT / SEC2NANO(1);	
 		rt_task_wait_period();
 
 	} while ( (fabs(total) - (double)TOTAL_TIME) < CALCERROR);
@@ -293,7 +290,6 @@ static void *robotGeneration(void *ptr)
 		fprintf(stderr, "Error! It was not possible to log data!\n\r");
 
 	rtai_taskFinish(calctask);
-	free(sample);
 	pthread_exit(NULL);
 }
 /*****************************************************************************/
@@ -317,8 +313,10 @@ void robotThreadsMain(void)
     rt_set_oneshot_mode(); 
 	period = (int) nano2count((RTIME) SEC2NANO(1));
     start_rt_timer(period);
-	//start_rt_timer(0);
-	
+	start_rt_timer(0);
+
+	pthread_mutex_init(&mutexShared, NULL);
+
 	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, 10000))) {
 		fprintf(stderr, "Error Creating Simulation Thread!!\n");
 		exit(1);
@@ -333,6 +331,7 @@ void robotThreadsMain(void)
 
 	rt_thread_join(rt_simTask_thread);
 	rt_thread_join(rt_calcTask_thread);
+	pthread_mutex_destroy(&mutexShared);
 	stop_rt_timer();
 }
 /*****************************************************************************/

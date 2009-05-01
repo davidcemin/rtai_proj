@@ -46,7 +46,7 @@ LXRT_LDFLAGS = $(shell rtai-config --lxrt-ldflags)
 LIBFILES += $(LXRT_LDFLAGS)
 
 #General
-QUIET = 
+QUIET = @
 
 .PHONY: clean install distclean clobber install
 
