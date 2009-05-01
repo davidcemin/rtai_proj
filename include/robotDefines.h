@@ -17,7 +17,7 @@
 #define INIT_TIME			0.0
 
 //! Final time of the simulation
-#define FINAL_TIME			30.0
+#define FINAL_TIME			1.0
 
 //! Total time of simulation
 #define TOTAL_TIME	 ( FINAL_TIME - INIT_TIME ) 
@@ -41,7 +41,7 @@
 #define CALCPRIORITY	(SIMPRIORITY + 1)
 
 //! below this value I consider that it equals to zero
-#define	CALCERROR	0.0000001
+#define	CALCERROR	0.00001
 
 //! XY Dimension used
 #define XY_DIMENSION	3
