@@ -27,7 +27,7 @@
 /*****************************************************************************/
 
 //! Shared memory's mutex
-pthread_mutex_t mutexShared;
+pthread_mutex_t mutexShared = PTHREAD_MUTEX_INITIALIZER;
 
 /*****************************************************************************/
 
@@ -111,32 +111,27 @@ static inline int robotLogData(st_robotSample *sample)
 static inline int taskCreateRtai(RT_TASK *task, unsigned long taskName, char priority, double stepTick) 
 {
 	int period;
-	//struct sched_param sched;
 	int stkSize;
+	int msgSize;
 
 	/*set root permissions to user space*/
 	rt_allow_nonroot_hrt();
 
-	/*set priority*/
-    //sched.sched_priority = sched_get_priority_max(SCHED_FIFO) - 1;
-
-    //sched_setscheduler(0, SCHED_FIFO, &sched);
-
+	/*Es ist nicht noetig um die priority im sched_param structure anzusetzen, da 
+	 * es bereits im rt_task_init_schmod Function angesetzt ist.
+	 */
+	
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);
 	
-	stkSize = sizeof(st_robotShared) + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 100000;
+	msgSize = sizeof(st_robotShared);
+	stkSize = msgSize + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 100000;
 
-	//if(!(task = rt_task_init_schmod(taskName, priority, 0, SCHED_FIFO, 0xff) ) ) {	
-	//	fprintf(stderr, "Cannot Init Task: ");
-	//	return -1;
-	//}
-
-	if(!(task = rt_task_init(taskName, priority, stkSize, 0))) {
+	if(!(task = rt_task_init_schmod(taskName, priority, stkSize, msgSize, SCHED_FIFO, 0xff) ) ) {	
 		fprintf(stderr, "Cannot Init Task: ");
 		return -1;
 	}
-	
+
 	/*make it hard real time*/	
     rt_make_hard_real_time();
 
@@ -156,7 +151,7 @@ static inline int taskCreateRtai(RT_TASK *task, unsigned long taskName, char pri
  */
 static inline void rtai_taskFinish(RT_TASK *task)
 {
-	rt_make_soft_real_time();
+	//rt_make_soft_real_time();
 	rt_task_delete(task);
 }
 
@@ -233,8 +228,8 @@ static void *robotSimulation(void *ptr)
 	}
 #endif /*CALC_DATA*/
 
+	free(robot);
 	rtai_taskFinish(simtask);
-	//free(robot);
 	pthread_exit(NULL);
 }
 /*****************************************************************************/
@@ -299,7 +294,7 @@ static void *robotGeneration(void *ptr)
 		fprintf(stderr, "Error! It was not possible to log data!\n\r");
 
 	rtai_taskFinish(calctask);
-	//free(sample);
+	free(sample);
 	pthread_exit(NULL);
 }
 /*****************************************************************************/
@@ -310,7 +305,6 @@ void robotThreadsMain(void)
 	
 	int rt_simTask_thread;
 	int rt_calcTask_thread;
-	//int period;
 	int stkSize;
 	
 	if ( (shared = (st_robotShared*) malloc(sizeof(st_robotShared)) ) == NULL ) { 
@@ -322,28 +316,22 @@ void robotThreadsMain(void)
 
 	/*Start timer*/
     rt_set_oneshot_mode(); 	
-	
-	/*make it hard real time*/	
-  //  rt_make_hard_real_time();
-
-	//period = (int) nano2count((RTIME) SEC2NANO(1));
-    //start_rt_timer(period);
 	start_rt_timer(0);
 
-	pthread_mutex_init(&mutexShared, NULL);
-
 	stkSize = sizeof(st_robotShared) + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 100000;
-
-
+	
 	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, stkSize))) {
 		fprintf(stderr, "Error Creating Simulation Thread!!\n");
-		exit(1);
-	}
+		free(shared);
+		return;
+	}	
 	
 	if(!(rt_calcTask_thread = rt_thread_create(robotGeneration, shared, stkSize))) {
 		fprintf(stderr, "Error Creating Calculation Thread!!\n\r");
-		exit(1);
+		free(shared);
+		return;
 	}
+
 
 	//! TODO: third thread to print the y and u values on the screen
 

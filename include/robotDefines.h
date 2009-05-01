@@ -53,7 +53,7 @@
 #define DIST	0.6
 
 //! Maximum quantity of data
-#define MAX_DATA_VALUE	(int)(ceil( ( (double)( (TOTAL_TIME) / (STEPTIMESIM) ) ) ) )
+#define MAX_DATA_VALUE	(int)(ceil( ( (double)( (TOTAL_TIME) / (STEPTIMESIM) ) ) ) + 1 )
 
 #endif //! _ROBOTDEFINES_H
 
