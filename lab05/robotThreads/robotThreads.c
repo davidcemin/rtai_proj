@@ -19,7 +19,7 @@
 #include "simulCalcsUtils.h"
 
 /*rtai includes*/
-#include <rtai_sched.h>
+//#include <rtai_sched.h>
 #include <rtai_lxrt.h>
 
 //! Defined used in jitter calculations and the like.
@@ -227,7 +227,7 @@ static void *robotSimulation(void *ptr)
 
 		rt_task_wait_period();
 		robot->timeInstant[robot->kIndex] = currentT / SEC2NANO(1);
-	} while ( (fabs(total) < (double)TOTAL_TIME) );
+	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
 #ifdef CALC_DATA
 	if ( robotCalcData(robot) < 0 ) {
@@ -299,7 +299,7 @@ static void *robotGeneration(void *ptr)
 		total = currentT / SEC2NANO(1); 	
 		rt_task_wait_period();
 
-	} while ( (fabs(total) < (double)TOTAL_TIME) );
+	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
 	/*log data*/
 	if(	robotLogData(sample) < 0) 
