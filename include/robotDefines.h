@@ -17,7 +17,7 @@
 #define INIT_TIME			0.0
 
 //! Final time of the simulation
-#define FINAL_TIME			30.0
+#define FINAL_TIME			3.0
 
 //! Total time of simulation
 #define TOTAL_TIME	 ( FINAL_TIME - INIT_TIME ) 
@@ -35,7 +35,7 @@
 #define STEPTIMESIMNANO		SEC2NANO(STEPTIMESIM)
 
 //! Simulation task Priority
-#define SIMPRIORITY		0
+#define SIMPRIORITY		1
 
 //! Calculation task priority
 #define CALCPRIORITY	(SIMPRIORITY + 1)

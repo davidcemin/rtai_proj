@@ -18,7 +18,7 @@
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
 
-
+#include <rtai_sched.h>
 #include <rtai_lxrt.h>
 
 //! Defined used in jitter calculations and the like.
@@ -102,6 +102,51 @@ static inline int robotLogData(st_robotSample *sample)
 
 	return 0;
 }
+
+/*****************************************************************************/
+
+/**
+ * \brief  
+ */
+static inline int rtai_taskCreate(RT_TASK *task, unsigned long taskName, char priority, double stepTick) 
+{
+	int period;
+	struct sched_param sched;
+	/*set root permissions to user space*/
+	rt_allow_nonroot_hrt();
+
+	/*set priority*/
+    sched.sched_priority = sched_get_priority_max(SCHED_FIFO) - 1;
+
+    sched_setscheduler(0, SCHED_FIFO, &sched);
+
+	/*It Prevents the memory to be paged*/
+    mlockall(MCL_CURRENT | MCL_FUTURE);
+
+ 	period = (int)nano2count((RTIME)stepTick);
+    rt_make_hard_real_time();
+
+	if(!(task = rt_task_init(taskName, priority, 0, 0))) {
+		fprintf(stderr, "Cannot Init Task: ");
+		return -1;
+	}
+    
+	rt_task_make_periodic(task, rt_get_time()+period, period);
+
+	return 0;
+}
+
+/*****************************************************************************/
+
+/**
+ * \brief  
+ */
+static inline void rtai_taskFinish(RT_TASK *task)
+{
+	rt_make_soft_real_time();
+	rt_task_delete(task);
+}
+
 /*****************************************************************************/
 
 /**
@@ -114,11 +159,15 @@ static void *robotSimulation(void *ptr)
 	st_robotShared *shared = ptr;
 	st_robotMainArrays *robot;
 	double currentT = 0;
+	double lastT = 0;
+	double diff = 0;
+	double total = 0;
+	double tInit = 0;
+
 	
-	RT_TASK *simtask;
-	struct sched_param simsched;
+	RT_TASK *simtask = NULL;
 	unsigned long simtask_name = nam2num("SIMULATION");
-	int period;
+	//int period;
 
 	/* Allocates memory to robot structure */
 	if ( (robot = (st_robotMainArrays*) malloc(sizeof(st_robotMainArrays)) ) == NULL ) { 
@@ -128,30 +177,15 @@ static void *robotSimulation(void *ptr)
 
 	robotInit(robot);
 
-	/*set root permissions to user space*/
-	rt_allow_nonroot_hrt();
-
-	/*set priority*/
-    simsched.sched_priority = sched_get_priority_max(SCHED_FIFO)-1;
-
-    sched_setscheduler(0,SCHED_FIFO, &simsched);
-
-	/*It Prevents the memory to be paged*/
-    mlockall(MCL_CURRENT | MCL_FUTURE);
-
- 	period = (int)nano2count((RTIME)STEPTIMESIMNANO);
-    rt_make_hard_real_time();
-
-	if(!(simtask = rt_task_init(simtask_name, SIMPRIORITY, 0, 0))) {
-		fprintf(stderr, "Cannot Init simulation Task!\n");
+	if(rtai_taskCreate(simtask, simtask_name, SIMPRIORITY, 30000000) < 0) {
+		fprintf(stderr, "Simulation!\n");
 		exit(1);
 	}
-    
-	rt_task_make_periodic(simtask, rt_get_time()+period, period);
 
-	currentT = count2nano(rt_get_time());
-
+	tInit = rt_get_time_ns();
 	do {
+		currentT = rt_get_time_ns() - tInit;
+		diff = currentT - lastT;
 		/* Entering in crictical section */
 		pthread_mutex_lock(&mutexShared);
 
@@ -173,11 +207,13 @@ static void *robotSimulation(void *ptr)
 		/* Leaving crictical section */
 		pthread_mutex_unlock(&mutexShared);
 
+		lastT = currentT;
+		total+= diff/ SEC2NANO(1);
 		robot->kIndex++;
 		rt_task_wait_period();
-		robot->timeInstant[robot->kIndex] = currentT / 1000000;
 
-	} while (currentT < (double)TOTAL_TIME * 1000);
+		robot->timeInstant[robot->kIndex] = currentT / SEC2NANO(1);
+	} while ( (fabs(total) - (double)TOTAL_TIME) < CALCERROR );
 
 #ifdef CALC_DATA
 	if ( robotCalcData(robot) < 0 ) {
@@ -186,7 +222,7 @@ static void *robotSimulation(void *ptr)
 	}
 #endif /*CALC_DATA*/
 
-	rt_task_delete(simtask);
+	rtai_taskFinish(simtask);
 	free(robot);
 	pthread_exit(NULL);
 }
@@ -203,11 +239,13 @@ static void *robotGeneration(void *ptr)
 	st_robotSample *sample;
 	double t = 0;
 	double currentT = 0;
+	double lastT = 0;
+	double diff = 0;
+	double total = 0;
+	double tInit = 0;
 
-	RT_TASK *calctask;
-	struct sched_param calcsched;
+	RT_TASK *calctask = NULL;
 	unsigned long calctask_name = nam2num("CONTROL");
-	int period;
 	
 	/* Allocates memory to robot structure */
 	if ( (sample = (st_robotSample*) malloc(sizeof(st_robotSample)) ) == NULL ) { 
@@ -218,28 +256,15 @@ static void *robotGeneration(void *ptr)
 	/*sample init*/
 	memset(sample, 0, sizeof(st_robotSample) );
 
-	/*set root permissions to user space*/
-	rt_allow_nonroot_hrt();
-
-	/*set priority*/
-    calcsched.sched_priority = sched_get_priority_max(SCHED_FIFO)-1;
-	
-	/*set scheduler*/
-	sched_setscheduler(0,SCHED_FIFO, &calcsched);
-
-	/*It Prevents the memory to be paged*/
-    mlockall(MCL_CURRENT | MCL_FUTURE);
-
- 	period = (int)nano2count((RTIME)STEPTIMECALCNANO);
-    rt_make_hard_real_time();
-
-	if(!(calctask = rt_task_init(calctask_name, CALCPRIORITY, 0, 0))) {
-		fprintf(stderr, "Cannot Init simulation Task!\n");
+	if(rtai_taskCreate(calctask, calctask_name, CALCPRIORITY, 50000000) < 0){
+		fprintf(stderr, "Calculation!\n");
 		exit(1);
 	}
-    
-	rt_task_make_periodic(calctask, rt_get_time()+period, period);
+
+	tInit = rt_get_time_ns();
 	do {
+		currentT = rt_get_time_ns() - tInit;
+		diff = currentT - lastT;
 
 		/* Entering in crictical section */
 		pthread_mutex_lock(&mutexShared);
@@ -255,17 +280,19 @@ static void *robotGeneration(void *ptr)
 
 		sample->kIndex++;
 
-		currentT = count2nano(rt_get_time()) / 1000;
-		t = currentT / 1000;
+		lastT = currentT;
+		total+= diff / SEC2NANO(1);
+		t = currentT / SEC2NANO(1); 
+		
 		rt_task_wait_period();
 
-	} while (currentT < (double)TOTAL_TIME * 1000);
+	} while ( (fabs(total) - (double)TOTAL_TIME) < CALCERROR);
 	
 	/*log data*/
 	if(	robotLogData(sample) < 0) 
 		fprintf(stderr, "Error! It was not possible to log data!\n\r");
 
-	rt_task_delete(calctask);
+	rtai_taskFinish(calctask);
 	free(sample);
 	pthread_exit(NULL);
 }
@@ -277,7 +304,7 @@ void robotThreadsMain(void)
 	
 	int rt_simTask_thread;
 	int rt_calcTask_thread;
-	//int period;
+	int period;
 	
 	if ( (shared = (st_robotShared*) malloc(sizeof(st_robotShared)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to shared!\n\r");
@@ -287,10 +314,10 @@ void robotThreadsMain(void)
 	memset(shared, 0, sizeof(st_robotShared) );
 
 	/*Start timer*/
-    rt_set_oneshot_mode();
-	//period=(int)nano2count((RTIME)DESIRED_TICK);
-	//start_rt_timer(period);
-	start_rt_timer(0);
+    rt_set_oneshot_mode(); 
+	period = (int) nano2count((RTIME) SEC2NANO(1));
+    start_rt_timer(period);
+	//start_rt_timer(0);
 	
 	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, 10000))) {
 		fprintf(stderr, "Error Creating Simulation Thread!!\n");
