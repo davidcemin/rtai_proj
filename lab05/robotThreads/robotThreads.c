@@ -18,6 +18,7 @@
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
 
+/*rtai includes*/
 #include <rtai_sched.h>
 #include <rtai_lxrt.h>
 
@@ -45,6 +46,7 @@ static inline void getUFromShared(st_robotMainArrays *robot, st_robotShared *sha
 	for (i = 0; i < U_DIMENSION; i++)
 		robot->uVal[i][k] = shared->u[i];
 }
+
 /*****************************************************************************/
 
 /**
@@ -61,6 +63,7 @@ static inline void cpYIntoShared(st_robotMainArrays *robot, st_robotShared *shar
 	for (i = 0; i < XY_DIMENSION; i++)
 		shared->yf[i] = robot->yVal[i][k];
 }
+
 /*****************************************************************************/
 
 /**
@@ -78,6 +81,7 @@ static inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample,
 	for(i = 0; i < XY_DIMENSION; i++)
 		sample->yVal[i][sample->kIndex] = shared->yf[i];
 }
+
 /*****************************************************************************/
 
 /**
@@ -100,6 +104,7 @@ static inline int robotLogData(st_robotSample *sample)
 		fprintf(fd, "%f\t%f\t%f\t%f\t%d\n", sample->yVal[0][i], sample->yVal[1][i], sample->yVal[2][i], 
 				sample->timeInstant[i], i);
 
+	fclose(fd);
 	return 0;
 }
 
@@ -149,7 +154,7 @@ static inline int taskCreateRtai(RT_TASK *task, unsigned long taskName, char pri
 /**
  * \brief  
  */
-static inline void rtai_taskFinish(RT_TASK *task)
+static inline void taskFinishRtai(RT_TASK *task)
 {
 	/* Here also is not necessary to use rt_make_soft_real_time because rt_task_delete 
 	 * already use it(base/include/rtai_lxrt.h:842)
@@ -179,7 +184,7 @@ static void *robotSimulation(void *ptr)
 	/* Allocates memory to robot structure */
 	if ( (robot = (st_robotMainArrays*) malloc(sizeof(st_robotMainArrays)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to main!\n\r");
-		pthread_exit(NULL);
+		return NULL;
 	}
 
 	robotInit(robot);
@@ -187,7 +192,7 @@ static void *robotSimulation(void *ptr)
 	if(taskCreateRtai(simtask, simtask_name, SIMPRIORITY, STEPTIMESIMNANO) < 0) {
 		fprintf(stderr, "Simulation!\n");
 		free(robot);
-		exit(1);
+		return NULL;
 	}
 
 	tInit = rt_get_time_ns();
@@ -226,15 +231,18 @@ static void *robotSimulation(void *ptr)
 
 #ifdef CALC_DATA
 	if ( robotCalcData(robot) < 0 ) {
-		rtai_taskFinish(simtask);
-		pthread_exit(NULL);
+		free(robot);
+		taskFinishRtai(simtask);
+		return NULL;
 	}
 #endif /*CALC_DATA*/
 
+	taskFinishRtai(simtask);
 	free(robot);
-	rtai_taskFinish(simtask);
 	pthread_exit(NULL);
+	//return NULL;
 }
+
 /*****************************************************************************/
 
 /**
@@ -265,6 +273,7 @@ static void *robotGeneration(void *ptr)
 
 	if(taskCreateRtai(calctask, calctask_name, CALCPRIORITY, STEPTIMECALCNANO) < 0){
 		fprintf(stderr, "Calculation!\n");
+		free(sample);
 		exit(1);
 	}
 
@@ -296,10 +305,72 @@ static void *robotGeneration(void *ptr)
 	if(	robotLogData(sample) < 0) 
 		fprintf(stderr, "Error! It was not possible to log data!\n\r");
 
-	rtai_taskFinish(calctask);
+	taskFinishRtai(calctask);
 	free(sample);
-	pthread_exit(NULL);
+	return NULL;
+	//pthread_exit(NULL);
 }
+
+/*****************************************************************************/
+
+/**
+ * \brief  
+ */
+static inline void printDisplay(st_robotShared *shared, double t)
+{
+	struct {
+		double y1;
+		double y2; 
+		double y3;
+		double u1; 
+		double u2;
+	} disp = {shared->yf[0], shared->yf[1], shared->yf[2], shared->u[0], shared->u[1]};
+
+	fprintf(stdout, "%f\t%f\t%f\t%f\t%f\t%f\n", disp.y1, disp.y2, disp.y3, disp.u1, disp.u2, t);
+
+	return;
+}
+
+/*****************************************************************************/
+
+/**
+ * \brief  Thread used to show data on the screen. It is not a RTAI thread.
+ * \param  ptr Pointer to shared memory
+ * \return void
+ */
+static void *robotThreadDisplay(void *ptr)
+{
+	st_robotShared *shared = ptr;
+	double tInit;
+	double lastT;
+	double currentT;
+	double t;
+
+	/*time init*/
+	tInit = getTimeMilisec();
+	lastT = 0;
+	currentT = 0;
+	t = 0;
+
+	do {
+		/* update the current Time */
+		currentT = getTimeMilisec() - tInit;
+		if ( ((currentT - lastT) >= (STEPTIMESIM * 1000) ) ){
+
+			t = currentT / 1000.0;
+
+			pthread_mutex_lock(&mutexShared);
+			printDisplay(shared, t);
+			pthread_mutex_unlock(&mutexShared);
+
+			/* saves the last time */
+			lastT = currentT;
+		}
+	} while (currentT < (double)TOTAL_TIME * 1000);
+	
+	return NULL;
+}
+
 /*****************************************************************************/
 
 void robotThreadsMain(void)
@@ -309,11 +380,16 @@ void robotThreadsMain(void)
 	int rt_simTask_thread;
 	int rt_calcTask_thread;
 	int stkSize;
+
+	pthread_t threadDisplay;
+	pthread_attr_t attr;
+	int ret;
 	
 	if ( (shared = (st_robotShared*) malloc(sizeof(st_robotShared)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to shared!\n\r");
 		return;
 	}
+	
 	/* shared init */
 	memset(shared, 0, sizeof(st_robotShared) );
 
@@ -322,27 +398,50 @@ void robotThreadsMain(void)
 	start_rt_timer(0);
 
 	stkSize = sizeof(st_robotShared) + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 10000;
-	
+
+	/*rtai simulation thread*/
 	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, stkSize))) {
 		fprintf(stderr, "Error Creating Simulation Thread!!\n");
+		pthread_mutex_destroy(&mutexShared);
+		stop_rt_timer();
 		free(shared);
 		return;
 	}	
 	
+	/*rtai control task*/
 	if(!(rt_calcTask_thread = rt_thread_create(robotGeneration, shared, stkSize))) {
-		fprintf(stderr, "Error Creating Calculation Thread!!\n\r");
+		fprintf(stderr, "Error Creating Calculation Thread!!\n");
+		pthread_mutex_destroy(&mutexShared);
+		stop_rt_timer();
+		free(shared);
+		return;
+	}	
+	
+	/*Create display thread*/
+	
+	/* For portability, explicitly create threads in a joinable state */
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	if ( (ret = pthread_create(&threadDisplay, &attr, robotThreadDisplay, shared) ) ) {
+		fprintf(stderr, "Error Creating Display Thread: %d\n", ret);
+		pthread_mutex_destroy(&mutexShared);
+		pthread_attr_destroy(&attr);
+		stop_rt_timer();
 		free(shared);
 		return;
 	}
 
-
-	//! TODO: third thread to print the y and u values on the screen
-
+	/* Wait for all threads to complete */
 	rt_thread_join(rt_calcTask_thread);
 	rt_thread_join(rt_simTask_thread);
+	pthread_join(threadDisplay, NULL);
+
+	/* Clean up and exit */
 	pthread_mutex_destroy(&mutexShared);
-	stop_rt_timer();
+	pthread_attr_destroy(&attr);
 	free(shared);
+	stop_rt_timer();
 }
 /*****************************************************************************/
 

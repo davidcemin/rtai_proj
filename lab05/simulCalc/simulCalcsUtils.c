@@ -47,7 +47,7 @@ void robotInit(st_robotMainArrays *robotInit)
 }
 /******************************************************************************/
 
-void robotInputCalc(st_robotShared	*robot, double t)
+void robotInputCalc(st_robotShared *robot, double t)
 {	
 	if (t < 0.0) {
 		robot->u[0] = 0;

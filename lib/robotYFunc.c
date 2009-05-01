@@ -20,6 +20,5 @@ void robotCalcYFromX(st_robotMainArrays *robotMain)
 	robotMain->yVal[1][k] = robotMain->xVal[1][k];	
 	robotMain->yVal[2][k] = robotMain->xVal[2][k];	
 }
+
 /******************************************************************************/
-
-
