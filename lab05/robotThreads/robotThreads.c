@@ -125,7 +125,7 @@ static inline int taskCreateRtai(RT_TASK *task, unsigned long taskName, char pri
     mlockall(MCL_CURRENT | MCL_FUTURE);
 	
 	msgSize = sizeof(st_robotShared);
-	stkSize = msgSize + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 100000;
+	stkSize = msgSize + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 10000;
 
 	if(!(task = rt_task_init_schmod(taskName, priority, stkSize, msgSize, SCHED_FIFO, 0xff) ) ) {	
 		fprintf(stderr, "Cannot Init Task: ");
@@ -151,7 +151,9 @@ static inline int taskCreateRtai(RT_TASK *task, unsigned long taskName, char pri
  */
 static inline void rtai_taskFinish(RT_TASK *task)
 {
-	//rt_make_soft_real_time();
+	/* Here also is not necessary to use rt_make_soft_real_time because rt_task_delete 
+	 * already use it(base/include/rtai_lxrt.h:842)
+	 */
 	rt_task_delete(task);
 }
 
@@ -184,12 +186,14 @@ static void *robotSimulation(void *ptr)
 
 	if(taskCreateRtai(simtask, simtask_name, SIMPRIORITY, STEPTIMESIMNANO) < 0) {
 		fprintf(stderr, "Simulation!\n");
+		free(robot);
 		exit(1);
 	}
 
 	tInit = rt_get_time_ns();
 	do {
 		currentT = rt_get_time_ns() - tInit;
+		
 		/* Entering in crictical section */
 		pthread_mutex_lock(&mutexShared);
 
@@ -214,7 +218,6 @@ static void *robotSimulation(void *ptr)
 		/*Timers procedure*/
 		lastT = currentT;
 		total = currentT / SEC2NANO(1);
-		printf("%f\n", total);
 		robot->kIndex++;
 
 		rt_task_wait_period();
@@ -318,7 +321,7 @@ void robotThreadsMain(void)
     rt_set_oneshot_mode(); 	
 	start_rt_timer(0);
 
-	stkSize = sizeof(st_robotShared) + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 100000;
+	stkSize = sizeof(st_robotShared) + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 10000;
 	
 	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, stkSize))) {
 		fprintf(stderr, "Error Creating Simulation Thread!!\n");
