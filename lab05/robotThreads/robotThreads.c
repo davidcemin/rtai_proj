@@ -99,9 +99,9 @@ static inline int robotLogData(st_robotSample *sample)
 		return -1;
 	}
 	
-	for(i = 0; i < sample->kIndex; i++)
+	for(i = 1; i < sample->kIndex; i++)
 		fprintf(fd, "%f\t%f\t%f\t%f\t%d\n", sample->yVal[0][i], sample->yVal[1][i], sample->yVal[2][i], 
-				sample->timeInstant[i], i);
+				sample->timeInstant[i], i - 1);
 
 	fclose(fd);
 	return 0;
@@ -314,7 +314,6 @@ static void *robotGeneration(void *ptr)
 	taskFinishRtai(calctask);
 	free(sample);
 	return NULL;
-	//pthread_exit(NULL);
 }
 
 /*****************************************************************************/
