@@ -19,7 +19,6 @@
 #include "simulCalcsUtils.h"
 
 /*rtai includes*/
-//#include <rtai_sched.h>
 #include <rtai_lxrt.h>
 
 //! Defined used in jitter calculations and the like.
@@ -111,7 +110,12 @@ static inline int robotLogData(st_robotSample *sample)
 /*****************************************************************************/
 
 /**
- * \brief  
+ * \brief  Function that creates a task in rtai
+ * \param task Pointer to task 
+ * \param taskName Number that corresponts to task name
+ * \param priority priority of the task
+ * \param stepTick Tick value, used on period.
+ * \return 0 if ok, -1 error.
  */
 static inline int taskCreateRtai(RT_TASK *task, unsigned long taskName, char priority, double stepTick) 
 {
@@ -152,7 +156,9 @@ static inline int taskCreateRtai(RT_TASK *task, unsigned long taskName, char pri
 /*****************************************************************************/
 
 /**
- * \brief  
+ * \brief Function to finish a rt task
+ * \param task Pointer to task to be finished
+ * \return void
  */
 static inline void taskFinishRtai(RT_TASK *task)
 {
@@ -314,7 +320,10 @@ static void *robotGeneration(void *ptr)
 /*****************************************************************************/
 
 /**
- * \brief  
+ * \brief Function used to print the information on the screen.
+ * \param shared Pointer to shared memory.
+ * \param t Current time of simulation
+ * \return void
  */
 static inline void printDisplay(st_robotShared *shared, double t)
 {
