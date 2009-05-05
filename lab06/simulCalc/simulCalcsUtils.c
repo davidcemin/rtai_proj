@@ -26,6 +26,7 @@ double getTimeMilisec(void)
 	
 	return ret;
 }
+
 /******************************************************************************/
 
 void robotInit(st_robotMainArrays *robotInit)
@@ -45,6 +46,7 @@ void robotInit(st_robotMainArrays *robotInit)
 		for(j = 0; j < MAX_DATA_VALUE; j++)
 			robotInit->uVal[i][j] = 0;
 }
+
 /******************************************************************************/
 
 void robotInputCalc(st_robotShared *robot, double t)
@@ -63,6 +65,40 @@ void robotInputCalc(st_robotShared *robot, double t)
 		robot->u[1] = -0.2 * M_PI;
 	}
 }
+
+/******************************************************************************/
+
+inline void getUFromShared(st_robotMainArrays *robot, st_robotShared *shared)
+{
+	int k = robot->kIndex;
+	int i;
+
+	for (i = 0; i < U_DIMENSION; i++)
+		robot->uVal[i][k] = shared->u[i];
+}
+
+/******************************************************************************/
+
+inline void cpYIntoShared(st_robotMainArrays *robot, st_robotShared *shared)
+{
+	int k = robot->kIndex;
+	int i;
+	
+	for (i = 0; i < XY_DIMENSION; i++)
+		shared->yf[i] = robot->yVal[i][k];
+}
+
+/******************************************************************************/
+
+inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample, double t)
+{
+	int i;
+	sample->timeInstant[sample->kIndex] = t;
+
+	for(i = 0; i < XY_DIMENSION; i++)
+		sample->yVal[i][sample->kIndex] = shared->yf[i];
+}
+
 /******************************************************************************/
 
 /**
@@ -92,6 +128,7 @@ static int dataPeriod(double *period, double *ret, int nmemb)
 	fclose(fd);
 	return 0;
 }
+
 /******************************************************************************/
 
 /**
@@ -135,6 +172,7 @@ static void maxValue(double *period, int nmemb, double *max)
 		if (fabs(period[i]) > *max) 
 			*max = fabs(period[i]);
 }
+
 /******************************************************************************/
 
 /**
@@ -154,6 +192,7 @@ static void minValue(double *period, int nmemb, double *min)
 		if (fabs(period[i]) < *min) 
 			*min = fabs(period[i]);
 }
+
 /******************************************************************************/
 
 /**

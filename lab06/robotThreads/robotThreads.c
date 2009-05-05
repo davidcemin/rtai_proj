@@ -6,7 +6,6 @@
 /*****************************************************************************/
 
 /*libc Includes*/
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -15,6 +14,7 @@
 
 /*robot includes*/
 #include "libRobot.h"
+//#include "monitorSim.h"
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
 
@@ -29,57 +29,7 @@
 //! Shared memory's mutex
 pthread_mutex_t mutexShared = PTHREAD_MUTEX_INITIALIZER;
 
-/*****************************************************************************/
-
-/**
- * \brief  Gets u array from shared memory
- * \param  robot Pointer to st_robotMainArrays memory
- * \param  shared Pointer to st_robotShared memory
- * \return void
- */
-static inline void getUFromShared(st_robotMainArrays *robot, st_robotShared *shared)
-{
-	int k = robot->kIndex;
-	int i;
-
-	for (i = 0; i < U_DIMENSION; i++)
-		robot->uVal[i][k] = shared->u[i];
-}
-
-/*****************************************************************************/
-
-/**
- * \brief  Copy yf array into shared memory
- * \param  robot Pointer to st_robotMainArrays memory
- * \param  shared Pointer to st_robotShared memory
- * \return void
- */
-static inline void cpYIntoShared(st_robotMainArrays *robot, st_robotShared *shared)
-{
-	int k = robot->kIndex;
-	int i;
-	
-	for (i = 0; i < XY_DIMENSION; i++)
-		shared->yf[i] = robot->yVal[i][k];
-}
-
-/*****************************************************************************/
-
-/**
- * \brief  It samples yf array to later save it in a file
- * \param  shared Pointer to st_robotShared memory
- * \param  sample Pointer to st_robotSample memory
- * \param  t Current simulation time
- * \return void
- */
-static inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample, double t)
-{
-	int i;
-	sample->timeInstant[sample->kIndex] = t;
-
-	for(i = 0; i < XY_DIMENSION; i++)
-		sample->yVal[i][sample->kIndex] = shared->yf[i];
-}
+//static st_monitorBuffer MonitorBuffer;
 
 /*****************************************************************************/
 
@@ -205,6 +155,8 @@ static void *robotSimulation(void *ptr)
 	do {
 		currentT = rt_get_time_ns() - tInit;
 		
+		/*monitorSimRun()*/
+
 		/* Entering in crictical section */
 		pthread_mutex_lock(&mutexShared);
 
@@ -400,6 +352,8 @@ void robotThreadsMain(void)
 	
 	/* shared init */
 	memset(shared, 0, sizeof(st_robotShared) );
+
+	/*monitor init*/
 
 	/*Start timer*/
     rt_set_oneshot_mode(); 	
