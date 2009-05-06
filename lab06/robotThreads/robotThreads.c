@@ -29,8 +29,6 @@
 //! Shared memory's mutex
 pthread_mutex_t mutexShared = PTHREAD_MUTEX_INITIALIZER;
 
-//static st_monitorBuffer MonitorBuffer;
-
 /*****************************************************************************/
 
 /**
@@ -155,8 +153,6 @@ static void *robotSimulation(void *ptr)
 	do {
 		currentT = rt_get_time_ns() - tInit;
 		
-		/*monitorSimRun()*/
-
 		/* Entering in crictical section */
 		pthread_mutex_lock(&mutexShared);
 
@@ -353,7 +349,6 @@ void robotThreadsMain(void)
 	/* shared init */
 	memset(shared, 0, sizeof(st_robotShared) );
 
-	/*monitor init*/
 
 	/*Start timer*/
     rt_set_oneshot_mode(); 	

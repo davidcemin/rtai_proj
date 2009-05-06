@@ -11,9 +11,9 @@
 
 
 
-int monitorSim_append(int item, st_monitorBuffer *b)
+int monitorSimSet(st_robotShared *shared)
 {
-	pthread_mutex_lock(&b->mutex);
+	pthread_mutex_lock(shared->mutexShared);
 
 	while(b->count==SIZE)
 		pthread_cond_wait(&b->notfull, &b->mutex);
@@ -27,7 +27,7 @@ int monitorSim_append(int item, st_monitorBuffer *b)
 }
 
 
-int monitorSim_take(int *item, st_monitorBuffer *b)
+int monitorSimGet(int *item, st_monitorBuffer *b)
 {
 	pthread_mutex_lock(&b->mutex);
 
@@ -40,25 +40,6 @@ int monitorSim_take(int *item, st_monitorBuffer *b)
 	pthread_mutex_unlock(&b->mutex);
 	pthread_cond_signal(&b->notfull);
 	return 0;
-}
-
-int monitorSim_run(st_robotShared *shared, st_robotMainArrays *robot)
-{
-	/* New X value */
-	robotNewX(robot);
-
-	/* Get u values from shared */
-	getUFromShared(robot, shared);
-
-	/* Calculates x' from x and u*/
-	robotDxSim(robot);
-
-	/* Calculates y from x and the inputs */
-	robotCalcYFromX(robot);
-
-	/* Copy y values into shared memory */
-	cpYIntoShared(robot, shared);
-
 }
 
 

@@ -8,6 +8,10 @@
 #ifndef _LIBROBOT_H
 #define _LIBROBOT_H
 
+/*linux includes*/
+#include <pthread.h>
+
+/*robot includes*/
 #include "robotDefines.h"
 
 //! Create a single type to the variables. Easy to change it later.
@@ -30,10 +34,19 @@ typedef struct {
 	varType yVal[XY_DIMENSION][MAX_DATA_VALUE];		//! y array(y1, y2, y3)
 } st_robotSample;
 
+//! Robot thread structure used inside shared
+typedef struct {
+	ptrhead_mutex_t	mutexSim;
+	ptrhead_mutex_t mutexCalc;
+	pthread_cond_t	simEmpty;
+	pthread_cond_t	calcEmpty;
+} st_robotPthread;
+
 //! Shared structure
 typedef	struct {
 	varType yf[3];	//! Output array
 	varType u[2];	//! Input array 
+	st_robotPthread	robotThread; //! Robot shared thread structure
 } st_robotShared;
 
 /******************************************************************************/
