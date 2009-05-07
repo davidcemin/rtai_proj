@@ -9,6 +9,10 @@
 #ifndef _MONITORSIM_H
 #define _MONITORSIM_H
 
+/*rtai includes*/
+#include <rtai_sem.h>
+
+/*robot includes*/
 #include "libRobot.h"
 
 /******************************************************************************/

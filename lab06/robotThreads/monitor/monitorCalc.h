@@ -9,6 +9,10 @@
 #ifndef _MONITORCALC_H
 #define _MONITORCALC_H
 
+/*rtai includes*/
+#include <rtai_sem.h>
+
+/*robot includes*/
 #include "libRobot.h"
 
 /******************************************************************************/

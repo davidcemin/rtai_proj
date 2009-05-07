@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <semaphore.h>
 #include <string.h> 
 #include <sys/time.h> 
 
@@ -44,9 +45,9 @@ static inline int robotLogData(st_robotSample *sample)
 		return -1;
 	}
 	
-	for(i = 1; i < sample->kIndex; i++)
+	for(i = 2; i < sample->kIndex; i++)
 		fprintf(fd, "%f\t%f\t%f\t%f\t%d\n", sample->yVal[0][i], sample->yVal[1][i], sample->yVal[2][i], 
-				sample->timeInstant[i], i - 1);
+				sample->timeInstant[i], i - 2);
 
 	fclose(fd);
 	return 0;
@@ -153,6 +154,9 @@ static void *robotSimulation(void *ptr)
 		/* New X value */
 		robotNewX(robot);
 
+		/* wait for semaphore release from control thread */
+		rt_sem_wait(shared->sem.rt_sem);
+
 		/* Monitor get u*/
 		monitorSimGet(robot, shared);
 
@@ -165,13 +169,18 @@ static void *robotSimulation(void *ptr)
 		/*monitor set y*/
 		monitorSimSet(robot, shared);
 
+		/* release the semaphore to display thread */
+		sem_post(&shared->sem.disp_sem);
+
+	
+		rt_task_wait_period();
+		robot->timeInstant[robot->kIndex] = currentT / SEC2NANO(1);	
+		
 		/*Timers procedure*/
 		lastT = currentT;
 		total = currentT / SEC2NANO(1);
 		robot->kIndex++;
 
-		rt_task_wait_period();
-		robot->timeInstant[robot->kIndex] = currentT / SEC2NANO(1);
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
 #ifdef CALC_DATA
@@ -184,7 +193,7 @@ static void *robotSimulation(void *ptr)
 
 	taskFinishRtai(simtask);
 	free(robot);
-	pthread_exit(NULL);
+	return NULL;
 }
 
 /*****************************************************************************/
@@ -209,7 +218,7 @@ static void *robotGeneration(void *ptr)
 	/* Allocates memory to robot structure */
 	if ( (sample = (st_robotSample*) malloc(sizeof(st_robotSample)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to sample!\n\r");
-		pthread_exit(NULL);
+		return NULL;
 	}
 
 	/*sample init*/
@@ -227,6 +236,9 @@ static void *robotGeneration(void *ptr)
 
 		/*monitor set u*/
 		monitorCalcSet(shared, total);
+		
+		/* release semaphore to simulation thread */
+		rt_sem_signal(shared->sem.rt_sem);
 
 		/*monitor get y*/
 		monitorCalcGet(sample, shared, total);
@@ -249,7 +261,6 @@ static void *robotGeneration(void *ptr)
 }
 
 /*****************************************************************************/
-
 
 /**
  * \brief  Thread used to show data on the screen. It is not a RTAI thread.
@@ -277,6 +288,8 @@ static void *robotThreadDisplay(void *ptr)
 
 			t = currentT / 1000.0;
 
+			/* Wait simulation thread release the semaphore */
+			sem_wait(&shared->sem.disp_sem);
 			monitorDispGet(shared, t);
 
 			/* saves the last time */
@@ -287,21 +300,41 @@ static void *robotThreadDisplay(void *ptr)
 	return NULL;
 }
 
-static void robotSharedInit(void *shared)
+/*****************************************************************************/
+
+/**
+ * \brief  
+ */
+static int robotSharedInit(void *shared)
 {
 	st_robotShared *robotShared = shared;
 
-	pthread_mutex_init(&robotShared->mutexSim, NULL);
-	pthread_mutex_init(&robotShared->mutexCalc, NULL);
+	pthread_mutex_init(&robotShared->mutex.mutexSim, NULL);
+	pthread_mutex_init(&robotShared->mutex.mutexCalc, NULL);
 
+	robotShared->sem.rt_sem = rt_sem_init(nam2num("SEM_RT"), 0);
+
+	if ( (sem_init(&robotShared->sem.disp_sem, 0, 0) < 0) ) {
+		fprintf(stderr, "Error in sem_init: %d\n", errno);
+		return -1;
+	}
+
+	return 0;
 }
 
+/*****************************************************************************/
+
+/**
+ * \brief  
+ */
 static void robotSharedCleanUp(void *shared)
 {
 	st_robotShared *robotShared = shared;
 
-	pthread_mutex_destroy(&robotShared->mutexSim);
-	pthread_mutex_destroy(&robotShared->mutexCalc);
+	pthread_mutex_destroy(&robotShared->mutex.mutexSim);
+	pthread_mutex_destroy(&robotShared->mutex.mutexCalc);
+	rt_sem_delete(robotShared->sem.rt_sem);
+	sem_destroy(&robotShared->sem.disp_sem);
 	stop_rt_timer();
 	free(shared);
 }
@@ -327,7 +360,10 @@ void robotThreadsMain(void)
 	
 	/* shared init */
 	memset(shared, 0, sizeof(st_robotShared) );
-	robotSharedInit(shared);
+	if( robotSharedInit(shared) < 0){
+		free(shared);
+		return;
+	}
 
 	/*Start timer*/
     rt_set_oneshot_mode(); 	
@@ -370,6 +406,7 @@ void robotThreadsMain(void)
 	/* Clean up and exit */
 	pthread_attr_destroy(&attr);
 	robotSharedCleanUp(shared);
+	return; 
 }
 /*****************************************************************************/
 

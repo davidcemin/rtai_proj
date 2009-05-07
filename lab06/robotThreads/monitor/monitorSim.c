@@ -13,24 +13,24 @@
 
 int monitorSimSet(st_robotMainArrays *robot, st_robotShared *shared)
 {
-	pthread_mutex_lock(&shared->mutexSim);
+	pthread_mutex_lock(&shared->mutex.mutexSim);
 
 	/* Copy y values into shared memory */
 	cpYIntoShared(robot, shared);
 
-	pthread_mutex_unlock(&shared->mutexSim);
+	pthread_mutex_unlock(&shared->mutex.mutexSim);
 	return 0;
 }
 
 
 int monitorSimGet(st_robotMainArrays *robot, st_robotShared *shared)
 {	
-	pthread_mutex_lock(&shared->mutexCalc);
+	pthread_mutex_lock(&shared->mutex.mutexCalc);
 
 	/* Get u values from shared */
 	getUFromShared(robot, shared);
 
-	pthread_mutex_unlock(&shared->mutexCalc);
+	pthread_mutex_unlock(&shared->mutex.mutexCalc);
 
 	return 0;
 }

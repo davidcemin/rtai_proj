@@ -138,10 +138,11 @@ static int dataPeriod(double *period, double *ret, int nmemb)
 	}
 
 	ret[0] = 0.0;
+	//ret[1] = STEPTIMESIM;
 
-	for (i = 2; i < nmemb; i++) {
+	for (i = 1; i < nmemb; i++) {
 		ret[i] = 1000 * (period[i] - period[i-1]);
-		fprintf(fd, "%f\t%d\n", ret[i], i - 2);
+		fprintf(fd, "%f\t%d\n", ret[i], i - 1);
 	}
 	fclose(fd);
 	return 0;
@@ -257,9 +258,9 @@ static int dataJitter(double *period, int nmemb, double *jitter)
 		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
 		return -1;
 	}
-	for (i = 2; i < nmemb; i++) {
+	for (i = 1; i < nmemb; i++) {
 		jitter[i] = period[i] - (double)(STEPTIMESIM * 1000) ;
-		fprintf(fd, "%f\t%d\n", jitter[i], i - 2);
+		fprintf(fd, "%f\t%d\n", jitter[i], i - 1);
 	}
 	return 0;
 }
@@ -281,13 +282,13 @@ int robotCalcData(st_robotMainArrays *robot)
 
 	/* Allocate memory to period array */
 	if ( (period = (double*) malloc(robot->kIndex * sizeof(double)) ) == NULL ) { 
-		fprintf(stderr, "Not possible to allocate memory to main!\n\r");
+		fprintf(stderr, "Not possible to allocate memory to period!\n\r");
 		return -1;
 	}
 
 	/* Allocate memory to jitter array */
 	if ( (jitter = (double*) malloc(robot->kIndex * sizeof(double)) ) == NULL ) { 
-		fprintf(stderr, "Not possible to allocate memory to main!\n\r");
+		fprintf(stderr, "Not possible to allocate memory to jitter!\n\r");
 		return -1;
 	}
 	/* Opens a file to write */

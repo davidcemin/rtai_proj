@@ -30,6 +30,16 @@ OBJS = $(CSOURCES:.c=.o)
 #General
 QUIET = @
 
+#RTAI
+prefix := $(shell rtai-config --prefix)
+
+ifeq ($(prefix),)
+$(error Please add <rtai-install>/bin to your PATH variable)
+endif
+
+LXRT_CFLAGS = $(shell rtai-config --lxrt-cflags)
+LXRT_LDFLAGS = $(shell rtai-config --lxrt-ldflags)
+
 .PHONY: clean install distclean clobber install
 
 all: $(TARGET)
@@ -41,7 +51,7 @@ $(TARGET): $(OBJS)
 
 $(OBJS): $(CSOURCES)
 	$(QUIET)echo Creating object: $@
-	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $^
+	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $(LXRT_CFLAGS) $^
 
 -include $(DEPS)
 %.d: %.c

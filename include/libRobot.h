@@ -10,6 +10,10 @@
 
 /*linux includes*/
 #include <pthread.h>
+#include <semaphore.h>
+
+/*rtai includes*/
+#include <rtai_sem.h>
 
 /*robot includes*/
 #include "robotDefines.h"
@@ -34,12 +38,25 @@ typedef struct {
 	varType yVal[XY_DIMENSION][MAX_DATA_VALUE];		//! y array(y1, y2, y3)
 } st_robotSample;
 
+//! Struct with mutexes
+typedef struct{
+	pthread_mutex_t	mutexSim;
+	pthread_mutex_t	mutexCalc;
+
+} st_robotMutex;
+
+//! Struct with semaphores
+typedef struct{
+	SEM *rt_sem;
+	sem_t disp_sem;
+} st_robotSem;
+
 //! Shared structure
 typedef	struct {
 	varType yf[3];	//! Output array
 	varType u[2];	//! Input array 
-	pthread_mutex_t	mutexSim;
-	pthread_mutex_t	mutexCalc;
+	st_robotMutex mutex;
+	st_robotSem	sem;
 } st_robotShared;
 
 /******************************************************************************/
