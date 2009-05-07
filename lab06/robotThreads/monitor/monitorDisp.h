@@ -1,13 +1,13 @@
 /******************************************************************************/
 /**
- * \file monitorCalc.h
- * \brief This file has the Control monitor prototypes, structs and defines
+ * \file monitorDisp.h
+ * \brief This file has the Display monitor prototypes, structs and defines
  *
  */
 /******************************************************************************/
 
-#ifndef _MONITORCALC_H
-#define _MONITORCALC_H
+#ifndef _MONITORDISP_H
+#define _MONITORDISP_H
 
 #include "libRobot.h"
 
@@ -16,14 +16,7 @@
 /**
  * \brief  
  */
-extern int monitorCalcSet(st_robotShared *shared, double t);
-
-/******************************************************************************/
-
-/**
- * \brief  
- */
-int monitorCalcGet(st_robotSample *sample, st_robotShared *shared, double t);
+int monitorDispGet(st_robotShared *shared, double t);
 
 /******************************************************************************/
 

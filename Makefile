@@ -6,7 +6,8 @@ LIBDIR  = lib
 THREAD  = $(MAINDIR)/robotThreads
 SIMUL	= $(MAINDIR)/simulCalc
 INCLUDE = include
-DIRS = $(LIBDIR) $(SIMUL) $(THREAD) $(MAINDIR)
+MONITOR = $(THREAD)/monitor
+DIRS = $(LIBDIR) $(SIMUL) $(MONITOR) $(THREAD) $(MAINDIR)
 
 #General
 QUIET = @

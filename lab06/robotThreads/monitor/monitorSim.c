@@ -6,39 +6,32 @@
  */
 /******************************************************************************/
 
+#include <pthread.h>
+
 #include "monitorSim.h"
-#include "robotCalcUtils.h" 
+#include "simulCalcsUtils.h"
 
-
-
-int monitorSimSet(st_robotShared *shared)
+int monitorSimSet(st_robotMainArrays *robot, st_robotShared *shared)
 {
-	pthread_mutex_lock(shared->mutexShared);
+	pthread_mutex_lock(&shared->mutexSim);
 
-	while(b->count==SIZE)
-		pthread_cond_wait(&b->notfull, &b->mutex);
+	/* Copy y values into shared memory */
+	cpYIntoShared(robot, shared);
 
-	b->buf[b->first]=item;
-	b->count++;
-	b->first=(b->first+1) % SIZE;
-	pthread_mutex_unlock(&b->mutex);
-	pthread_cond_signal(&b->notempty);
+	pthread_mutex_unlock(&shared->mutexSim);
 	return 0;
 }
 
 
-int monitorSimGet(int *item, st_monitorBuffer *b)
-{
-	pthread_mutex_lock(&b->mutex);
+int monitorSimGet(st_robotMainArrays *robot, st_robotShared *shared)
+{	
+	pthread_mutex_lock(&shared->mutexCalc);
 
-	while(b->count==0)
-		pthread_cond_wait(&b->notempty, &b->mutex);
+	/* Get u values from shared */
+	getUFromShared(robot, shared);
 
-	*item = b->buf[b->last];
-	b->last=(b->last+1) % SIZE;
-	b->count--;
-	pthread_mutex_unlock(&b->mutex);
-	pthread_cond_signal(&b->notfull);
+	pthread_mutex_unlock(&shared->mutexCalc);
+
 	return 0;
 }
 

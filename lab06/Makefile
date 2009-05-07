@@ -4,10 +4,11 @@ TARGET := robotSim
 #Include dirs
 ROBOTHREAD = ./robotThreads
 SIMUL = ./simulCalc
+MONITOR = $(ROBOTHREAD)/monitor
 
 #flags
 CFLAGS   := -O2 -Wall
-CINCLUDE := -I../include/ -I$(ROBOTHREAD) -I$(SIMULCALC)
+CINCLUDE := -I../include/ -I$(ROBOTHREAD) -I$(SIMULCALC) -I$(MONITOR)
 CLIBDIR  :=
 CLIBS    := -lm -lpthread
 DEPFLAGS := -MM
@@ -30,7 +31,7 @@ LDFLAGS  = ${LIBS}
 CSOURCES = $(wildcard *.c)
 OBJECTS  = $(CSOURCES:.c=.o)
 DEPS     = $(CSOURCES:.c=.d)
-LIBFILES = $(SIMUL)/simulCalcsUtils.o $(ROBOTHREAD)/robotThreads.o $(LIBINCLUDE)/libRobot.a 
+LIBFILES = $(SIMUL)/simulCalcsUtils.o $(MONITOR)/monitorSim.o $(MONITOR)/monitorCalc.o $(MONITOR)/monitorDisp.o $(ROBOTHREAD)/robotThreads.o $(LIBINCLUDE)/libRobot.a 
 
 
 #RTAI

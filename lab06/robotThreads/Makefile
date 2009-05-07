@@ -6,7 +6,7 @@ RTAIDIR  = /usr/realtime
 
 #flags
 CFLAGS   = -O2 -Wall
-CINCLUDE = -I../../include/ -I. -I../ -I../../lib/ -I../simulCalc
+CINCLUDE = -I../../include/ -I. -I../ -I../../lib/ -I../simulCalc -I./monitor
 CLIBDIR  =
 CLIBS    = -lpthread -llxrt
 DEPFLAGS = -MM

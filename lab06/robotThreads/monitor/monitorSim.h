@@ -9,9 +9,22 @@
 #ifndef _MONITORSIM_H
 #define _MONITORSIM_H
 
-#include <pthread.h>
-#define SIZE 10
+#include "libRobot.h"
 
+/******************************************************************************/
 
+/**
+ * \brief  
+ */
+extern int monitorSimSet(st_robotMainArrays *robot, st_robotShared *shared);
+
+/******************************************************************************/
+
+/**
+ * \brief  
+ */
+extern int monitorSimGet(st_robotMainArrays *robot, st_robotShared *shared);
+
+/******************************************************************************/
 
 #endif //! _MONITORSIM_H

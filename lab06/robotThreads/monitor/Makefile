@@ -3,9 +3,9 @@ TARGET =
 
 #flags
 CFLAGS   = -O2 -Wall
-CINCLUDE = -I../../include/ -I. -I../ -I../../lib/
+CINCLUDE = -I. -I../../simulCalc/ -I../../../include/
 CLIBDIR  =
-CLIBS    = 
+CLIBS    = -lpthread
 DEPFLAGS = -MM
 
 #includes
@@ -13,7 +13,7 @@ INCLUDE    = ${CINCLUDE}
 FLAGS      = ${CFLAGS}
 LIBDIR     = ${CLIBDIR}
 LIBS       = ${CLIBS}
-LIBINCLUDE = ../../lib
+LIBINCLUDE = ../../../lib
 
 #Setzen alle zusammen..
 CMP      = gcc
@@ -28,16 +28,6 @@ OBJECTS  = $(CSOURCES:.c=.o)
 DEPS     = $(CSOURCES:.c=.d)
 LIBFILES = $(LIBINCLUDE)/libRobot.a
 
-#RTAI
-prefix := $(shell rtai-config --prefix)
-
-ifeq ($(prefix),)
-$(error Please add <rtai-install>/bin to your PATH variable)
-endif
-
-LXRT_CFLAGS = $(shell rtai-config --lxrt-cflags)
-LXRT_LDFLAGS = $(shell rtai-config --lxrt-ldflags)
-
 #General
 QUIET = @
 
@@ -50,7 +40,7 @@ all: $(OBJECTS)
 
 $(OBJECTS): $(CSOURCES)
 	$(QUIET)echo Creating object: $@
-	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $(LXRT_CFLAGS) $^ 
+	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $^ 
 
 -include $(DEPS)
 %.d: %.c

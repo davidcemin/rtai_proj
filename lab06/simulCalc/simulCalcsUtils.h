@@ -79,4 +79,15 @@ extern inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample,
 
 /******************************************************************************/
 
+/**
+ * \brief Function used to print the information on the screen.
+ * \param shared Pointer to shared memory.
+ * \param t Current time of simulation
+ * \return void
+ */
+extern inline void printDisplay(st_robotShared *shared, double t);
+
+/******************************************************************************/
+
+
 #endif

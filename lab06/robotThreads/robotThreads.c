@@ -14,7 +14,9 @@
 
 /*robot includes*/
 #include "libRobot.h"
-//#include "monitorSim.h"
+#include "monitorCalc.h"
+#include "monitorDisp.h"
+#include "monitorSim.h"
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
 
@@ -23,11 +25,6 @@
 
 //! Defined used in jitter calculations and the like.
 #define CALC_DATA
-
-/*****************************************************************************/
-
-//! Shared memory's mutex
-pthread_mutex_t mutexShared = PTHREAD_MUTEX_INITIALIZER;
 
 /*****************************************************************************/
 
@@ -153,14 +150,11 @@ static void *robotSimulation(void *ptr)
 	do {
 		currentT = rt_get_time_ns() - tInit;
 		
-		/* Entering in crictical section */
-		pthread_mutex_lock(&mutexShared);
-
 		/* New X value */
 		robotNewX(robot);
 
-		/* Get u values from shared */
-		getUFromShared(robot, shared);
+		/* Monitor get u*/
+		monitorSimGet(robot, shared);
 
 		/* Calculates x' from x and u*/
 		robotDxSim(robot);
@@ -168,11 +162,8 @@ static void *robotSimulation(void *ptr)
 		/* Calculates y from x and the inputs */
 		robotCalcYFromX(robot);
 
-		/* Copy y values into shared memory */
-		cpYIntoShared(robot, shared);
-
-		/* Leaving crictical section */
-		pthread_mutex_unlock(&mutexShared);
+		/*monitor set y*/
+		monitorSimSet(robot, shared);
 
 		/*Timers procedure*/
 		lastT = currentT;
@@ -194,7 +185,6 @@ static void *robotSimulation(void *ptr)
 	taskFinishRtai(simtask);
 	free(robot);
 	pthread_exit(NULL);
-	//return NULL;
 }
 
 /*****************************************************************************/
@@ -235,17 +225,11 @@ static void *robotGeneration(void *ptr)
 	do {
 		currentT = rt_get_time_ns() - tInit;
 
-		/* Entering in crictical section */
-		pthread_mutex_lock(&mutexShared);
+		/*monitor set u*/
+		monitorCalcSet(shared, total);
 
-		/* Calculates the inputs: u[n] */
-		robotInputCalc(shared, total);
-
-		/* Sample y and copy it into buffer */
-		robotSampleYf(shared, sample, total);
-
-		/* Leaving crictical section */
-		pthread_mutex_unlock(&mutexShared);
+		/*monitor get y*/
+		monitorCalcGet(sample, shared, total);
 
 		sample->kIndex++;
 
@@ -266,28 +250,6 @@ static void *robotGeneration(void *ptr)
 
 /*****************************************************************************/
 
-/**
- * \brief Function used to print the information on the screen.
- * \param shared Pointer to shared memory.
- * \param t Current time of simulation
- * \return void
- */
-static inline void printDisplay(st_robotShared *shared, double t)
-{
-	struct {
-		double y1;
-		double y2; 
-		double y3;
-		double u1; 
-		double u2;
-	} disp = {shared->yf[0], shared->yf[1], shared->yf[2], shared->u[0], shared->u[1]};
-
-	fprintf(stdout, "%f\t%f\t%f\t%f\t%f\t%f\n", disp.y1, disp.y2, disp.y3, disp.u1, disp.u2, t);
-
-	return;
-}
-
-/*****************************************************************************/
 
 /**
  * \brief  Thread used to show data on the screen. It is not a RTAI thread.
@@ -315,9 +277,7 @@ static void *robotThreadDisplay(void *ptr)
 
 			t = currentT / 1000.0;
 
-			pthread_mutex_lock(&mutexShared);
-			printDisplay(shared, t);
-			pthread_mutex_unlock(&mutexShared);
+			monitorDispGet(shared, t);
 
 			/* saves the last time */
 			lastT = currentT;
@@ -325,6 +285,25 @@ static void *robotThreadDisplay(void *ptr)
 	} while (currentT < (double)TOTAL_TIME * 1000);
 	
 	return NULL;
+}
+
+static void robotSharedInit(void *shared)
+{
+	st_robotShared *robotShared = shared;
+
+	pthread_mutex_init(&robotShared->mutexSim, NULL);
+	pthread_mutex_init(&robotShared->mutexCalc, NULL);
+
+}
+
+static void robotSharedCleanUp(void *shared)
+{
+	st_robotShared *robotShared = shared;
+
+	pthread_mutex_destroy(&robotShared->mutexSim);
+	pthread_mutex_destroy(&robotShared->mutexCalc);
+	stop_rt_timer();
+	free(shared);
 }
 
 /*****************************************************************************/
@@ -348,7 +327,7 @@ void robotThreadsMain(void)
 	
 	/* shared init */
 	memset(shared, 0, sizeof(st_robotShared) );
-
+	robotSharedInit(shared);
 
 	/*Start timer*/
     rt_set_oneshot_mode(); 	
@@ -359,18 +338,14 @@ void robotThreadsMain(void)
 	/*rtai simulation thread*/
 	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, stkSize))) {
 		fprintf(stderr, "Error Creating Simulation Thread!!\n");
-		pthread_mutex_destroy(&mutexShared);
-		stop_rt_timer();
-		free(shared);
+		robotSharedCleanUp(shared);
 		return;
 	}	
 	
 	/*rtai control task*/
 	if(!(rt_calcTask_thread = rt_thread_create(robotGeneration, shared, stkSize))) {
 		fprintf(stderr, "Error Creating Calculation Thread!!\n");
-		pthread_mutex_destroy(&mutexShared);
-		stop_rt_timer();
-		free(shared);
+		robotSharedCleanUp(shared);
 		return;
 	}	
 	
@@ -382,10 +357,8 @@ void robotThreadsMain(void)
 
 	if ( (ret = pthread_create(&threadDisplay, &attr, robotThreadDisplay, shared) ) ) {
 		fprintf(stderr, "Error Creating Display Thread: %d\n", ret);
-		pthread_mutex_destroy(&mutexShared);
 		pthread_attr_destroy(&attr);
-		stop_rt_timer();
-		free(shared);
+		robotSharedCleanUp(shared);
 		return;
 	}
 
@@ -395,10 +368,8 @@ void robotThreadsMain(void)
 	pthread_join(threadDisplay, NULL);
 
 	/* Clean up and exit */
-	pthread_mutex_destroy(&mutexShared);
 	pthread_attr_destroy(&attr);
-	free(shared);
-	stop_rt_timer();
+	robotSharedCleanUp(shared);
 }
 /*****************************************************************************/
 

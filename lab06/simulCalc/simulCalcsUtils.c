@@ -101,6 +101,24 @@ inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample, double
 
 /******************************************************************************/
 
+inline void printDisplay(st_robotShared *shared, double t)
+{
+	struct {
+		double y1;
+		double y2; 
+		double y3;
+		double u1; 
+		double u2;
+	} disp = {shared->yf[0], shared->yf[1], shared->yf[2], shared->u[0], shared->u[1]};
+
+	fprintf(stdout, "%f\t%f\t%f\t%f\t%f\t%f\n", disp.y1, disp.y2, disp.y3, disp.u1, disp.u2, t);
+
+	return;
+}
+
+/*****************************************************************************/
+
+
 /**
  * \brief  Calculate the period as specified
  * \param  period pointer to x array
