@@ -31,8 +31,7 @@ LDFLAGS  = ${LIBS}
 CSOURCES = $(wildcard *.c)
 OBJECTS  = $(CSOURCES:.c=.o)
 DEPS     = $(CSOURCES:.c=.d)
-LIBFILES = $(SIMUL)/simulCalcsUtils.o $(MONITOR)/monitorSim.o $(MONITOR)/monitorCalc.o $(MONITOR)/monitorDisp.o $(ROBOTHREAD)/robotThreads.o $(LIBINCLUDE)/libRobot.a 
-
+LIBFILES = $(SIMUL)/*.o $(MONITOR)/*.o $(ROBOTHREAD)/*.o $(LIBINCLUDE)/libRobot.a 
 
 #RTAI
 prefix := $(shell rtai-config --prefix)
