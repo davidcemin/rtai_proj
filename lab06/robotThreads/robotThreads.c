@@ -16,7 +16,6 @@
 /*robot includes*/
 #include "libRobot.h"
 #include "monitorCalc.h"
-#include "monitorDisp.h"
 #include "monitorSim.h"
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
@@ -45,6 +44,7 @@ static inline int robotLogData(st_robotSample *sample)
 		return -1;
 	}
 	
+	fprintf(stdout, "Writing dados.dat\n"); 
 	for(i = 2; i < sample->kIndex; i++)
 		fprintf(fd, "%f\t%f\t%f\t%f\t%d\n", sample->yVal[0][i], sample->yVal[1][i], sample->yVal[2][i], 
 				sample->timeInstant[i], i - 2);
@@ -124,6 +124,7 @@ static inline void taskFinishRtai(RT_TASK *task)
 static void *robotSimulation(void *ptr)
 {	
 	st_robotShared *shared = ptr;
+	st_robotShared *sharedCp;
 	st_robotMainArrays *robot;
 	double currentT = 0;
 	double lastT = 0;
@@ -138,8 +139,15 @@ static void *robotSimulation(void *ptr)
 		fprintf(stderr, "Not possible to allocate memory to main!\n\r");
 		return NULL;
 	}
+	
+	/* Allocates memory to shared's copy structure */
+	if ( (sharedCp = (st_robotShared*) malloc(sizeof(st_robotShared)) ) == NULL ) { 
+		fprintf(stderr, "Not possible to allocate memory to shared copy!\n\r");
+		return NULL;
+	}
 
 	robotInit(robot);
+	memset(sharedCp, 0, sizeof(st_robotShared));
 
 	if(taskCreateRtai(simtask, simtask_name, SIMPRIORITY, STEPTIMESIMNANO) < 0) {
 		fprintf(stderr, "Simulation!\n");
@@ -158,7 +166,10 @@ static void *robotSimulation(void *ptr)
 		rt_sem_wait(shared->sem.rt_sem);
 
 		/* Monitor get u*/
-		monitorSimGet(robot, shared);
+		monitorSimGet(sharedCp, shared);
+		
+		/* Get u values from shared */
+		getUFromShared(robot, sharedCp);
 
 		/* Calculates x' from x and u*/
 		robotDxSim(robot);
@@ -171,7 +182,6 @@ static void *robotSimulation(void *ptr)
 
 		/* release the semaphore to display thread */
 		sem_post(&shared->sem.disp_sem);
-
 	
 		rt_task_wait_period();
 		robot->kIndex++;
@@ -186,12 +196,14 @@ static void *robotSimulation(void *ptr)
 #ifdef CALC_DATA
 	if ( robotCalcData(robot) < 0 ) {
 		free(robot);
+		free(sharedCp);
 		taskFinishRtai(simtask);
 		return NULL;
 	}
 #endif /*CALC_DATA*/
 
 	taskFinishRtai(simtask);
+	free(sharedCp);
 	free(robot);
 	return NULL;
 }
@@ -270,10 +282,19 @@ static void *robotGeneration(void *ptr)
 static void *robotThreadDisplay(void *ptr)
 {
 	st_robotShared *shared = ptr;
+	st_robotShared *sharedCp;
 	double tInit;
 	double lastT;
 	double currentT;
 	double t;
+
+	/* Allocates memory to shared's copy structure */
+	if ( (sharedCp = (st_robotShared*) malloc(sizeof(st_robotShared)) ) == NULL ) { 
+		fprintf(stderr, "Not possible to allocate memory to shared copy!\n\r");
+		return NULL;
+	}
+
+	memset(sharedCp, 0, sizeof(st_robotShared));
 
 	/*time init*/
 	tInit = getTimeMilisec();
@@ -290,13 +311,17 @@ static void *robotThreadDisplay(void *ptr)
 
 			/* Wait simulation thread release the semaphore */
 			sem_wait(&shared->sem.disp_sem);
-			monitorDispGet(shared, t);
+			
+			monitorSimGet(sharedCp, shared);
+
+			printDisplay(sharedCp, t);
 
 			/* saves the last time */
 			lastT = currentT;
 		}
 	} while (currentT < (double)TOTAL_TIME * 1000);
 	
+	free(sharedCp);
 	return NULL;
 }
 
@@ -369,7 +394,7 @@ void robotThreadsMain(void)
     rt_set_oneshot_mode(); 	
 	start_rt_timer(0);
 
-	stkSize = sizeof(st_robotShared) + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 10000;
+	stkSize = 2*sizeof(st_robotShared) + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 10000;
 
 	/*rtai simulation thread*/
 	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, stkSize))) {

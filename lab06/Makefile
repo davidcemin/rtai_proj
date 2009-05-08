@@ -1,11 +1,13 @@
 #lab04 Makefile. It should be the last to be called
 TARGET := robotSim
 
+########################################################################
 #Include dirs
 ROBOTHREAD = ./robotThreads
 SIMUL = ./simulCalc
 MONITOR = $(ROBOTHREAD)/monitor
 
+########################################################################
 #flags
 CFLAGS   := -O2 -Wall
 CINCLUDE := -I../include/ -I$(ROBOTHREAD) -I$(SIMULCALC) -I$(MONITOR)
@@ -13,6 +15,7 @@ CLIBDIR  :=
 CLIBS    := -lm -lpthread
 DEPFLAGS := -MM
 
+########################################################################
 #includes
 INCLUDE    = ${CINCLUDE}
 FLAGS      = ${CFLAGS}
@@ -20,6 +23,7 @@ LIBDIR     = ${CLIBDIR}
 LIBS       = ${CLIBS}
 LIBINCLUDE = ../lib
 
+########################################################################
 #Setzen alle zusammen..
 CMP      = gcc
 LD       = ld
@@ -28,11 +32,13 @@ ARFLAGS  = rvu
 CMPFLAGS = ${FLAGS} ${INCLUDE}
 LDFLAGS  = ${LIBS}
 
+########################################################################
 CSOURCES = $(wildcard *.c)
 OBJECTS  = $(CSOURCES:.c=.o)
 DEPS     = $(CSOURCES:.c=.d)
 LIBFILES = $(SIMUL)/*.o $(MONITOR)/*.o $(ROBOTHREAD)/*.o $(LIBINCLUDE)/libRobot.a 
 
+########################################################################
 #RTAI
 prefix := $(shell rtai-config --prefix)
 
@@ -43,25 +49,34 @@ endif
 LXRT_CFLAGS = $(shell rtai-config --lxrt-cflags)
 LXRT_LDFLAGS = $(shell rtai-config --lxrt-ldflags)
 
+########################################################################
+
 LIBFILES += $(LXRT_LDFLAGS)
 
 #General
 QUIET = @
 
-.PHONY: clean install distclean clobber install
-
+.PHONY: clean clobber 
 
 all: $(TARGET)
 
-# The variable $@ has the value of the target and $^ has the value of the dependencies
-# $< has the value of the first dependency file
 $(TARGET): $(OBJECTS)
 	$(QUIET)echo Compiling executable file: $@
 	$(QUIET)${CMP} $(LDFLAGS) -o $@  $^ $(LIBFILES) $(LXRT_LDFLAGS)
 
-$(OBJECTS): $(CSOURCES)
+%.o: %.c
 	$(QUIET)echo Creating object: $@
 	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $(LXRT_CFLAGS) $^
+
+clean:
+	$(QUIET)echo Removing temp and object files
+	$(QUIET)rm -f *~ *.bak *.o
+
+
+clobber: clean
+	$(QUIET)echo Removing executable and some unnecessary files
+	$(QUIET)rm -f $(TARGET) $(DEPS) 
+	$(QUIET) rm -f *.gch
 
 -include $(DEPS)
 %.d: %.c
@@ -70,16 +85,3 @@ $(OBJECTS): $(CSOURCES)
 	| sed 's!\($*\)\.o[ :]*!\1.o $@ : !g' > $@; \
 	[ -s $@ ] || rm -f $@
 
-clean:
-	$(QUIET)echo Removing temp and object files
-	$(QUIET)rm -f *~ *.bak *.o
-
-install:
-
-distclean: clean
-	$(QUIET)echo Removing executable and some unnecessary files
-	$(QUIET)rm -f $(TARGET) $(DEPS) 
-	$(QUIET) rm -f *.gch
-
-clobber: distclean
-# DO NOT DELETE

@@ -17,7 +17,7 @@
 #define INIT_TIME			0.0
 
 //! Final time of the simulation
-#define FINAL_TIME			1.0
+#define FINAL_TIME			30.0
 
 //! Total time of simulation
 #define TOTAL_TIME	 ( FINAL_TIME - INIT_TIME ) 

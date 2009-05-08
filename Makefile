@@ -18,15 +18,13 @@ all:
 	$(QUIET)for i in $(DIRS); do cd $$i; $(MAKE); cd -;done
 
 clean:
-	$(QUIET)for i in $(DIRS); do cd $$i; $(MAKE) $@ ; cd -; done
+	$(QUIET)for i in $(DIRS); do cd $$i; $(MAKE) $@; cd -;  done
 
 install:
 
-distclean: clean
+clobber: clean
 	$(QUIET)for i in $(DIRS); do cd $$i; $(MAKE) $@ ; cd -; done
 	$(QUIET)cd $(INCLUDE); rm *.gch; cd -;
-
-clobber: distclean
 	$(QUIET) rm *.dat 
 
 doc:

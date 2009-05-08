@@ -27,7 +27,7 @@ extern int monitorSimSet(st_robotMainArrays *robot, st_robotShared *shared);
 /**
  * \brief  
  */
-extern int monitorSimGet(st_robotMainArrays *robot, st_robotShared *shared);
+extern int monitorSimGet(st_robotShared *sharedCp, st_robotShared *shared);
 
 /******************************************************************************/
 
