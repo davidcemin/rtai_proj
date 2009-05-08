@@ -138,11 +138,11 @@ static int dataPeriod(double *period, double *ret, int nmemb)
 	}
 
 	ret[0] = 0.0;
-	//ret[1] = STEPTIMESIM;
+	ret[1] = STEPTIMESIM * 1000;
 
-	for (i = 1; i < nmemb; i++) {
+	for (i = 2; i < nmemb; i++) {
 		ret[i] = 1000 * (period[i] - period[i-1]);
-		fprintf(fd, "%f\t%d\n", ret[i], i - 1);
+		fprintf(fd, "%f\t%d\n", ret[i], i - 2);
 	}
 	fclose(fd);
 	return 0;
@@ -258,9 +258,9 @@ static int dataJitter(double *period, int nmemb, double *jitter)
 		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
 		return -1;
 	}
-	for (i = 1; i < nmemb; i++) {
+	for (i = 2; i < nmemb; i++) {
 		jitter[i] = period[i] - (double)(STEPTIMESIM * 1000) ;
-		fprintf(fd, "%f\t%d\n", jitter[i], i - 1);
+		fprintf(fd, "%f\t%d\n", jitter[i], i - 2);
 	}
 	return 0;
 }

@@ -174,12 +174,12 @@ static void *robotSimulation(void *ptr)
 
 	
 		rt_task_wait_period();
+		robot->kIndex++;
 		robot->timeInstant[robot->kIndex] = currentT / SEC2NANO(1);	
 		
 		/*Timers procedure*/
 		lastT = currentT;
 		total = currentT / SEC2NANO(1);
-		robot->kIndex++;
 
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
