@@ -239,7 +239,7 @@ static void *robotGeneration(void *ptr)
 	if(taskCreateRtai(calctask, calctask_name, CALCPRIORITY, STEPTIMECALCNANO) < 0){
 		fprintf(stderr, "Calculation!\n");
 		free(sample);
-		exit(1);
+		return NULL;
 	}
 
 	tInit = rt_get_time_ns();
@@ -328,7 +328,9 @@ static void *robotThreadDisplay(void *ptr)
 /*****************************************************************************/
 
 /**
- * \brief  
+ * \brief  Initializes shared memory
+ * \param  shared Void pointer to shared memory
+ * \return 0 Ok, -1 Error. 
  */
 static int robotSharedInit(void *shared)
 {
@@ -350,7 +352,9 @@ static int robotSharedInit(void *shared)
 /*****************************************************************************/
 
 /**
- * \brief  
+ * \brief Cleans up shared memory.
+ * \param shared void pointer to shared memory
+ * \return void
  */
 static void robotSharedCleanUp(void *shared)
 {

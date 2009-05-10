@@ -8,6 +8,7 @@
 #ifndef _SIMULCALCUTILS_H
 #define _SIMULCALCUTILS_H
 
+/* robot include */
 #include "libRobot.h"
 
 /******************************************************************************/
@@ -88,6 +89,5 @@ extern inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample,
 extern inline void printDisplay(st_robotShared *shared, double t);
 
 /******************************************************************************/
-
 
 #endif

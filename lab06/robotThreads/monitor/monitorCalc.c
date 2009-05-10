@@ -6,10 +6,14 @@
  */
 /******************************************************************************/
 
+/* libc */
 #include <pthread.h>
 
+/* robot */
 #include "monitorCalc.h"
 #include "simulCalcsUtils.h"
+
+/******************************************************************************/
 
 int monitorCalcSet(st_robotShared *shared, double t)
 {
@@ -22,6 +26,7 @@ int monitorCalcSet(st_robotShared *shared, double t)
 	return 0;
 }
 
+/******************************************************************************/
 
 int monitorCalcGet(st_robotSample *sample, st_robotShared *shared, double t)
 {	
@@ -35,3 +40,4 @@ int monitorCalcGet(st_robotSample *sample, st_robotShared *shared, double t)
 	return 0;
 }
 
+/******************************************************************************/

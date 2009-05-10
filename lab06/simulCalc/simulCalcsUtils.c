@@ -118,7 +118,6 @@ inline void printDisplay(st_robotShared *shared, double t)
 
 /*****************************************************************************/
 
-
 /**
  * \brief  Calculate the period as specified
  * \param  period pointer to x array
@@ -140,7 +139,7 @@ static int dataPeriod(double *period, double *ret, int nmemb)
 	ret[0] = 0.0;
 	ret[1] = STEPTIMESIM * 1000;
 
-	fprintf(stdout, " Writing period.dat\n");
+	fprintf(stdout, "Writing period.dat\n");
 	for (i = 2; i < nmemb; i++) {
 		ret[i] = 1000 * (period[i] - period[i-1]);
 		fprintf(fd, "%f\t%d\n", ret[i], i - 2);
@@ -259,7 +258,7 @@ static int dataJitter(double *period, int nmemb, double *jitter)
 		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
 		return -1;
 	}
-	fprintf(stdout, " Writing jitter.dat\n");
+	fprintf(stdout, "Writing jitter.dat\n");
 	for (i = 2; i < nmemb; i++) {
 		jitter[i] = period[i] - (double)(STEPTIMESIM * 1000) ;
 		fprintf(fd, "%f\t%d\n", jitter[i], i - 2);
@@ -351,4 +350,3 @@ int robotCalcData(st_robotMainArrays *robot)
 	free(jitter);
 	return 0;
 }
-

@@ -9,23 +9,25 @@
 #ifndef _MONITORSIM_H
 #define _MONITORSIM_H
 
-/*rtai includes*/
-#include <rtai_sem.h>
-
 /*robot includes*/
 #include "libRobot.h"
 
 /******************************************************************************/
 
 /**
- * \brief  
+ * \brief This function copy a value into the shared
+ * \param robot Pointer to st_robotMainArrays structure
+ * \param shared pointer to shared memory
+ * \return 0
  */
 extern int monitorSimSet(st_robotMainArrays *robot, st_robotShared *shared);
 
 /******************************************************************************/
 
 /**
- * \brief  
+ * \brief  This function gets a copy of the shared memory
+ * \param  sharedCp pointer to shared copy
+ * \param  shared pointer to shared memory
  */
 extern int monitorSimGet(st_robotShared *sharedCp, st_robotShared *shared);
 
