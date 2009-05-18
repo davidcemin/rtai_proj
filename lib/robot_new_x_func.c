@@ -1,7 +1,7 @@
 /******************************************************************************/
 /**
- * \file robotYFunc.c
- * \brief Functions to calculate the output y
+ * \file robotNewXFunc.c
+ * \brief  It calculates the new x value from x' and x
  */
 /******************************************************************************/
 
@@ -10,15 +10,17 @@
 
 /******************************************************************************/
 
-void robotCalcYFromX(st_robotMainArrays *robotMain)
+void robotNewX(st_robotMainArrays *robotMain)
 {
+	int i;
+	double ts;
 	int k = robotMain->kIndex;
 
-	/* y[0] = x[0] + *0.5*D*cos(x[2]);
-	 *  y[1] = x[1]; y[2] = x[2] */
-	robotMain->yVal[0][k] = robotMain->xVal[0][k] + 0.5 * DIST * cos(robotMain->xVal[2][k]);	
-	robotMain->yVal[1][k] = robotMain->xVal[1][k];	
-	robotMain->yVal[2][k] = robotMain->xVal[2][k];	
+	ts = (robotMain->timeInstant[k] - robotMain->timeInstant[k-1]);
+	/* dx/dt = (x[n] - x[n-1])Ts*/
+	for (i = 0; i < 3; i++){
+		robotMain->xVal[i][k] = robotMain->dxVal[i][k - 1] * ts + robotMain->xVal[i][k - 1];
+	}
 }
 
 /******************************************************************************/

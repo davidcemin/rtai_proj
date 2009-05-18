@@ -1,22 +1,22 @@
 /*****************************************************************************/
 /**
- * \file robotThreads.h
- * \brief Threads used on simulation
+ * \file robotGeneration.h
+ * \brief Generation thread prototypes
  */
 /*****************************************************************************/
 
-#ifndef _ROBOTTHREADS_H
-#define _ROBOTTHREADS_H
-
+#ifndef _ROBOTGENERATION_H
+#define _ROBOTGENERATION_H
 
 /*****************************************************************************/
-
 
 /**
- * \brief Threads main function. This function initializes all the other threads.
+ * \brief Generation thread. It is responsible to generate the references
+ * \param ptr pointer to shared memory
  * \return void
  */
-extern void robotThreadsMain(void);
+extern void *robotGeneration(void *ptr);
+
 /*****************************************************************************/
 
-#endif
+#endif /*_ROBOTGENERATION_H */

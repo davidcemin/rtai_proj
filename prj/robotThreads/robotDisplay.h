@@ -1,22 +1,22 @@
 /*****************************************************************************/
 /**
- * \file robotThreads.h
- * \brief Threads used on simulation
+ * \file robotDisplay.h
+ * \brief Display thread prototypes
  */
 /*****************************************************************************/
 
-#ifndef _ROBOTTHREADS_H
-#define _ROBOTTHREADS_H
-
+#ifndef _ROBOTDISPLAY_H
+#define _ROBOTDISPLAY_H
 
 /*****************************************************************************/
-
 
 /**
- * \brief Threads main function. This function initializes all the other threads.
+ * \brief  Thread used to show data on the screen. It is not a RTAI thread.
+ * \param  ptr Pointer to shared memory
  * \return void
  */
-extern void robotThreadsMain(void);
+extern void *robotThreadDisplay(void *ptr);
+
 /*****************************************************************************/
 
-#endif
+#endif /* _ROBOTDISPLAY_H */
