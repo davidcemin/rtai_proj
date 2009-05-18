@@ -1,7 +1,7 @@
 #Main Makefile
 
 #defines
-MAINDIR = prj
+MAINDIR = sim
 LIBDIR  = lib
 THREAD  = $(MAINDIR)/robotThreads
 SIMUL	= $(MAINDIR)/simulCalc
