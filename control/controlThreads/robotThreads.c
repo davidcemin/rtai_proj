@@ -19,7 +19,6 @@
 #include "monitorSim.h"
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
-#include "robotSimulation.h"
 #include "robotControl.h"
 #include "robotGeneration.h"
 #include "robotDisplay.h"
@@ -63,28 +62,21 @@ static void robotSharedCleanUp(void *shared)
 {
 	st_robotShared *robotShared = shared;
 
-	pthread_mutex_destroy(&robotShared->mutex.mutexSim);
 	pthread_mutex_destroy(&robotShared->mutex.mutexCalc);
 	rt_sem_delete(robotShared->sem.rt_sem);
-	sem_destroy(&robotShared->sem.disp_sem);
 	stop_rt_timer();
 	free(shared);
 }
 
 /*****************************************************************************/
 
-void robotThreadsMain(void)
+void robotControlThreadsMain(void)
 {
 	void *shared; 
 	
-	int rt_simTask_thread;
 	int rt_calcTask_thread;
 	int stkSize;
 
-	pthread_t threadDisplay;
-	pthread_attr_t attr;
-	int ret;
-	
 	if ( (shared = (st_robotShared*) malloc(sizeof(st_robotShared)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to shared!\n\r");
 		return;
@@ -103,13 +95,6 @@ void robotThreadsMain(void)
 
 	stkSize = 2*sizeof(st_robotShared) + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 10000;
 
-	/*rtai simulation thread*/
-	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, stkSize))) {
-		fprintf(stderr, "Error Creating Simulation Thread!!\n");
-		robotSharedCleanUp(shared);
-		return;
-	}	
-	
 	/*rtai control task*/
 	if(!(rt_calcTask_thread = rt_thread_create(robotControl, shared, stkSize))) {
 		fprintf(stderr, "Error Creating Calculation Thread!!\n");
@@ -117,26 +102,10 @@ void robotThreadsMain(void)
 		return;
 	}	
 	
-	/*Create display thread*/
-	
-	/* For portability, explicitly create threads in a joinable state */
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-	if ( (ret = pthread_create(&threadDisplay, &attr, robotThreadDisplay, shared) ) ) {
-		fprintf(stderr, "Error Creating Display Thread: %d\n", ret);
-		pthread_attr_destroy(&attr);
-		robotSharedCleanUp(shared);
-		return;
-	}
-
 	/* Wait for all threads to complete */
 	rt_thread_join(rt_calcTask_thread);
-	rt_thread_join(rt_simTask_thread);
-	pthread_join(threadDisplay, NULL);
 
 	/* Clean up and exit */
-	pthread_attr_destroy(&attr);
 	robotSharedCleanUp(shared);
 	return; 
 }

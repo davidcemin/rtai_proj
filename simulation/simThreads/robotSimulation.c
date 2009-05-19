@@ -15,12 +15,10 @@
 
 /*robot includes*/
 #include "libRobot.h"
-#include "monitorCalc.h"
-#include "monitorSim.h"
-#include "robotThreads.h"
-#include "simulCalcsUtils.h"
+#include "simThreads.h"
 
 /*rtai includes*/
+#include <rtai_netrpc.h>
 #include <rtai_lxrt.h>
 
 //! Defined used in jitter calculations and the like.
@@ -98,6 +96,7 @@ void *robotSimulation(void *ptr)
 	double lastT = 0;
 	double total = 0;
 	double tInit = 0;
+	unsigned long node = rt_set_this_node("127.0.0.1", 0, 1);
 
 	RT_TASK *simtask = NULL;
 	unsigned long simtask_name = nam2num("SIMULATION");
@@ -114,7 +113,7 @@ void *robotSimulation(void *ptr)
 		return NULL;
 	}
 
-	robotInit(robot);
+	//robotInit(robot);
 	memset(sharedCp, 0, sizeof(st_robotShared));
 
 	if(taskCreateRtaiSim(simtask, simtask_name, SIMPRIORITY, STEPTIMESIMNANO) < 0) {
@@ -134,11 +133,8 @@ void *robotSimulation(void *ptr)
 		rt_sem_wait(shared->sem.rt_sem);
 
 		/* Monitor get u*/
-		monitorSimGet(sharedCp, shared);
+		RT_receive(node, 0, simtask, 0);
 		
-		/* Get u values from shared */
-		getUFromShared(robot, sharedCp);
-
 		/* Calculates x' from x and u*/
 		robotDxSim(robot);
 
@@ -146,10 +142,10 @@ void *robotSimulation(void *ptr)
 		robotCalcYFromX(robot);
 
 		/*monitor set y*/
-		monitorSimSet(robot, shared);
+		RT_send(node, 0, simtask, 0);
 
 		/* release the semaphore to display thread */
-		sem_post(&shared->sem.disp_sem);
+	//	sem_post(&shared->sem.disp_sem);
 	
 		rt_task_wait_period();
 		robot->kIndex++;
@@ -161,20 +157,18 @@ void *robotSimulation(void *ptr)
 
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
-#ifdef CALC_DATA
-	if ( robotCalcData(robot) < 0 ) {
-		free(robot);
-		free(sharedCp);
-		taskFinishRtaiSim(simtask);
-		return NULL;
-	}
-#endif /*CALC_DATA*/
+//#ifdef CALC_DATA
+//	if ( robotCalcData(robot) < 0 ) {
+//		free(robot);
+//		free(sharedCp);
+//		taskFinishRtaiSim(simtask);
+//		return NULL;
+//	}
+//#endif /*CALC_DATA*/
 
 	taskFinishRtaiSim(simtask);
 	free(sharedCp);
 	free(robot);
 	return NULL;
 }
-
-
 

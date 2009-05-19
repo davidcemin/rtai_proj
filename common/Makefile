@@ -2,15 +2,11 @@
 TARGET = 
 
 ########################################################################
-#Dirs
-RTAIDIR  = /usr/realtime
-
-########################################################################
 #flags
 CFLAGS   = -O2 -Wall
-CINCLUDE = -I../../include/ -I. -I../ -I../../lib/ -I../simulCalc -I./monitor
+CINCLUDE = -I../include/ -I. -I../lib/
 CLIBDIR  =
-CLIBS    = -lpthread -llxrt
+CLIBS    = 
 DEPFLAGS = -MM
 
 ########################################################################
@@ -19,7 +15,7 @@ INCLUDE    = ${CINCLUDE}
 FLAGS      = ${CFLAGS}
 LIBDIR     = ${CLIBDIR}
 LIBS       = ${CLIBS}
-LIBINCLUDE = ../../lib
+LIBINCLUDE = ../lib
 
 ########################################################################
 #Setzen alle zusammen..
@@ -31,14 +27,10 @@ CMPFLAGS = ${FLAGS} ${INCLUDE}
 LDFLAGS  = ${LIBS}
 
 ########################################################################
-
 CSOURCES = $(wildcard *.c)
 OBJECTS  = $(CSOURCES:.c=.o)
 DEPS     = $(CSOURCES:.c=.d)
 LIBFILES = $(LIBINCLUDE)/libRobot.a
-
-#General
-QUIET = @
 
 ########################################################################
 #RTAI
@@ -51,15 +43,18 @@ endif
 LXRT_CFLAGS = $(shell rtai-config --lxrt-cflags)
 LXRT_LDFLAGS = $(shell rtai-config --lxrt-ldflags)
 
-########################################################################
+#######################################################################
+#General
+QUIET = @
 
 .PHONY: clean clobber
 
+########################################################################
 all: $(OBJECTS)
 
 %.o: %.c
 	$(QUIET)echo Creating object: $@
-	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $(LXRT_CFLAGS) $^
+	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $(LXRT_CFLAGS) $^ 
 
 clean:
 	$(QUIET)echo Removing temp and object files

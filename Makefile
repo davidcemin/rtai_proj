@@ -1,13 +1,13 @@
 #Main Makefile
 
 #defines
-MAINDIR = control
-LIBDIR  = lib
-THREAD  = $(MAINDIR)/robotThreads
-SIMUL	= $(MAINDIR)/simulCalc
-INCLUDE = include
-MONITOR = $(THREAD)/monitor
-DIRS = $(LIBDIR) $(SIMUL) $(MONITOR) $(THREAD) $(MAINDIR)
+CONTROLDIR := control
+LIBDIR  := lib
+COMMON  := common
+THREAD  := $(CONTROLDIR)/controlThreads
+INCLUDE := include
+MONITOR := $(THREAD)/monitor
+DIRS = $(LIBDIR) $(COMMON) $(MONITOR) $(THREAD) $(CONTROLDIR)
 
 #General
 QUIET = @

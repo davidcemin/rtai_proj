@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
-	robotThreadsMain();
+	robotControlThreadsMain();
 
 	return 0;
 }

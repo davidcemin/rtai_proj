@@ -16,7 +16,7 @@
  * \brief Threads main function. This function initializes all the other threads.
  * \return void
  */
-extern void robotThreadsMain(void);
+extern void robotSimThreadsMain(void);
 /*****************************************************************************/
 
 #endif

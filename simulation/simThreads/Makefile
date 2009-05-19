@@ -1,20 +1,17 @@
-#lab04 Makefile. It should be the last to be called
-TARGET := control
+#threads Makefile. It should be the last to be called
+TARGET = 
 
 ########################################################################
-#Include dirs
-THREAD = ./controlThreads
-MONITOR = $(THREAD)/monitor
-COMMON = ../common
-INCLUDE = ../include
+#Dirs
+RTAIDIR  = /usr/realtime
 
 ########################################################################
 #flags
-CFLAGS   := -O2 -Wall
-CINCLUDE := -I$(INCLUDE) -I$(THREAD) -I$(COMMON) -I$(MONITOR)
-CLIBDIR  :=
-CLIBS    := -lm -lpthread
-DEPFLAGS := -MM
+CFLAGS   = -O2 -Wall
+CINCLUDE = -I../../include/ -I. -I../ -I../../lib/ -I../simulCalc -I./monitor
+CLIBDIR  =
+CLIBS    = -lpthread -llxrt
+DEPFLAGS = -MM
 
 ########################################################################
 #includes
@@ -22,7 +19,7 @@ INCLUDE    = ${CINCLUDE}
 FLAGS      = ${CFLAGS}
 LIBDIR     = ${CLIBDIR}
 LIBS       = ${CLIBS}
-LIBINCLUDE = ../lib
+LIBINCLUDE = ../../lib
 
 ########################################################################
 #Setzen alle zusammen..
@@ -34,10 +31,14 @@ CMPFLAGS = ${FLAGS} ${INCLUDE}
 LDFLAGS  = ${LIBS}
 
 ########################################################################
+
 CSOURCES = $(wildcard *.c)
 OBJECTS  = $(CSOURCES:.c=.o)
 DEPS     = $(CSOURCES:.c=.d)
-LIBFILES = $(COMMON)/*.o $(MONITOR)/*.o $(THREAD)/*.o $(LIBINCLUDE)/*.a 
+LIBFILES = $(LIBINCLUDE)/*.a
+
+#General
+QUIET = @
 
 ########################################################################
 #RTAI
@@ -52,18 +53,9 @@ LXRT_LDFLAGS = $(shell rtai-config --lxrt-ldflags)
 
 ########################################################################
 
-LIBFILES += $(LXRT_LDFLAGS)
+.PHONY: clean clobber
 
-#General
-QUIET = 
-
-.PHONY: clean clobber 
-
-all: $(TARGET)
-
-$(TARGET): $(OBJECTS)
-	$(QUIET)echo Compiling executable file: $@
-	$(QUIET)${CMP} $(LDFLAGS) -o $@  $^ $(LIBFILES) $(LXRT_LDFLAGS)
+all: $(OBJECTS)
 
 %.o: %.c
 	$(QUIET)echo Creating object: $@
@@ -73,11 +65,9 @@ clean:
 	$(QUIET)echo Removing temp and object files
 	$(QUIET)rm -f *~ *.bak *.o
 
-
 clobber: clean
 	$(QUIET)echo Removing executable and some unnecessary files
-	$(QUIET)rm -f $(TARGET) $(DEPS) 
-	$(QUIET) rm -f *.gch
+	$(QUIET)rm -f $(TARGET) *.d *.a *.gch
 
 -include $(DEPS)
 %.d: %.c

@@ -1,17 +1,14 @@
 #lab04 Makefile. It should be the last to be called
-TARGET := control
+TARGET := robotSim
 
 ########################################################################
 #Include dirs
-THREAD = ./controlThreads
-MONITOR = $(THREAD)/monitor
-COMMON = ../common
-INCLUDE = ../include
+ROBOTHREAD = ./simThreads
 
 ########################################################################
 #flags
 CFLAGS   := -O2 -Wall
-CINCLUDE := -I$(INCLUDE) -I$(THREAD) -I$(COMMON) -I$(MONITOR)
+CINCLUDE := -I../include/ -I$(ROBOTHREAD) -I$(SIMULCALC) -I$(MONITOR)
 CLIBDIR  :=
 CLIBS    := -lm -lpthread
 DEPFLAGS := -MM
@@ -37,7 +34,7 @@ LDFLAGS  = ${LIBS}
 CSOURCES = $(wildcard *.c)
 OBJECTS  = $(CSOURCES:.c=.o)
 DEPS     = $(CSOURCES:.c=.d)
-LIBFILES = $(COMMON)/*.o $(MONITOR)/*.o $(THREAD)/*.o $(LIBINCLUDE)/*.a 
+LIBFILES = $(ROBOTHREAD)/*.o $(LIBINCLUDE)/*.a 
 
 ########################################################################
 #RTAI
@@ -55,7 +52,7 @@ LXRT_LDFLAGS = $(shell rtai-config --lxrt-ldflags)
 LIBFILES += $(LXRT_LDFLAGS)
 
 #General
-QUIET = 
+QUIET = @
 
 .PHONY: clean clobber 
 

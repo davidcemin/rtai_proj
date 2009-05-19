@@ -4,7 +4,7 @@ TARGET =
 ########################################################################
 #flags
 CFLAGS   = -O2 -Wall
-CINCLUDE = -I. -I../../simulCalc/ -I../../../include/
+CINCLUDE = -I. -I../../../common/ -I../../../include/
 CLIBDIR  =
 CLIBS    = -lpthread 
 DEPFLAGS = -MM

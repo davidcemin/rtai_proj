@@ -14,14 +14,12 @@
 void robotNewYm(st_robotRefMod *refmod)
 {
 	int k = refmod->kIndex;
-	int alpha = refmod->alpha;
-	double ref = refmod->ref[k];
 	double ts;
 
-	/* dx/dt = (x[n] - x[n-1])/Ts*/
+	/* ymx(k) = y'(k) * T*/
 	ts = (refmod->timeInstant[k] - refmod->timeInstant[k-1]);
-	
-	refmod->ym[k] = ( (alpha * ts * ref - refmod->ym[k-1]) / (1 + alpha * ts) );
+
+	refmod->ym[k] = refmod->dRef[k-1] * ts;
 }
 
 /******************************************************************************/
