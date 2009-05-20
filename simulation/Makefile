@@ -1,5 +1,5 @@
 #lab04 Makefile. It should be the last to be called
-TARGET := robotSim
+TARGET := simulation
 
 ########################################################################
 #Include dirs

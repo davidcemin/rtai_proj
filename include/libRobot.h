@@ -43,10 +43,10 @@ typedef struct {
 //! Main structure with arrays
 typedef struct {
 	int kIndex;										//! k index
-	double timeInstant[MAX_DATA_VALUE];			//! Time
-	double dxVal[XY_DIMENSION][MAX_DATA_VALUE];	//! dx array(x1', x2', x3')
+	double timeInstant[MAX_DATA_VALUE];				//! Time
+	double dxVal[XY_DIMENSION][MAX_DATA_VALUE];		//! dx array(x1', x2', x3')
 	double xVal[X_DIMENSION][MAX_DATA_VALUE];		//! x array(x1, x2, x3)
-	double yVal[Y_DIMENSION][MAX_DATA_VALUE];		//! y array(y1, y2, y3)
+	double yVal[Y_DIMENSION][MAX_DATA_VALUE];		//! y array(y1, y2)
 	double uVal[U_DIMENSION][MAX_DATA_VALUE];		//! u array(v, w)
 } st_robotMainArrays;
 
@@ -71,17 +71,30 @@ typedef struct{
 
 //! Shared structure
 typedef	struct {
-	double yf[3];	//! Output array
-	double u[2];	//! Input array 
+	double yf[Y_DIMENSION];		//! Output array
+	double u[U_DIMENSION];		//! Input array 
 	st_robotMutex mutex;
 	st_robotSem	sem;
 } st_robotShared;
+
+//! Simulation structure base
+typedef struct {
+	double y[Y_DIMENSION];
+	double u[U_DIMENSION];
+} st_robotSimulPacket;
 
 //! Robot generation shared strucuture
 typedef struct {
 	st_robotGeneration genShared;
 	pthread_mutex_t	mutexGen;
 } st_robotGenerationShared;
+
+//! Linearization packet structure
+typedef struct {
+	double v[V_DIMENSION];
+	double u[U_DIMENSION];
+	double x[X_DIMENSION];
+} st_robotLinPacket;
 
 /******************************************************************************/
 
@@ -137,6 +150,15 @@ extern void robotNewYm(st_robotRefMod *refmod);
  * \return void
  */
 extern void robotDxYm(st_robotRefMod *refmod);
+
+/******************************************************************************/
+
+/**
+ * \brief  Generates u vector from x and v
+ * \param  linPacket Pointer to st_robotLinPacket structure
+ * \return void
+ */
+extern void robotGenU(st_robotLinPacket *linPacket);
 
 /******************************************************************************/
 

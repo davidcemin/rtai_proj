@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <arpa/inet.h>
 #include <semaphore.h>
 #include <string.h> 
 #include <sys/time.h> 
@@ -87,19 +88,67 @@ static inline void taskFinishRtaiSim(RT_TASK *task)
 
 /*****************************************************************************/
 
+/**
+ * \brief  
+ */
+static inline void robotSimGetPacket(void *msg)
+{
+	RT_TASK *recvfrom = NULL;
+	unsigned long recvnode;
+	unsigned long recvport;
+	struct sockaddr_in addr;
+	long len = 0;
+	
+	inet_aton("127.0.0.1", &addr.sin_addr);
+	recvnode = addr.sin_addr.s_addr;
+	recvport = rt_request_hard_port(recvnode);
+
+	recvfrom = RT_get_adr(recvnode, recvport, "LINTASK");
+
+	/*TODO: Treat errors..*/
+	RT_receivex(recvnode, recvport, recvfrom, msg, U_DIMENSION * sizeof(double), &len);
+
+	RT_release_port(recvnode, recvport);
+}
+
+/*****************************************************************************/
+
+/**
+ * \brief  
+ */
+static inline void robotSimSendPacket(void *msg)
+{
+	RT_TASK *sendto = NULL;
+	unsigned int sendnode;
+	unsigned int sendport;
+	struct sockaddr_in addr;
+	
+	inet_aton("127.0.0.1", &addr.sin_addr);
+	sendnode = addr.sin_addr.s_addr;
+	sendport = rt_request_hard_port(sendnode);
+
+	sendto = RT_get_adr(sendnode, sendport, "CALCTASK");
+
+	/*TODO: Treat errors..*/
+	RT_sendx(sendnode, sendport, sendto, msg, Y_DIMENSION * sizeof(double) );
+
+	RT_release_port(sendnode, sendport);
+}
+
+/*****************************************************************************/
+
 void *robotSimulation(void *ptr)
 {	
-	st_robotShared *shared = ptr;
-	st_robotShared *sharedCp;
+	//st_robotShared *shared = ptr;
+	st_robotSimulPacket *simulPack;
 	st_robotMainArrays *robot;
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
 	double tInit = 0;
-	unsigned long node = rt_set_this_node("127.0.0.1", 0, 1);
 
 	RT_TASK *simtask = NULL;
-	unsigned long simtask_name = nam2num("SIMULATION");
+	unsigned long simtask_name = nam2num("SIMTASK");
 
 	/* Allocates memory to robot structure */
 	if ( (robot = (st_robotMainArrays*) malloc(sizeof(st_robotMainArrays)) ) == NULL ) { 
@@ -107,14 +156,14 @@ void *robotSimulation(void *ptr)
 		return NULL;
 	}
 	
-	/* Allocates memory to shared's copy structure */
-	if ( (sharedCp = (st_robotShared*) malloc(sizeof(st_robotShared)) ) == NULL ) { 
-		fprintf(stderr, "Not possible to allocate memory to shared copy!\n\r");
+	/* Allocates memory to simulPack structure */
+	if ( (simulPack = (st_robotSimulPacket*) malloc(sizeof(st_robotSimulPacket)) ) == NULL ) { 
+		fprintf(stderr, "Not possible to allocate memory to simul packet!\n\r");
 		return NULL;
 	}
 
 	//robotInit(robot);
-	memset(sharedCp, 0, sizeof(st_robotShared));
+	memset(simulPack, 0, sizeof(st_robotSimulPacket));
 
 	if(taskCreateRtaiSim(simtask, simtask_name, SIMPRIORITY, STEPTIMESIMNANO) < 0) {
 		fprintf(stderr, "Simulation!\n");
@@ -129,11 +178,8 @@ void *robotSimulation(void *ptr)
 		/* New X value */
 		robotNewX(robot);
 
-		/* wait for semaphore release from control thread */
-		rt_sem_wait(shared->sem.rt_sem);
-
-		/* Monitor get u*/
-		RT_receive(node, 0, simtask, 0);
+		/* get u from lin thread*/
+		robotSimGetPacket((void*)simulPack->u);
 		
 		/* Calculates x' from x and u*/
 		robotDxSim(robot);
@@ -141,12 +187,9 @@ void *robotSimulation(void *ptr)
 		/* Calculates y from x and the inputs */
 		robotCalcYFromX(robot);
 
-		/*monitor set y*/
-		RT_send(node, 0, simtask, 0);
+		/* send y to control thread*/
+		robotSimSendPacket((void*)simulPack->y);
 
-		/* release the semaphore to display thread */
-	//	sem_post(&shared->sem.disp_sem);
-	
 		rt_task_wait_period();
 		robot->kIndex++;
 		robot->timeInstant[robot->kIndex] = currentT / SEC2NANO(1);	
@@ -167,7 +210,7 @@ void *robotSimulation(void *ptr)
 //#endif /*CALC_DATA*/
 
 	taskFinishRtaiSim(simtask);
-	free(sharedCp);
+	free(simulPack);
 	free(robot);
 	return NULL;
 }

@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <arpa/inet.h>
 #include <semaphore.h>
 #include <string.h> 
 #include <sys/time.h> 
@@ -24,6 +25,7 @@
 
 /*rtai includes*/
 #include <rtai_lxrt.h>
+#include <rtai_netrpc.h>
 
 /*****************************************************************************/
 
@@ -115,18 +117,44 @@ static inline void taskFinishRtai(RT_TASK *task)
 
 /*****************************************************************************/
 
+/**
+ * \brief  
+ */
+static inline void robotControlGetPacket(void *msg)
+{
+	RT_TASK *recvfrom = NULL;
+	unsigned long recvnode;
+	unsigned long recvport;
+	struct sockaddr_in addr;
+	long len = 0;
+	
+	inet_aton("127.0.0.1", &addr.sin_addr);
+	recvnode = addr.sin_addr.s_addr;
+	recvport = rt_request_hard_port(recvnode);
+
+	recvfrom = RT_get_adr(recvnode, recvport, "SIMTASK");
+
+	/*TODO: Treat errors..*/
+	RT_receivex(recvnode, recvport, recvfrom, msg, Y_DIMENSION * sizeof(double), &len);
+
+	RT_release_port(recvnode, recvport);
+}
+
+/*****************************************************************************/
+
 void *robotControl(void *ptr)
 {
 	//st_robotGenerationShared *shared = ptr;
 	st_robotSample *sample;
 	st_robotGeneration *local;
+	st_robotSimulPacket *simulPack;
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
 	double tInit = 0;
 
 	RT_TASK *calctask = NULL;
-	unsigned long calctask_name = nam2num("CONTROL");
+	unsigned long calctask_name = nam2num("CTRLTASK");
 	
 	/* Allocates memory to robot structure */
 	if ( (sample = (st_robotSample*) malloc(sizeof(st_robotSample)) ) == NULL ) { 
@@ -140,9 +168,15 @@ void *robotControl(void *ptr)
 		return NULL;
 	}
 
+	if ( (simulPack = (st_robotSimulPacket*)malloc(sizeof(st_robotSimulPacket))) == NULL) {
+		fprintf(stderr, "Error in simulPack malloc!\n");
+		return NULL;
+	}
+
 	/* Pointers init*/
 	memset(sample, 0, sizeof(st_robotSample) );
 	memset(local, 0, sizeof(st_robotGeneration));
+	memset(simulPack, 0, sizeof(st_robotSimulPacket));
 
 	if(taskCreateRtai(calctask, calctask_name, CALCPRIORITY, STEPTIMECALCNANO) < 0){
 		fprintf(stderr, "Calculation!\n");
@@ -162,16 +196,15 @@ void *robotControl(void *ptr)
 		 * 5) send v vector;
 		 */
 	
-		/* monitor get references */
+		/* get references */
 
-		/*monitor set u*/
-		//monitorCalcSet(shared, total);
-		
-		/* release semaphore to simulation thread */
-		//rt_sem_signal(shared->sem.rt_sem);
+		/* get y */
+		robotControlGetPacket((void*)simulPack->y);
 
-		/*monitor get y*/
-		//monitorCalcGet(sample, shared, total);
+		/*calculate v*/
+
+
+		/*send v*/
 
 		sample->kIndex++;
 

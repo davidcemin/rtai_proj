@@ -11,7 +11,8 @@
 #include <math.h>
 
 //! Macro that transforms the value in seconds to nanoseconds
-#define SEC2NANO(val)	(val * 1000000000.0)
+/*#define SEC2NANO(val)	(val * 1000000000.0)*/
+#define SEC2NANO(val)	(val * 1e9)
 
 //! Simulation timers
 #define INIT_TIME			0.0
@@ -19,14 +20,16 @@
 #define TOTAL_TIME	 ( FINAL_TIME - INIT_TIME ) 
 
 //! Step times
-#define STEPTIMECALC	0.05
-#define STEPTIMESIM		0.03
+#define STEPTIMECALC		0.05
+#define STEPTIMESIM			0.03
+#define STEPTIMELIN			0.04
 #define STEPTIMEGENERATION	0.120
 #define STEPTIMEREFMODELX	0.05
 #define STEPTIMEREFMODELY	0.05
 
 //! Step times in nanoseconds
 #define STEPTIMECALCNANO	SEC2NANO(STEPTIMECALC)
+#define STEPTIMELINNANO		SEC2NANO(STEPTIMELIN)
 #define STEPTIMESIMNANO		SEC2NANO(STEPTIMESIM)
 #define STEPTIMEGENERNANO	SEC2NANO(STEPTIMEGENERATION)
 #define STEPTIMEREFMODELXNANO	SEC2NANO(STEPTIMEREFMODELX)
@@ -37,6 +40,7 @@
 #define CALCPRIORITY	(SIMPRIORITY + 1)
 #define REFMODXPRIORITY	(SIMPRIORITY + 2)
 #define REFMODYPRIORITY	(SIMPRIORITY + 3)
+#define LINPRIORITY		(SIMPRIORITY + 4)
 
 //! below this value I consider that it equals to zero
 #define	CALCERROR	0.00001
@@ -46,6 +50,7 @@
 #define X_DIMENSION		3
 #define Y_DIMENSION		2
 #define U_DIMENSION		2
+#define V_DIMENSION		2
 
 //! Distance from the robot's front
 #define DIST	0.6

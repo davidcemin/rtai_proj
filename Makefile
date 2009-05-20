@@ -2,32 +2,42 @@
 
 #defines
 CONTROLDIR := control
+SIMULDIR := simulation
+
+#COMMON
 LIBDIR  := lib
 COMMON  := common
-THREAD  := $(CONTROLDIR)/controlThreads
-INCLUDE := include
-MONITOR := $(THREAD)/monitor
-DIRS = $(LIBDIR) $(COMMON) $(MONITOR) $(THREAD) $(CONTROLDIR)
+INCLUDE	:= include
+UTIL 	:= $(LIBDIR) $(COMMON) 
+
+#CONTROL
+CONTROLTHREAD	:= $(CONTROLDIR)/controlThreads
+CONTROLMONITOR 	:= $(CONTROLTHREAD)/monitor
+CONTROL	:= $(CONTROLMONITOR) $(CONTROLTHREAD) $(CONTROLDIR)
+
+#SIMULATION
+SIMULTHREAD	:= $(SIMULDIR)/simThreads
+SIMUL := $(SIMULTHREAD) $(SIMULDIR)
 
 #General
 QUIET = @
 
-.PHONY: all clean install distclean clobber doc
+#All dirs
+ALLDIRS := $(UTIL) $(CONTROL) $(SIMUL)
 
-all:
-	$(QUIET)for i in $(DIRS); do cd $$i; $(MAKE); cd -;done
+.PHONY: all clean clobber doc 
+
+all: 
+	$(QUIET)for i in $(ALLDIRS) ; do cd $$i; $(MAKE); cd -;done
 
 clean:
-	$(QUIET)for i in $(DIRS); do cd $$i; $(MAKE) $@; cd -;  done
-
-install:
+	$(QUIET)for i in $(ALLDIRS); do cd $$i; $(MAKE) $@; cd -;  done
 
 clobber: clean
-	$(QUIET)for i in $(DIRS); do cd $$i; $(MAKE) $@ ; cd -; done
+	$(QUIET)for i in $(ALLDIRS); do cd $$i; $(MAKE) $@ ; cd -; done
 	$(QUIET)cd $(INCLUDE); rm *.gch; cd -;
 	$(QUIET) rm *.dat 
 
 doc:
 	$(QUIET)doxygen Doxyfile
 
-# DO NOT DELETE
