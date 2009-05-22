@@ -10,6 +10,7 @@
 
 /*linux includes*/
 #include <pthread.h>
+#include <arpa/inet.h>
 #include <semaphore.h>
 
 /*rtai includes*/
@@ -79,6 +80,7 @@ typedef	struct {
 
 //! Simulation structure base
 typedef struct {
+	double x[X_DIMENSION];
 	double y[Y_DIMENSION];
 	double u[U_DIMENSION];
 } st_robotSimulPacket;
@@ -95,6 +97,23 @@ typedef struct {
 	double u[U_DIMENSION];
 	double x[X_DIMENSION];
 } st_robotLinPacket;
+
+//! rtnet receive packet information
+typedef struct {
+	RT_TASK *recvfrom;
+	unsigned long recvnode;
+	unsigned long recvport;
+	struct sockaddr_in addr;
+	long len;
+} st_rtnetReceive;
+
+//! rtnet send packet information
+typedef struct {
+	RT_TASK *sendto;
+	unsigned int sendnode;
+	unsigned int sendport;
+	struct sockaddr_in addr;
+} st_rtnetSend;
 
 /******************************************************************************/
 

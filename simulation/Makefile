@@ -4,11 +4,12 @@ TARGET := simulation
 ########################################################################
 #Include dirs
 ROBOTHREAD = ./simThreads
+COMMON   = ../common
 
 ########################################################################
 #flags
 CFLAGS   := -O2 -Wall
-CINCLUDE := -I../include/ -I$(ROBOTHREAD) -I$(SIMULCALC) -I$(MONITOR)
+CINCLUDE := -I../include/ -I$(ROBOTHREAD) -I$(MONITOR) -I$(COMMON)
 CLIBDIR  :=
 CLIBS    := -lm -lpthread
 DEPFLAGS := -MM
@@ -34,7 +35,8 @@ LDFLAGS  = ${LIBS}
 CSOURCES = $(wildcard *.c)
 OBJECTS  = $(CSOURCES:.c=.o)
 DEPS     = $(CSOURCES:.c=.d)
-LIBFILES = $(ROBOTHREAD)/*.o $(LIBINCLUDE)/*.a 
+OBSDEPS  = $(ROBOTHREAD)/*.o $(COMMON)/*.o
+LIBFILES = $(LIBINCLUDE)/*.a 
 
 ########################################################################
 #RTAI
@@ -50,6 +52,7 @@ LXRT_LDFLAGS = $(shell rtai-config --lxrt-ldflags)
 ########################################################################
 
 LIBFILES += $(LXRT_LDFLAGS)
+OBJECTS += $(OBSDEPS)
 
 #General
 QUIET = @

@@ -37,7 +37,8 @@ LDFLAGS  = ${LIBS}
 CSOURCES = $(wildcard *.c)
 OBJECTS  = $(CSOURCES:.c=.o)
 DEPS     = $(CSOURCES:.c=.d)
-LIBFILES = $(COMMON)/*.o $(MONITOR)/*.o $(THREAD)/*.o $(LIBINCLUDE)/*.a 
+OBSDEPS  = $(COMMON)/*.o $(MONITOR)/*.o $(THREAD)/*.o 
+LIBFILES = $(LIBINCLUDE)/*.a 
 
 ########################################################################
 #RTAI
@@ -53,6 +54,7 @@ LXRT_LDFLAGS = $(shell rtai-config --lxrt-ldflags)
 ########################################################################
 
 LIBFILES += $(LXRT_LDFLAGS)
+OBJECTS += $(OBSDEPS)
 
 #General
 QUIET = @

@@ -17,7 +17,3 @@ extern void *robotSimulation(void *ptr);
 
 #endif /*_ROBOTSIM_H*/
 
-
-
-
-

@@ -19,13 +19,13 @@
 #include "robotThreads.h"
 #include "robotControl.h"
 #include "robotLin.h"
+#include "rtnetAPI.h"
 
 /*rtai includes*/
 #include <rtai_lxrt.h>
 #include <rtai_netrpc.h>
 
 /*****************************************************************************/
-
 
 /**
  * \brief  It creates a rtai task
@@ -88,64 +88,18 @@ static inline void taskFinishRtaiLin(RT_TASK *task)
 
 /*****************************************************************************/
 
-/**
- * \brief  
- */
-static inline void robotLinGetPacket(void *msg)
-{
-	RT_TASK *recvfrom = NULL;
-	unsigned long recvnode;
-	unsigned long recvport;
-	struct sockaddr_in addr;
-	long len = 0;
-	
-	inet_aton("127.0.0.1", &addr.sin_addr);
-	recvnode = addr.sin_addr.s_addr;
-	recvport = rt_request_hard_port(recvnode);
-
-	recvfrom = RT_get_adr(recvnode, recvport, "SIMTASK");
-
-	/*TODO: Treat errors..*/
-	RT_receivex(recvnode, recvport, recvfrom, msg, X_DIMENSION * sizeof(double), &len);
-
-	RT_release_port(recvnode, recvport);
-}
-
-/*****************************************************************************/
-
-/**
- * \brief  
- */
-static inline void robotLinSendPacket(void *msg)
-{
-	RT_TASK *sendto = NULL;
-	unsigned int sendnode;
-	unsigned int sendport;
-	struct sockaddr_in addr;
-	
-	inet_aton("127.0.0.1", &addr.sin_addr);
-	sendnode = addr.sin_addr.s_addr;
-	sendport = rt_request_hard_port(sendnode);
-
-	sendto = RT_get_adr(sendnode, sendport, "SIMTASK");
-
-	/*TODO: Treat errors..*/
-	RT_sendx(sendnode, sendport, sendto, msg, V_DIMENSION * sizeof(double) );
-
-	RT_release_port(sendnode, sendport);
-}
-
-/*****************************************************************************/
-
 void *robotLin(void *ptr)
 {
+	st_robotLinPacket *linPacket;
+	st_rtnetSend *sendSim; 
+	st_rtnetReceive *recvSim;
+
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
 	double tInit = 0;
-	st_robotLinPacket *linPacket;
 	
-	unsigned long lintask_name = nam2num("LINTSK");
+	unsigned long lintask_name = nam2num("LINTASK");
 	RT_TASK *lintask = NULL;
 
 	if(taskCreateRtaiLin(lintask, lintask_name, LINPRIORITY, STEPTIMELINNANO) < 0){
@@ -157,8 +111,20 @@ void *robotLin(void *ptr)
 		fprintf(stderr, "Error in linPacket malloc\n");
 		return NULL;
 	}
+	
+	if ( (sendSim = (st_rtnetSend*)malloc(sizeof(sendSim))) == NULL ) {
+		fprintf(stderr, "Not possible to allocate memroy to sendSim packet\n\r");
+		return NULL;
+	}
+	
+	if ( (recvSim = (st_rtnetReceive*)malloc(sizeof(recvSim))) == NULL ) {
+		fprintf(stderr, "Not possible to allocate memory to recvSim packet\n\r");
+		return NULL;
+	}
 
 	memset(linPacket, 0, sizeof(st_robotLinPacket));
+	rtnetSendPacketInit(sendSim, "SIMTASK");
+	rtnetRecvPacketInit(recvSim, "SIMTASK");
 
 	tInit = rt_get_time_ns();
 	do {
@@ -171,8 +137,8 @@ void *robotLin(void *ptr)
 		 * 4) Send u;
 		 */
 
-		/* Get x */
-		robotLinGetPacket((void*)linPacket->x);
+		/* Get x from simulation thread*/
+		robotGetPacket(recvSim, (void*)linPacket->x);
 	
 		/* Get v */
 
@@ -180,7 +146,7 @@ void *robotLin(void *ptr)
 		robotGenU(linPacket);
 
 		/* send u */
-		robotLinSendPacket((void*)linPacket->u);
+		robotSendPacket(sendSim, (void*)linPacket->u);
 
 		lastT = currentT;
 		total = currentT / SEC2NANO(1); 	
@@ -188,6 +154,8 @@ void *robotLin(void *ptr)
 
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
+	rtnetSendPacketFinish(sendSim);
+	rtnetRecvPacketFinish(recvSim);
 	taskFinishRtaiLin(lintask);
 	return NULL;
 }

@@ -16,6 +16,7 @@
 
 /*robot includes*/
 #include "libRobot.h"
+#include "rtnetAPI.h"
 #include "simThreads.h"
 
 /*rtai includes*/
@@ -88,60 +89,15 @@ static inline void taskFinishRtaiSim(RT_TASK *task)
 
 /*****************************************************************************/
 
-/**
- * \brief  
- */
-static inline void robotSimGetPacket(void *msg)
-{
-	RT_TASK *recvfrom = NULL;
-	unsigned long recvnode;
-	unsigned long recvport;
-	struct sockaddr_in addr;
-	long len = 0;
-	
-	inet_aton("127.0.0.1", &addr.sin_addr);
-	recvnode = addr.sin_addr.s_addr;
-	recvport = rt_request_hard_port(recvnode);
-
-	recvfrom = RT_get_adr(recvnode, recvport, "LINTASK");
-
-	/*TODO: Treat errors..*/
-	RT_receivex(recvnode, recvport, recvfrom, msg, U_DIMENSION * sizeof(double), &len);
-
-	RT_release_port(recvnode, recvport);
-}
-
-/*****************************************************************************/
-
-/**
- * \brief  
- */
-static inline void robotSimSendPacket(void *msg)
-{
-	RT_TASK *sendto = NULL;
-	unsigned int sendnode;
-	unsigned int sendport;
-	struct sockaddr_in addr;
-	
-	inet_aton("127.0.0.1", &addr.sin_addr);
-	sendnode = addr.sin_addr.s_addr;
-	sendport = rt_request_hard_port(sendnode);
-
-	sendto = RT_get_adr(sendnode, sendport, "CALCTASK");
-
-	/*TODO: Treat errors..*/
-	RT_sendx(sendnode, sendport, sendto, msg, Y_DIMENSION * sizeof(double) );
-
-	RT_release_port(sendnode, sendport);
-}
-
-/*****************************************************************************/
-
 void *robotSimulation(void *ptr)
 {	
 	//st_robotShared *shared = ptr;
 	st_robotSimulPacket *simulPack;
 	st_robotMainArrays *robot;
+	st_rtnetSend *sendCtrl;
+	st_rtnetSend *sendLin; 
+	st_rtnetReceive *recvLin;
+
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
@@ -151,19 +107,37 @@ void *robotSimulation(void *ptr)
 	unsigned long simtask_name = nam2num("SIMTASK");
 
 	/* Allocates memory to robot structure */
-	if ( (robot = (st_robotMainArrays*) malloc(sizeof(st_robotMainArrays)) ) == NULL ) { 
+	if ( (robot = (st_robotMainArrays*) malloc(sizeof(robot)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to main!\n\r");
 		return NULL;
 	}
 	
 	/* Allocates memory to simulPack structure */
-	if ( (simulPack = (st_robotSimulPacket*) malloc(sizeof(st_robotSimulPacket)) ) == NULL ) { 
+	if ( (simulPack = (st_robotSimulPacket*) malloc(sizeof(simulPack)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to simul packet!\n\r");
 		return NULL;
 	}
 
+	if ( (sendCtrl = (st_rtnetSend*)malloc(sizeof(sendCtrl))) == NULL ) {
+		fprintf(stderr, "Not possible to allocate memroy to sendCtrl packet\n\r");
+		return NULL;
+	}
+
+	if ( (sendLin = (st_rtnetSend*)malloc(sizeof(sendLin))) == NULL ) {
+		fprintf(stderr, "Not possible to allocate memroy to sendLin packet\n\r");
+		return NULL;
+	}
+	
+	if ( (recvLin = (st_rtnetReceive*)malloc(sizeof(recvLin))) == NULL ) {
+		fprintf(stderr, "Not possible to allocate memory to recvLin packet\n\r");
+		return NULL;
+	}
+
 	//robotInit(robot);
-	memset(simulPack, 0, sizeof(st_robotSimulPacket));
+	memset(simulPack, 0, sizeof(simulPack));
+	rtnetSendPacketInit(sendCtrl, "CTRLTASK");
+	rtnetSendPacketInit(sendLin, "LINTASK");
+	rtnetRecvPacketInit(recvLin, "LINTASK");
 
 	if(taskCreateRtaiSim(simtask, simtask_name, SIMPRIORITY, STEPTIMESIMNANO) < 0) {
 		fprintf(stderr, "Simulation!\n");
@@ -179,7 +153,7 @@ void *robotSimulation(void *ptr)
 		robotNewX(robot);
 
 		/* get u from lin thread*/
-		robotSimGetPacket((void*)simulPack->u);
+		robotGetPacket(recvLin, (void*)simulPack->u);
 		
 		/* Calculates x' from x and u*/
 		robotDxSim(robot);
@@ -188,7 +162,10 @@ void *robotSimulation(void *ptr)
 		robotCalcYFromX(robot);
 
 		/* send y to control thread*/
-		robotSimSendPacket((void*)simulPack->y);
+		robotSendPacket(sendCtrl, (void*)simulPack->y);
+
+		/* send x to lin thread */
+		robotSendPacket(sendLin, (void*)simulPack->u);
 
 		rt_task_wait_period();
 		robot->kIndex++;
@@ -209,6 +186,9 @@ void *robotSimulation(void *ptr)
 //	}
 //#endif /*CALC_DATA*/
 
+	rtnetSendPacketFinish(sendCtrl);
+	rtnetSendPacketFinish(sendLin);
+	rtnetRecvPacketFinish(recvLin);
 	taskFinishRtaiSim(simtask);
 	free(simulPack);
 	free(robot);

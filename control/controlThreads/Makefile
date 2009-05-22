@@ -4,7 +4,8 @@ TARGET =
 ########################################################################
 #Dirs
 RTAIDIR = /usr/realtime
-INCLUDE = ../../include
+COMMON  = ../../common
+INCLUDEDIR = ../../include
 MAIN = ../
 LIB = ../../lib
 MONITOR = ./monitor
@@ -12,7 +13,7 @@ MONITOR = ./monitor
 ########################################################################
 #flags
 CFLAGS   = -O2 -Wall
-CINCLUDE = -I. -I../../include -I../ -I../../lib -I./monitor -I../../common
+CINCLUDE = -I. -I$(INCLUDEDIR) -I$(MAIN) -I$(LIB) -I$(MONITOR) -I$(COMMON)
 CLIBDIR  =
 CLIBS    = -lpthread -llxrt
 DEPFLAGS = -MM
