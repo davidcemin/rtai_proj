@@ -15,8 +15,9 @@
 
 /*robot includes*/
 #include "libRobot.h"
-#include "monitorGen.h"
+#include "monitorControlMain.h"
 #include "robotRefModels.h"
+#include "robotStructs.h"
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
 
@@ -49,8 +50,8 @@ static inline int taskCreateRtaiRefX(RT_TASK *task, unsigned long taskName, char
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);
 	
-	msgSize = sizeof(st_robotShared);
-	stkSize = msgSize + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 10000;
+	msgSize = sizeof(st_robotControlShared);
+	stkSize = msgSize + 10000;
 
 	if(!(task = rt_task_init_schmod(taskName, priority, stkSize, msgSize, SCHED_FIFO, 0xff) ) ) {	
 		fprintf(stderr, "Cannot Init Task: ");
@@ -88,9 +89,9 @@ static inline void taskFinishRtaiRefSim(RT_TASK *task)
 
 void *robotRefModSimX(void *ptr)
 {	
-	st_robotGenerationShared *shared = ptr;
+	st_robotControlShared *shared = ptr;
+	st_robotControl *local;
 	st_robotRefMod *refmod;
-	st_robotGeneration *local;
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
@@ -103,14 +104,15 @@ void *robotRefModSimX(void *ptr)
 		fprintf(stderr, "Error in refmod memory allocation!\n");
 		return NULL;
 	}
-
-	if ( (local = (st_robotGeneration*)malloc(sizeof(st_robotGeneration))) == NULL ) {
-		fprintf(stderr, "Error in generation local memory allocation!\n");
+	
+	if ( (local = (st_robotControl*)malloc(sizeof(local))) == NULL ) {
+		fprintf(stderr, "Error in generation structure memory allocation\n");
+		free(local);
 		return NULL;
 	}
 
-	memset(local, 0, sizeof(st_robotGeneration));
-	memset(refmod, 0, sizeof(st_robotRefMod));
+	memset(local, 0, sizeof(local));
+	memset(refmod, 0, sizeof(refmod));
 
 	if(taskCreateRtaiRefX(simtask, simtask_name, REFMODXPRIORITY, STEPTIMEREFMODELXNANO) < 0) {
 		fprintf(stderr, "reference model X!\n");
@@ -123,10 +125,10 @@ void *robotRefModSimX(void *ptr)
 		currentT = rt_get_time_ns() - tInit;
 
 		/* Monitor get ref*/
-		monitorGeneration(shared, local, MONITOR_GET);
+		monitorControlMain(shared, local, MONITOR_GET_REFERENCE);
 
 		/* Copy reference from local memory */
-		refmod->ref[refmod->kIndex] = local->xref;
+		refmod->ref[refmod->kIndex] = local->generation_t.xref;
 
 		/* Calculate ym */
 		robotNewYm(refmod);
@@ -135,11 +137,11 @@ void *robotRefModSimX(void *ptr)
 		robotDxYm(refmod);
 		
 		/* Copy ym and ym' into local shared */
-		local->ym = refmod->ym[refmod->kIndex];
-		local->dym = refmod->dRef[refmod->kIndex];
+		local->control_t.ym[XM_POSITION] = refmod->ym[refmod->kIndex];
+		local->control_t.dym[XM_POSITION] = refmod->dRef[refmod->kIndex];
 		
 		/*monitor set ym and ym'*/
-		monitorGeneration(shared, local, MONITOR_SET);
+		monitorControlMain(shared, local, MONITOR_SET_YMX);
 
 		rt_task_wait_period();
 		refmod->kIndex++;
@@ -152,6 +154,7 @@ void *robotRefModSimX(void *ptr)
 
 	taskFinishRtaiRefSim(simtask);
 	free(refmod);
+	free(local);
 	return NULL;
 }
 

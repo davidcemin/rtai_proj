@@ -10,7 +10,7 @@
 
 /* robot */
 #include "robotDefines.h"
-#include "libRobot.h"
+#include "robotStructs.h"
 
 /******************************************************************************/
 

@@ -7,8 +7,9 @@
 
 #include <math.h>
 
-#include "robotDefines.h"
 #include "libRobot.h"
+#include "robotDefines.h"
+#include "robotStructs.h"
 
 /******************************************************************************/
 

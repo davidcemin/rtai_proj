@@ -21,11 +21,11 @@
  * \param local pointer to local memory
  * \return 0;
  */
-static int monitorGenSet(st_robotGenerationShared *shared, st_robotGeneration *local)
+inline int monitorGenSet(st_robotControlShared *shared, st_robotControl *local)
 {
 	pthread_mutex_lock(&shared->mutexGen);
 
-	memcpy(&shared->genShared, local, sizeof(st_robotGeneration));
+	memcpy(&shared->control.generation_t, &local->generation_t, sizeof(st_robotGeneration_t));
 
 	pthread_mutex_unlock(&shared->mutexGen);
 
@@ -40,11 +40,11 @@ static int monitorGenSet(st_robotGenerationShared *shared, st_robotGeneration *l
  * \param  shared Pointer to st_robotGenerationShared structure
  * \return 0
  */
-static int monitorGenGet(st_robotGeneration *local, st_robotGenerationShared *shared)
+inline int monitorGenGet(st_robotControl *local, st_robotControlShared *shared)
 {	
 	pthread_mutex_lock(&shared->mutexGen);
 
-	memcpy(local, &shared->genShared, sizeof(st_robotGeneration));
+	memcpy(&local->generation_t, &shared->control.generation_t, sizeof(st_robotGeneration_t));
 
 	pthread_mutex_unlock(&shared->mutexGen);
 
@@ -52,23 +52,3 @@ static int monitorGenGet(st_robotGeneration *local, st_robotGenerationShared *sh
 }
 
 /******************************************************************************/
-
-int monitorGeneration(st_robotGenerationShared *shared, st_robotGeneration *local, int type)
-{
-	
-	switch(type) {
-		case MONITOR_GET:
-			monitorGenGet(local, shared);
-			break;
-
-		case MONITOR_SET:
-			monitorGenSet(shared, local);
-			break;
-
-		default:
-			fprintf(stderr, "Monitor generation: I should not be here\n");
-			return -1;			
-	}
-
-	return 0;
-}

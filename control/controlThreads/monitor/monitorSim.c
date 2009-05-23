@@ -30,11 +30,11 @@ int monitorSimSet(st_robotMainArrays *robot, st_robotShared *shared)
 
 int monitorSimGet(st_robotShared *sharedCp, st_robotShared *shared)
 {	
-	pthread_mutex_lock(&shared->mutex.mutexCalc);
+	pthread_mutex_lock(&shared->mutex.mutexControl);
 
 	memcpy(sharedCp, shared, sizeof(st_robotShared));
 
-	pthread_mutex_unlock(&shared->mutex.mutexCalc);
+	pthread_mutex_unlock(&shared->mutex.mutexControl);
 
 	return 0;
 }

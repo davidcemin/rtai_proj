@@ -16,6 +16,7 @@
 
 /*robot includes*/
 #include "libRobot.h"
+#include "robotStructs.h"
 #include "rtnetAPI.h"
 #include "simThreads.h"
 
@@ -189,6 +190,9 @@ void *robotSimulation(void *ptr)
 	rtnetSendPacketFinish(sendCtrl);
 	rtnetSendPacketFinish(sendLin);
 	rtnetRecvPacketFinish(recvLin);
+	free(sendCtrl);
+	free(sendLin);
+	free(recvLin);
 	taskFinishRtaiSim(simtask);
 	free(simulPack);
 	free(robot);

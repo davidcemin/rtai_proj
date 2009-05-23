@@ -16,9 +16,8 @@
 
 /*robot includes*/
 #include "libRobot.h"
-#include "monitorCalc.h"
-#include "monitorSim.h"
-#include "monitorGen.h"
+#include "monitorControlMain.h"
+#include "robotStructs.h"
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
 #include "robotControl.h"
@@ -81,8 +80,8 @@ static inline int taskCreateRtai(RT_TASK *task, unsigned long taskName, char pri
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);
 	
-	msgSize = sizeof(st_robotShared);
-	stkSize = msgSize + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 10000;
+	msgSize = sizeof(st_robotControlShared);
+	stkSize = msgSize + 10000;
 
 	if(!(task = rt_task_init_schmod(taskName, priority, stkSize, msgSize, SCHED_FIFO, 0xff) ) ) {	
 		fprintf(stderr, "Cannot Init Task: ");
@@ -116,13 +115,35 @@ static inline void taskFinishRtai(RT_TASK *task)
 	rt_task_delete(task);
 }
 
+
+/*****************************************************************************/
+
+/**
+ * \brief  Calculates v and save into local memory
+ * \param local Local memory
+ * \param y Pointer to y packet
+ * \return void
+ */
+static inline void robotCalcV(st_robotControl *local, double *y)
+{
+	double ymx = local->control_t.ym[XM_POSITION];
+	double ymy = local->control_t.ym[YM_POSITION];
+	double dymx = local->control_t.dym[XM_POSITION];
+	double dymy = local->control_t.dym[YM_POSITION];
+	unsigned char alpha1 = local->alpha[ALPHA_1];
+	unsigned char alpha2 = local->alpha[ALPHA_2];
+
+	local->lin_t.v[0] = dymx + alpha1*(ymx - y[0]);
+	local->lin_t.v[1] = dymy + alpha2*(ymy - y[1]);
+}
+
 /*****************************************************************************/
 
 void *robotControl(void *ptr)
-{
-	//st_robotGenerationShared *shared = ptr;
+{	
+	st_robotControlShared *shared = ptr;
+	st_robotControl *local;
 	st_robotSample *sample;
-	st_robotGeneration *local;
 	st_robotSimulPacket *simulPacket;
 	st_rtnetReceive *recvSim;
 
@@ -135,14 +156,8 @@ void *robotControl(void *ptr)
 	unsigned long calctask_name = nam2num("CTRLTASK");
 	
 	/* Allocates memory to robot structure */
-	if ( (sample = (st_robotSample*) malloc(sizeof(st_robotSample)) ) == NULL ) { 
+	if ( (sample = (st_robotSample*)malloc(sizeof(sample)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to sample!\n\r");
-		return NULL;
-	}
-
-	if ( (local = (st_robotGeneration*)malloc(sizeof(st_robotGeneration))) == NULL ) {
-		fprintf(stderr, "Error in generation structure memory allocation\n");
-		free(local);
 		return NULL;
 	}
 
@@ -154,11 +169,17 @@ void *robotControl(void *ptr)
 	if ( (recvSim = (st_rtnetReceive*)malloc(sizeof(recvSim))) == NULL ) {
 		fprintf(stderr, "Not possible to allocate memory to recvSim packet\n\r");
 		return NULL;
+	}	
+	
+	if ( (local = (st_robotControl*)malloc(sizeof(local))) == NULL ) {
+		fprintf(stderr, "Error in generation structure memory allocation\n");
+		free(local);
+		return NULL;
 	}
 
 	/* Pointers init*/
-	memset(sample, 0, sizeof(sample) );
 	memset(local, 0, sizeof(local));
+	memset(sample, 0, sizeof(sample) );
 	memset(simulPacket, 0, sizeof(simulPacket));
 	rtnetRecvPacketInit(recvSim, "SIMTASK");
 
@@ -181,14 +202,21 @@ void *robotControl(void *ptr)
 		 */
 	
 		/* get references */
+		monitorControlMain(shared, local, MONITOR_GET_YMX);
+		monitorControlMain(shared, local, MONITOR_GET_YMY);
 
 		/* get y */
 		robotGetPacket(recvSim, (void*)simulPacket->y);
 
-		/*calculate v*/
-
-
+		/*first we get alpha values, not in crictical session */
+		local->alpha[ALPHA_1] = shared->control.alpha[ALPHA_1];
+		local->alpha[ALPHA_2] = shared->control.alpha[ALPHA_2];
+		
+		/*then calculate v */
+		robotCalcV(local, simulPacket->y);
+		
 		/*send v*/
+		monitorControlMain(shared, local, MONITOR_SET_V);
 
 		sample->kIndex++;
 
@@ -204,6 +232,7 @@ void *robotControl(void *ptr)
 
 	rtnetRecvPacketFinish(recvSim);
 	taskFinishRtai(calctask);
+	free(recvSim);
 	free(sample);
 	free(local);
 	return NULL;

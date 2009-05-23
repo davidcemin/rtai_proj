@@ -1,6 +1,6 @@
 /******************************************************************************/
 /**
- * \file monitorCalc.c
+ * \file monitorControl.c
  * \brief This file has the Control monitor functions
  *
  */
@@ -10,34 +10,32 @@
 #include <pthread.h>
 
 /* robot */
-#include "monitorCalc.h"
-#include "simulCalcsUtils.h"
+#include "monitorLin.h"
 
 /******************************************************************************/
 
-int monitorCalcSet(st_robotShared *shared, double t)
+inline int monitorLinSet(st_robotControlShared *shared, st_robotControl *local)
 {
-	pthread_mutex_lock(&shared->mutex.mutexCalc);
+	pthread_mutex_lock(&shared->mutexLin);
 
-	/* Calculates the inputs: u[n] */
-	robotInputCalc(shared, t);
+	memcpy(&shared->control.lin_t, &local->lin_t, sizeof(st_robotLin_t));
 
-	pthread_mutex_unlock(&shared->mutex.mutexCalc);
+	pthread_mutex_unlock(&shared->mutexLin);
 	return 0;
 }
 
 /******************************************************************************/
 
-int monitorCalcGet(st_robotSample *sample, st_robotShared *shared, double t)
-{	
-	pthread_mutex_lock(&shared->mutex.mutexSim);
-		
-	/* Sample y and copy it into buffer */
-	robotSampleYf(shared, sample, t);
+inline int monitorLitGet(st_robotControl *local, st_robotControlShared *shared)
+{		
+	pthread_mutex_lock(&shared->mutexLin);
 
-	pthread_mutex_unlock(&shared->mutex.mutexSim);
+	memcpy(&local->lin_t, &shared->control.lin_t, sizeof(st_robotLin_t));
+
+	pthread_mutex_unlock(&shared->mutexLin);
 
 	return 0;
 }
 
 /******************************************************************************/
+

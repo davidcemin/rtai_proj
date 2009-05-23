@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 
 /*robot includes*/
-#include "libRobot.h"
+#include "robotStructs.h"
 #include "rtnetAPI.h"
 
 /*rtai includes*/
@@ -60,7 +60,6 @@ inline void rtnetRecvPacketInit(st_rtnetReceive *rtnet, char *recvtask)
 inline void rtnetSendPacketFinish(st_rtnetSend *rtnet)
 {
 	RT_release_port(rtnet->sendnode, rtnet->sendport);
-	free(rtnet);
 }
 
 /*****************************************************************************/
@@ -68,7 +67,6 @@ inline void rtnetSendPacketFinish(st_rtnetSend *rtnet)
 inline void rtnetRecvPacketFinish(st_rtnetReceive *rtnet)
 {
 	RT_release_port(rtnet->recvnode, rtnet->recvport);
-	free(rtnet);
 }
 
 

@@ -16,8 +16,9 @@
 
 /*robot includes*/
 #include "libRobot.h"
+#include "robotStructs.h"
 #include "robotThreads.h"
-#include "robotControl.h"
+#include "monitorControlMain.h"
 #include "robotLin.h"
 #include "rtnetAPI.h"
 
@@ -51,8 +52,8 @@ static inline int taskCreateRtaiLin(RT_TASK *task, unsigned long taskName, char 
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);
 	
-	msgSize = sizeof(st_robotShared);
-	stkSize = msgSize + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 10000;
+	msgSize = sizeof(st_robotControlShared);
+	stkSize = msgSize + 10000;
 
 	if(!(task = rt_task_init_schmod(taskName, priority, stkSize, msgSize, SCHED_FIFO, 0xff) ) ) {	
 		fprintf(stderr, "Cannot Init Task: ");
@@ -90,6 +91,8 @@ static inline void taskFinishRtaiLin(RT_TASK *task)
 
 void *robotLin(void *ptr)
 {
+	st_robotControlShared *shared = ptr;
+	st_robotControl *local;
 	st_robotLinPacket *linPacket;
 	st_rtnetSend *sendSim; 
 	st_rtnetReceive *recvSim;
@@ -107,7 +110,7 @@ void *robotLin(void *ptr)
 		return NULL;
 	}
 
-	if ( (linPacket = (st_robotLinPacket*)malloc(sizeof(st_robotLinPacket)) ) == NULL ) {
+	if ( (linPacket = (st_robotLinPacket*)malloc(sizeof(linPacket)) ) == NULL ) {
 		fprintf(stderr, "Error in linPacket malloc\n");
 		return NULL;
 	}
@@ -121,8 +124,16 @@ void *robotLin(void *ptr)
 		fprintf(stderr, "Not possible to allocate memory to recvSim packet\n\r");
 		return NULL;
 	}
+	
+	if ( (local = (st_robotControl*)malloc(sizeof(local))) == NULL ) {
+		fprintf(stderr, "Error in generation structure memory allocation\n");
+		free(local);
+		return NULL;
+	}
 
-	memset(linPacket, 0, sizeof(st_robotLinPacket));
+	/* Pointers init*/
+	memset(local, 0, sizeof(local));
+	memset(linPacket, 0, sizeof(linPacket));
 	rtnetSendPacketInit(sendSim, "SIMTASK");
 	rtnetRecvPacketInit(recvSim, "SIMTASK");
 
@@ -141,6 +152,10 @@ void *robotLin(void *ptr)
 		robotGetPacket(recvSim, (void*)linPacket->x);
 	
 		/* Get v */
+		monitorControlMain(shared, local, MONITOR_GET_V);
+
+		/* Copy v into packet */
+		memcpy(linPacket->v, local->lin_t.v, sizeof(st_robotLin_t));
 
 		/* Generate u*/
 		robotGenU(linPacket);
@@ -156,6 +171,9 @@ void *robotLin(void *ptr)
 	
 	rtnetSendPacketFinish(sendSim);
 	rtnetRecvPacketFinish(recvSim);
+	free(sendSim);
+	free(recvSim);
+	free(local);
 	taskFinishRtaiLin(lintask);
 	return NULL;
 }

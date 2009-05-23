@@ -15,11 +15,11 @@
 
 /*robot includes*/
 #include "libRobot.h"
-#include "monitorCalc.h"
 #include "monitorSim.h"
+#include "robotStructs.h"
+#include "robotGeneration.h"
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
-#include "robotGeneration.h"
 
 /*rtai includes*/
 #include <rtai_lxrt.h>
@@ -61,9 +61,6 @@ void *robotThreadDisplay(void *ptr)
 
 			t = currentT / 1000.0;
 
-			/* Wait simulation thread release the semaphore */
-			sem_wait(&shared->sem.disp_sem);
-			
 			monitorSimGet(sharedCp, shared);
 
 			printDisplay(sharedCp, t);

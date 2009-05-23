@@ -47,10 +47,21 @@
 
 //! Dimensions
 #define XY_DIMENSION	3
+#define REF_DIMENSION	2
 #define X_DIMENSION		3
 #define Y_DIMENSION		2
 #define U_DIMENSION		2
 #define V_DIMENSION		2
+
+//!ym vector
+#define YM_DIMENSION	2
+#define XM_POSITION		0
+#define YM_POSITION		1
+
+//! ALPHA DEFINES
+#define ALPHA_DIMENSION	2
+#define ALPHA_1	0
+#define ALPHA_2	1
 
 //! Distance from the robot's front
 #define DIST	0.6
@@ -62,8 +73,18 @@
 #define MAX_DATA_VALUE	(int)(ceil( ( (double)( (TOTAL_TIME) / (STEPTIMESIM) ) ) ) + 1 )
 
 //! Monitor defines
-#define MONITOR_GET	0
-#define MONITOR_SET	1
+#define MONITOR_GET_REFERENCE	0
+#define MONITOR_SET_REFERENCE	1
+
+#define MONITOR_GET_YMX			10
+#define MONITOR_SET_YMX			11
+
+#define MONITOR_GET_YMY			20
+#define MONITOR_SET_YMY			21
+
+#define MONITOR_GET_V			30
+#define MONITOR_SET_V			31
+
 
 #endif //! _ROBOTDEFINES_H
 

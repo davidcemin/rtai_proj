@@ -15,8 +15,9 @@
 
 /*robot includes*/
 #include "libRobot.h"
-#include "simThreads.h"
+#include "robotStructs.h"
 #include "robotSimulation.h"
+#include "simThreads.h"
 //#include "robotDisplay.h"
 
 /*rtai includes*/
@@ -35,7 +36,7 @@ static int robotSharedInit(void *shared)
 	st_robotShared *robotShared = shared;
 
 	pthread_mutex_init(&robotShared->mutex.mutexSim, NULL);
-	pthread_mutex_init(&robotShared->mutex.mutexCalc, NULL);
+	pthread_mutex_init(&robotShared->mutex.mutexControl, NULL);
 
 	robotShared->sem.rt_sem = rt_sem_init(nam2num("SEM_RT"), 0);
 

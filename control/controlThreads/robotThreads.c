@@ -15,7 +15,6 @@
 
 /*robot includes*/
 #include "libRobot.h"
-#include "monitorCalc.h"
 #include "monitorSim.h"
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
@@ -23,6 +22,7 @@
 #include "robotGeneration.h"
 #include "robotDisplay.h"
 #include "robotRefModels.h"
+#include "robotStructs.h"
 
 /*rtai includes*/
 #include <rtai_lxrt.h>
@@ -39,7 +39,7 @@ static int robotSharedInit(void *shared)
 	st_robotShared *robotShared = shared;
 
 	pthread_mutex_init(&robotShared->mutex.mutexSim, NULL);
-	pthread_mutex_init(&robotShared->mutex.mutexCalc, NULL);
+	pthread_mutex_init(&robotShared->mutex.mutexControl, NULL);
 
 	robotShared->sem.rt_sem = rt_sem_init(nam2num("SEM_RT"), 0);
 
@@ -62,7 +62,7 @@ static void robotSharedCleanUp(void *shared)
 {
 	st_robotShared *robotShared = shared;
 
-	pthread_mutex_destroy(&robotShared->mutex.mutexCalc);
+	pthread_mutex_destroy(&robotShared->mutex.mutexControl);
 	rt_sem_delete(robotShared->sem.rt_sem);
 	stop_rt_timer();
 	free(shared);

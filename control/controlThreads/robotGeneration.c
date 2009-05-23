@@ -15,7 +15,8 @@
 
 /*robot includes*/
 #include "libRobot.h"
-#include "monitorGen.h"
+#include "monitorControlMain.h"
+#include "robotStructs.h"
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
 #include "robotGeneration.h"
@@ -49,8 +50,8 @@ static inline int taskCreateRtaiGen(RT_TASK *task, unsigned long taskName, char 
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);
 	
-	msgSize = sizeof(st_robotShared);
-	stkSize = msgSize + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 10000;
+	msgSize = sizeof(st_robotControlShared);
+	stkSize = msgSize + 10000;
 
 	if(!(task = rt_task_init_schmod(taskName, priority, stkSize, msgSize, SCHED_FIFO, 0xff) ) ) {	
 		fprintf(stderr, "Cannot Init Task: ");
@@ -88,8 +89,8 @@ static inline void taskFinishRtaiGen(RT_TASK *task)
 
 void *robotGeneration(void *ptr)
 {
-	st_robotGenerationShared *shared = ptr;
-	st_robotGeneration *local;
+	st_robotControlShared *shared = ptr;
+	st_robotControl *local;
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
@@ -103,13 +104,13 @@ void *robotGeneration(void *ptr)
 		return NULL;
 	}
 
-	if ( (local = (st_robotGeneration*)malloc(sizeof(st_robotGeneration))) == NULL ) {
+	if ( (local = (st_robotControl*)malloc(sizeof(local))) == NULL ) {
 		fprintf(stderr, "Error in generation structure memory allocation\n");
 		free(local);
 		return NULL;
 	}
 
-	memset(local, 0, sizeof(st_robotGeneration));
+	memset(local, 0, sizeof(local));
 
 	tInit = rt_get_time_ns();
 	do {
@@ -123,7 +124,7 @@ void *robotGeneration(void *ptr)
 		robotRefGen(local, total);
 
 		/*Set xref and yref into shared memory*/
-		monitorGeneration(shared, local, MONITOR_SET);
+		monitorControlMain(shared, local, MONITOR_SET_REFERENCE);
 
 		lastT = currentT;
 		total = currentT / SEC2NANO(1); 	

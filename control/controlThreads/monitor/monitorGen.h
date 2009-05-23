@@ -10,18 +10,27 @@
 #define _MONITORGEN_H
 
 /*robot includes*/
-#include "libRobot.h"
+#include "robotStructs.h"
 
 /******************************************************************************/
 
 /**
- * \brief Generation thread monitor
+ * \brief This function copy the local structure into shared
  * \param shared pointer to shared memory
  * \param local pointer to local memory
- * \param type Get or Set.
- * \return 0 ok, -1 error;
+ * \return 0;
  */
-extern int monitorGeneration(st_robotGenerationShared *shared, st_robotGeneration *local, int type);
+extern inline int monitorGenSet(st_robotControlShared *shared, st_robotControl *local);
+
+/******************************************************************************/
+
+/**
+ * \brief  Function that get the structure from shared
+ * \param  local Pointer to st_robotGeneration structure
+ * \param  shared Pointer to st_robotGenerationShared structure
+ * \return 0
+ */
+extern inline int monitorGenGet(st_robotControl *local, st_robotControlShared *shared);
 
 /******************************************************************************/
 

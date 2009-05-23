@@ -18,28 +18,11 @@
 
 /*robot includes*/
 #include "robotDefines.h"
+#include "robotStructs.h"
 
 /******************************************************************************/
 
 //!{@ Structures
-
-//! Structure used in reference generation
-typedef struct {
-	double xref;
-	double yref;
-	double ym;
-	double dym;
-} st_robotGeneration;
-
-//! Structure with reference models
-typedef struct {
-	double timeInstant[MAX_DATA_VALUE];	//! Current time
-	double ref[MAX_DATA_VALUE];			//! x and y reference
-	double ym[MAX_DATA_VALUE];			//! ymx and ymy
-	double dRef[MAX_DATA_VALUE];		//! ref'
-	int alpha;							//! alpha used
-	int kIndex;							//! current index
-} st_robotRefMod;
 
 //! Main structure with arrays
 typedef struct {
@@ -61,7 +44,7 @@ typedef struct {
 //! Struct with mutexes
 typedef struct{
 	pthread_mutex_t	mutexSim;
-	pthread_mutex_t	mutexCalc;
+	pthread_mutex_t	mutexControl;
 } st_robotMutex;
 
 //! Struct with semaphores
@@ -72,48 +55,11 @@ typedef struct{
 
 //! Shared structure
 typedef	struct {
-	double yf[Y_DIMENSION];		//! Output array
-	double u[U_DIMENSION];		//! Input array 
+	double yf[Y_DIMENSION];	
+	double u[U_DIMENSION];
 	st_robotMutex mutex;
 	st_robotSem	sem;
 } st_robotShared;
-
-//! Simulation structure base
-typedef struct {
-	double x[X_DIMENSION];
-	double y[Y_DIMENSION];
-	double u[U_DIMENSION];
-} st_robotSimulPacket;
-
-//! Robot generation shared strucuture
-typedef struct {
-	st_robotGeneration genShared;
-	pthread_mutex_t	mutexGen;
-} st_robotGenerationShared;
-
-//! Linearization packet structure
-typedef struct {
-	double v[V_DIMENSION];
-	double u[U_DIMENSION];
-	double x[X_DIMENSION];
-} st_robotLinPacket;
-
-//! rtnet receive packet information
-typedef struct {
-	RT_TASK *recvfrom;
-	unsigned long recvnode;
-	unsigned long recvport;
-	struct sockaddr_in addr;
-	long len;
-} st_rtnetReceive;
-
-//! rtnet send packet information
-typedef struct {
-	RT_TASK *sendto;
-	unsigned int sendnode;
-	unsigned int sendport;
-	struct sockaddr_in addr;
-} st_rtnetSend;
 
 /******************************************************************************/
 
@@ -150,7 +96,7 @@ extern void robotNewX(st_robotMainArrays *robotMain);
  * \param t current time
  * \return void 
  */
-extern void robotRefGen(st_robotGeneration *robot, double t);
+extern void robotRefGen(st_robotControl *robot, double t);
 
 /******************************************************************************/
 

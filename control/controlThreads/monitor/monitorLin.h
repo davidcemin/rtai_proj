@@ -1,36 +1,36 @@
 /******************************************************************************/
 /**
- * \file monitorCalc.h
+ * \file monitorControl.h
  * \brief This file has the Control monitor prototypes, structs and defines
  *
  */
 /******************************************************************************/
 
-#ifndef _MONITORCALC_H
-#define _MONITORCALC_H
+#ifndef _MONITORCONTROL_H
+#define _MONITORCONTROL_H
 
 /*robot includes*/
-#include "libRobot.h"
+#include "robotStructs.h"
 
 /******************************************************************************/
 
 /**
- * \brief This function calculates the inputs u and copy it into shared
+ * \brief Sets v into shared memory
  * \param shared Pointer to shared structure
- * \param t current time
+ * \param local Pointer to local structure
  * \return 0
  */
-extern int monitorCalcSet(st_robotShared *shared, double t);
+extern inline int monitorLinSet(st_robotControlShared *shared, st_robotControl *local);
 
 /******************************************************************************/
 
 /**
- * \brief  This function copies the shared into a local memory.
- * \param  sample Pointer to st_robotSample structure.
+ * \brief  Function that copies v from shared memory
  * \param  shared pointer to shared memory
- * \param  t current time.
+ * \param  local Pointer to local memory
+ * \return 0
  */
-int monitorCalcGet(st_robotSample *sample, st_robotShared *shared, double t);
+extern inline int monitorLitGet(st_robotControl *local, st_robotControlShared *shared);
 
 /******************************************************************************/
 
