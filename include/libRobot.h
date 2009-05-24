@@ -24,21 +24,12 @@
 
 //!{@ Structures
 
-//! Main structure with arrays
-typedef struct {
-	int kIndex;										//! k index
-	double timeInstant[MAX_DATA_VALUE];				//! Time
-	double dxVal[XY_DIMENSION][MAX_DATA_VALUE];		//! dx array(x1', x2', x3')
-	double xVal[X_DIMENSION][MAX_DATA_VALUE];		//! x array(x1, x2, x3)
-	double yVal[Y_DIMENSION][MAX_DATA_VALUE];		//! y array(y1, y2)
-	double uVal[U_DIMENSION][MAX_DATA_VALUE];		//! u array(v, w)
-} st_robotMainArrays;
 
 //! Struct used to sample y
 typedef struct {
 	int kIndex;									//! k index
 	double timeInstant[MAX_DATA_VALUE];			//! Time
-	double yVal[XY_DIMENSION][MAX_DATA_VALUE];	//! y array(y1, y2, y3)
+	double yVal[X_DIMENSION][MAX_DATA_VALUE];	//! y array(y1, y2, y3)
 } st_robotSample;
 
 //! Struct with mutexes
@@ -54,12 +45,12 @@ typedef struct{
 } st_robotSem;
 
 //! Shared structure
-typedef	struct {
-	double yf[Y_DIMENSION];	
-	double u[U_DIMENSION];
-	st_robotMutex mutex;
-	st_robotSem	sem;
-} st_robotShared;
+//typedef	struct {
+//	double yf[Y_DIMENSION];	
+//	double u[U_DIMENSION];
+//	st_robotMutex mutex;
+//	st_robotSem	sem;
+//} st_robotShared;
 
 /******************************************************************************/
 

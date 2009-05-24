@@ -99,7 +99,7 @@ void *robotGeneration(void *ptr)
 	RT_TASK *gentask = NULL;
 	unsigned long gentask_name = nam2num("GENERATION");
 	
-	if(taskCreateRtaiGen(gentask,gentask_name, CALCPRIORITY, STEPTIMEGENERNANO) < 0){
+	if(taskCreateRtaiGen(gentask,gentask_name, GENPRIORITY, STEPTIMEGENERNANO) < 0){
 		fprintf(stderr, "Generation!\n");
 		return NULL;
 	}
@@ -112,6 +112,7 @@ void *robotGeneration(void *ptr)
 
 	memset(local, 0, sizeof(local));
 
+	printf("GENERATION\n");
 	tInit = rt_get_time_ns();
 	do {
 		currentT = rt_get_time_ns() - tInit;

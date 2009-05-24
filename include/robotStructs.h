@@ -74,6 +74,16 @@ typedef struct {
 
 /************************* simulation structures ****************************/
 
+//! Main structure with arrays
+typedef struct {
+	int kIndex;
+	double timeInstant[MAX_DATA_VALUE];
+	double dxVal[X_DIMENSION][MAX_DATA_VALUE];
+	double xVal[X_DIMENSION][MAX_DATA_VALUE];
+	double yVal[Y_DIMENSION][MAX_DATA_VALUE];
+	double uVal[U_DIMENSION][MAX_DATA_VALUE];
+} st_robotMainArrays;
+
 //! Simulation structure base
 typedef struct {
 	double x[X_DIMENSION];
@@ -82,6 +92,11 @@ typedef struct {
 } st_robotSimulPacket;
 
 //! Simulation structure shared
+typedef struct {
+	double t;
+	st_robotSimulPacket simul_t;
+	pthread_mutex_t mutexSim;
+} st_robotSimulShared;
 
 /**************************** rtnet structures *******************************/
 

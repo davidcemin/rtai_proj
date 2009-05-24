@@ -14,15 +14,29 @@
 #include <sys/time.h> 
 
 /*robot includes*/
-#include "libRobot.h"
-#include "monitorSim.h"
+#include "monitorSimMain.h"
 #include "robotStructs.h"
-#include "robotGeneration.h"
-#include "robotThreads.h"
 #include "simulCalcsUtils.h"
 
 /*rtai includes*/
 #include <rtai_lxrt.h>
+
+
+/*****************************************************************************/
+
+static inline void printDisplay(st_robotSimulPacket *packet, double t)
+{
+	struct {
+		double y1;
+		double y2; 
+		double u1; 
+		double u2;
+	} disp = {packet->y[0], packet->y[1], packet->u[0], packet->u[1]};
+
+	fprintf(stdout, "%f\t%f\t%f\t%f\t%f\n", disp.y1, disp.y2, disp.u1, disp.u2, t);
+
+	return;
+}
 
 /*****************************************************************************/
 
@@ -33,27 +47,23 @@
  */
 void *robotThreadDisplay(void *ptr)
 {
-	st_robotShared *shared = ptr;
-	st_robotShared *sharedCp;
-	double tInit;
-	double lastT;
-	double currentT;
-	double t;
+	st_robotSimulShared *shared = ptr;
+	st_robotSimulPacket *packet;
+	double tInit = 0;
+	double lastT = 0;
+	double currentT = 0;
+	double t = 0;
 
 	/* Allocates memory to shared's copy structure */
-	if ( (sharedCp = (st_robotShared*) malloc(sizeof(st_robotShared)) ) == NULL ) { 
-		fprintf(stderr, "Not possible to allocate memory to shared copy!\n\r");
+	if ( (packet = (st_robotSimulPacket*) malloc(sizeof(packet)) ) == NULL ) { 
+		fprintf(stderr, "Not possible to allocate memory to display packet!\n\r");
 		return NULL;
 	}
 
-	memset(sharedCp, 0, sizeof(st_robotShared));
+	memset(packet, 0, sizeof(packet));
 
 	/*time init*/
 	tInit = getTimeMilisec();
-	lastT = 0;
-	currentT = 0;
-	t = 0;
-
 	do {
 		/* update the current Time */
 		currentT = getTimeMilisec() - tInit;
@@ -61,16 +71,16 @@ void *robotThreadDisplay(void *ptr)
 
 			t = currentT / 1000.0;
 
-			monitorSimGet(sharedCp, shared);
+			monitorSimMain(shared, packet, MONITOR_GET_SIM_SHARED);
 
-			printDisplay(sharedCp, t);
+			printDisplay(packet, t);
 
 			/* saves the last time */
 			lastT = currentT;
 		}
 	} while (currentT < (double)TOTAL_TIME * 1000);
 	
-	free(sharedCp);
+	free(packet);
 	return NULL;
 }
 

@@ -15,6 +15,7 @@
 #include <sys/time.h> 
 
 /*robot includes*/
+#include "monitorSimMain.h"
 #include "libRobot.h"
 #include "robotStructs.h"
 #include "rtnetAPI.h"
@@ -53,8 +54,8 @@ static inline int taskCreateRtaiSim(RT_TASK *task, unsigned long taskName, char 
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);
 	
-	msgSize = sizeof(st_robotShared);
-	stkSize = msgSize + sizeof(st_robotMainArrays) + sizeof(st_robotSample) + 10000;
+	msgSize = sizeof(st_robotSimulShared);
+	stkSize = msgSize + 10000;
 
 	if(!(task = rt_task_init_schmod(taskName, priority, stkSize, msgSize, SCHED_FIFO, 0xff) ) ) {	
 		fprintf(stderr, "Cannot Init Task: ");
@@ -90,9 +91,45 @@ static inline void taskFinishRtaiSim(RT_TASK *task)
 
 /*****************************************************************************/
 
+/**
+ * \brief  It copies u array into u array in robot main structure
+ * \param  robot Pointer to robot structure
+ * \param  u Pointer to u array
+ * \return void
+ */
+static inline void cpUIntoRobot(st_robotMainArrays *robot, double *u)
+{
+	int i;
+	int k = robot->kIndex;
+	for (i = 0; i < U_DIMENSION; i++)
+		robot->uVal[i][k] = u[i]; 
+}
+
+/*****************************************************************************/
+
+/**
+ * \brief  It copies x and y arrays from robot structure to packet
+ * \param  packet Pointer to the packet
+ * \param  robot Pointer to robot structure
+ * \return void
+ */
+static inline void cpXYIntoPacket(st_robotSimulPacket *packet, st_robotMainArrays *robot)
+{
+	int i;
+	int k = robot->kIndex;
+
+	for (i = 0; i < X_DIMENSION; i++)
+		packet->x[i] = robot->xVal[i][k];
+	
+	for (i = 0; i < Y_DIMENSION; i++)
+		packet->y[i] = robot->yVal[i][k];
+}
+
+/*****************************************************************************/
+
 void *robotSimulation(void *ptr)
 {	
-	//st_robotShared *shared = ptr;
+	st_robotSimulShared *shared = ptr;
 	st_robotSimulPacket *simulPack;
 	st_robotMainArrays *robot;
 	st_rtnetSend *sendCtrl;
@@ -113,12 +150,11 @@ void *robotSimulation(void *ptr)
 		return NULL;
 	}
 	
-	/* Allocates memory to simulPack structure */
 	if ( (simulPack = (st_robotSimulPacket*) malloc(sizeof(simulPack)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to simul packet!\n\r");
 		return NULL;
 	}
-
+	
 	if ( (sendCtrl = (st_rtnetSend*)malloc(sizeof(sendCtrl))) == NULL ) {
 		fprintf(stderr, "Not possible to allocate memroy to sendCtrl packet\n\r");
 		return NULL;
@@ -155,6 +191,9 @@ void *robotSimulation(void *ptr)
 
 		/* get u from lin thread*/
 		robotGetPacket(recvLin, (void*)simulPack->u);
+
+		/*Copy u into robot structure*/
+		cpUIntoRobot(robot, simulPack->u);
 		
 		/* Calculates x' from x and u*/
 		robotDxSim(robot);
@@ -162,11 +201,17 @@ void *robotSimulation(void *ptr)
 		/* Calculates y from x and the inputs */
 		robotCalcYFromX(robot);
 
+		/*copy x and y into packet structure*/
+		cpXYIntoPacket(simulPack, robot);
+	
 		/* send y to control thread*/
 		robotSendPacket(sendCtrl, (void*)simulPack->y);
 
 		/* send x to lin thread */
-		robotSendPacket(sendLin, (void*)simulPack->u);
+		robotSendPacket(sendLin, (void*)simulPack->x);
+	
+		/*monitor set shared to display*/
+		monitorSimMain(shared, simulPack, MONITOR_SET_SIM_SHARED);
 
 		rt_task_wait_period();
 		robot->kIndex++;

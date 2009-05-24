@@ -10,26 +10,21 @@
 #define _MONITORSIM_H
 
 /*robot includes*/
-#include "libRobot.h"
+#include "robotStructs.h"
 
 /******************************************************************************/
 
 /**
- * \brief This function copy a value into the shared
- * \param robot Pointer to st_robotMainArrays structure
- * \param shared pointer to shared memory
- * \return 0
+ * \brief  
  */
-extern int monitorSimSet(st_robotMainArrays *robot, st_robotShared *shared);
+extern inline int monitorSimSet(st_robotSimulShared *shared, st_robotSimulPacket *packet);
 
 /******************************************************************************/
 
 /**
- * \brief  This function gets a copy of the shared memory
- * \param  sharedCp pointer to shared copy
- * \param  shared pointer to shared memory
+ * \brief  
  */
-extern int monitorSimGet(st_robotShared *sharedCp, st_robotShared *shared);
+extern inline int monitorSimGet(st_robotSimulPacket *packet, st_robotSimulShared *shared);
 
 /******************************************************************************/
 

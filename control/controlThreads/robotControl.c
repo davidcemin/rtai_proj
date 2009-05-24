@@ -189,6 +189,7 @@ void *robotControl(void *ptr)
 		return NULL;
 	}
 
+	printf("control\n\r");
 	tInit = rt_get_time_ns();
 	do {
 		currentT = rt_get_time_ns() - tInit;

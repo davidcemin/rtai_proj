@@ -36,7 +36,7 @@ extern void robotInit(st_robotMainArrays *robotInit);
  * \param  t current time
  * \return st_robotInput structure
  */
-extern void robotInputCalc(st_robotShared *robot, double t);
+//extern void robotInputCalc(st_robotShared *robot, double t);
 
 /******************************************************************************/
 
@@ -55,19 +55,10 @@ extern int robotCalcData(st_robotMainArrays *robot);
  * \param  shared Pointer to st_robotShared memory
  * \return void
  */
-extern inline void getUFromShared(st_robotMainArrays *robot, st_robotShared *shared);
+//extern inline void getUFromShared(st_robotMainArrays *robot, st_robotShared *shared);
 
 /******************************************************************************/
 
-/**
- * \brief  Copy yf array into shared memory
- * \param  robot Pointer to st_robotMainArrays memory
- * \param  shared Pointer to st_robotShared memory
- * \return void
- */
-extern inline void cpYIntoShared(st_robotMainArrays *robot, st_robotShared *shared);
-
-/******************************************************************************/
 
 /**
  * \brief  It samples yf array to later save it in a file
@@ -76,17 +67,7 @@ extern inline void cpYIntoShared(st_robotMainArrays *robot, st_robotShared *shar
  * \param  t Current simulation time
  * \return void
  */
-extern inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample, double t);
-
-/******************************************************************************/
-
-/**
- * \brief Function used to print the information on the screen.
- * \param shared Pointer to shared memory.
- * \param t Current time of simulation
- * \return void
- */
-extern inline void printDisplay(st_robotShared *shared, double t);
+//extern inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample, double t);
 
 /******************************************************************************/
 

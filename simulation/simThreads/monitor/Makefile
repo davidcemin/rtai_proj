@@ -1,19 +1,13 @@
-#lab04 Makefile. It should be the last to be called
-TARGET := simulation
-
-########################################################################
-#Include dirs
-ROBOTHREAD = ./simThreads
-COMMON   = ../common
-MONITOR = $(ROBOTHREAD)/monitor
+#Monitor Makefile.
+TARGET = 
 
 ########################################################################
 #flags
-CFLAGS   := -O2 -Wall
-CINCLUDE := -I../include/ -I$(ROBOTHREAD) -I$(MONITOR) -I$(COMMON)
-CLIBDIR  :=
-CLIBS    := -lm -lpthread
-DEPFLAGS := -MM
+CFLAGS   = -O2 -Wall
+CINCLUDE = -I. -I../../../common/ -I../../../include/
+CLIBDIR  =
+CLIBS    = -lpthread 
+DEPFLAGS = -MM
 
 ########################################################################
 #includes
@@ -21,7 +15,7 @@ INCLUDE    = ${CINCLUDE}
 FLAGS      = ${CFLAGS}
 LIBDIR     = ${CLIBDIR}
 LIBS       = ${CLIBS}
-LIBINCLUDE = ../lib
+LIBINCLUDE = ../../../lib
 
 ########################################################################
 #Setzen alle zusammen..
@@ -31,13 +25,12 @@ AR       = ar
 ARFLAGS  = rvu
 CMPFLAGS = ${FLAGS} ${INCLUDE}
 LDFLAGS  = ${LIBS}
+LIBFILES = $(LIBINCLUDE)/libRobot.a
 
 ########################################################################
-CSOURCES = $(wildcard *.c)
-OBJECTS  = $(CSOURCES:.c=.o)
-DEPS     = $(CSOURCES:.c=.d)
-OBSDEPS  = $(COMMON)/*.o $(MONITOR)/*.o $(ROBOTHREAD)/*.o
-LIBFILES = $(LIBINCLUDE)/*.a 
+
+#General
+QUIET = @
 
 ########################################################################
 #RTAI
@@ -50,23 +43,21 @@ endif
 LXRT_CFLAGS = $(shell rtai-config --lxrt-cflags)
 LXRT_LDFLAGS = $(shell rtai-config --lxrt-ldflags)
 
+#########################################################################
+	
+CSOURCES = $(wildcard *.c)
+OBJECTS  = $(CSOURCES:.c=.o)
+DEPS     = $(CSOURCES:.c=.d)
+
+#########################################################################
+
+.PHONY: all clean clobber
+
+all: $(OBJECTS)
+ 
 ########################################################################
 
-LIBFILES += $(LXRT_LDFLAGS)
-OBJECTS += $(OBSDEPS)
-
-#General
-QUIET = @
-
-.PHONY: clean clobber 
-
-all: $(TARGET)
-
-$(TARGET): $(OBJECTS)
-	$(QUIET)echo Compiling executable file: $@
-	$(QUIET)${CMP} $(LDFLAGS) -o $@  $^ $(LIBFILES) $(LXRT_LDFLAGS)
-
-%.o: %.c
+%.o: %.c	
 	$(QUIET)echo Creating object: $@
 	$(QUIET)$(CMP) $(CMPFLAGS) $(LIBS) -c $(LXRT_CFLAGS) $^
 
@@ -74,13 +65,12 @@ clean:
 	$(QUIET)echo Removing temp and object files
 	$(QUIET)rm -f *~ *.bak *.o
 
-
 clobber: clean
 	$(QUIET)echo Removing executable and some unnecessary files
-	$(QUIET)rm -f $(TARGET) $(DEPS) 
-	$(QUIET) rm -f *.gch
+	$(QUIET)rm -f $(TARGET) *.d *.a *.gch
 
 -include $(DEPS)
+
 %.d: %.c
 	$(QUIET)echo Creating dep: $@
 	$(QUIET)$(CMP) $(DEPFLAGS) $(LIBS) $(CMPFLAGS) $< \

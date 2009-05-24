@@ -29,92 +29,65 @@ double getTimeMilisec(void)
 
 /******************************************************************************/
 
-void robotInit(st_robotMainArrays *robotInit)
-{
-	int i, j;
-	robotInit->kIndex = 0;
-	robotInit->timeInstant[0] = 0;
-
-	for (i = 0; i < 3; i++) {
-		for(j = 0; j < MAX_DATA_VALUE; j++) {
-			robotInit->xVal[i][j] = 0;
-			robotInit->yVal[i][j] = 0;
-			robotInit->dxVal[i][j] = 0;
-		}
-	}
-	for (i = 0; i < 2; i++)
-		for(j = 0; j < MAX_DATA_VALUE; j++)
-			robotInit->uVal[i][j] = 0;
-}
-
-/******************************************************************************/
-
-void robotInputCalc(st_robotShared *robot, double t)
-{	
-	if (t < 0.0) {
-		robot->u[0] = 0;
-		robot->u[1] = 0;
-	}
-	else if(t < 10.0)  {
-		robot->u[0] = 1; 
-		robot->u[1] = 0.2 * M_PI;
-	}
-	else { 
-		/*t >=10 */
-		robot->u[0] = 1;
-		robot->u[1] = -0.2 * M_PI;
-	}
-}
+//void robotInit(st_robotMainArrays *robotInit)
+//{
+//	int i, j;
+//	robotInit->kIndex = 0;
+//	robotInit->timeInstant[0] = 0;
+//
+//	for (i = 0; i < 3; i++) {
+//		for(j = 0; j < MAX_DATA_VALUE; j++) {
+//			robotInit->xVal[i][j] = 0;
+//			robotInit->yVal[i][j] = 0;
+//			robotInit->dxVal[i][j] = 0;
+//		}
+//	}
+//	for (i = 0; i < 2; i++)
+//		for(j = 0; j < MAX_DATA_VALUE; j++)
+//			robotInit->uVal[i][j] = 0;
+//}
 
 /******************************************************************************/
 
-inline void getUFromShared(st_robotMainArrays *robot, st_robotShared *shared)
-{
-	int k = robot->kIndex;
-	int i;
-
-	for (i = 0; i < U_DIMENSION; i++)
-		robot->uVal[i][k] = shared->u[i];
-}
-
-/******************************************************************************/
-
-inline void cpYIntoShared(st_robotMainArrays *robot, st_robotShared *shared)
-{
-	int k = robot->kIndex;
-	int i;
-	
-	for (i = 0; i < XY_DIMENSION; i++)
-		shared->yf[i] = robot->yVal[i][k];
-}
+//void robotInputCalc(st_robotShared *robot, double t)
+//{	
+//	if (t < 0.0) {
+//		robot->u[0] = 0;
+//		robot->u[1] = 0;
+//	}
+//	else if(t < 10.0)  {
+//		robot->u[0] = 1; 
+//		robot->u[1] = 0.2 * M_PI;
+//	}
+//	else { 
+//		/*t >=10 */
+//		robot->u[0] = 1;
+//		robot->u[1] = -0.2 * M_PI;
+//	}
+//}
 
 /******************************************************************************/
 
-inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample, double t)
-{
-	int i;
-	sample->timeInstant[sample->kIndex] = t;
-
-	for(i = 0; i < XY_DIMENSION; i++)
-		sample->yVal[i][sample->kIndex] = shared->yf[i];
-}
+//inline void getUFromShared(st_robotMainArrays *robot, st_robotShared *shared)
+//{
+//	int k = robot->kIndex;
+//	int i;
+//
+//	for (i = 0; i < U_DIMENSION; i++)
+//		robot->uVal[i][k] = shared->u[i];
+//}
 
 /******************************************************************************/
 
-inline void printDisplay(st_robotShared *shared, double t)
-{
-	struct {
-		double y1;
-		double y2; 
-		double y3;
-		double u1; 
-		double u2;
-	} disp = {shared->yf[0], shared->yf[1], shared->yf[2], shared->u[0], shared->u[1]};
-
-	fprintf(stdout, "%f\t%f\t%f\t%f\t%f\t%f\n", disp.y1, disp.y2, disp.y3, disp.u1, disp.u2, t);
-
-	return;
-}
+//inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample, double t)
+//{
+//	int i;
+//	sample->timeInstant[sample->kIndex] = t;
+//
+//	for(i = 0; i < 3; i++) //XY_DIMENSION
+//		sample->yVal[i][sample->kIndex] = shared->yf[i];
+//}
+//
 
 /*****************************************************************************/
 

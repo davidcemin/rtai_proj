@@ -15,29 +15,30 @@
 
 /******************************************************************************/
 
-int monitorSimSet(st_robotMainArrays *robot, st_robotShared *shared)
-{
-	pthread_mutex_lock(&shared->mutex.mutexSim);
-
-	/* Copy y values into shared memory */
-	cpYIntoShared(robot, shared);
-
-	pthread_mutex_unlock(&shared->mutex.mutexSim);
-	return 0;
-}
-
-/******************************************************************************/
-
-int monitorSimGet(st_robotShared *sharedCp, st_robotShared *shared)
+inline int monitorSimGet(st_robotSimulPacket *packet, st_robotSimulShared *shared)
 {	
-	pthread_mutex_lock(&shared->mutex.mutexControl);
+	pthread_mutex_lock(&shared->mutexSim);
 
-	memcpy(sharedCp, shared, sizeof(st_robotShared));
+	memcpy(packet, &shared->simul_t, sizeof(st_robotSimulPacket));
 
-	pthread_mutex_unlock(&shared->mutex.mutexControl);
+	pthread_mutex_unlock(&shared->mutexSim);
 
 	return 0;
 }
 
+
 /******************************************************************************/
+
+inline int monitorSimSet(st_robotSimulShared *shared, st_robotSimulPacket *packet)
+{
+	pthread_mutex_lock(&shared->mutexSim);
+
+	memcpy(&shared->simul_t, packet, sizeof(st_robotSimulPacket));
+
+	pthread_mutex_unlock(&shared->mutexSim);
+	return 0;
+}
+
+/******************************************************************************/
+
 

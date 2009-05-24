@@ -39,20 +39,44 @@ inline void rtnetSendPacketInit(st_rtnetSend *rtnet, char *sendtask)
 
 	inet_aton("127.0.0.1", &rtnet->addr.sin_addr);
 	rtnet->sendnode = rtnet->addr.sin_addr.s_addr;
-	rtnet->sendport = rt_request_soft_port(rtnet->sendnode);
-	rtnet->sendto = RT_get_adr(rtnet->sendnode, rtnet->sendport, sendtask);
+	while ( (rtnet->sendport = rt_request_soft_port(rtnet->sendnode)) <= 0) {
+		if (rtnet->sendport == -EINVAL) 
+			printf("Can't find send port \n");
+		printf("SEND port: %d\n", rtnet->sendport);
+		usleep(100000);
+	}
+
+	while ( (rtnet->sendto = RT_get_adr(rtnet->sendnode, rtnet->sendport, sendtask)) == NULL) {
+			usleep(100000);
+			printf("Cant find send task\n");
+	}
 }
 
 /*****************************************************************************/
 
 inline void rtnetRecvPacketInit(st_rtnetReceive *rtnet, char *recvtask)
 {
+	printf("a7\n\r");
 	rtnet->recvfrom = NULL;
 	
 	inet_aton("127.0.0.1", &rtnet->addr.sin_addr);
 	rtnet->recvnode = rtnet->addr.sin_addr.s_addr;
-	rtnet->recvport = rt_request_soft_port(rtnet->recvnode);
-	rtnet->recvfrom = RT_get_adr(rtnet->recvnode, rtnet->recvport, recvtask);
+
+	printf("0x%lx\n\r", rtnet->recvnode);
+
+	while ( (rtnet->recvport = rt_request_soft_port(rtnet->recvnode)) <= 0) {
+		if(rtnet->recvport == -EINVAL) {
+			printf("Can't find receive port\n");                
+		}
+		printf("RECV port: %ld\n",rtnet->recvport);
+		usleep(100000);        
+	}
+	printf("RECV port: %ld\n", rtnet->recvport);
+
+	while ( (rtnet->recvfrom = RT_get_adr(rtnet->recvnode, rtnet->recvport, recvtask)) == NULL) {
+		usleep(100000);        
+		printf("Can't find receive task\n");        
+	}
 }
 
 /*****************************************************************************/
