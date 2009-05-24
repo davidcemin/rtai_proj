@@ -120,6 +120,7 @@ void *robotRefModSimX(void *ptr)
 		return NULL;
 	}
 
+	printf("REFMODX\n\r");
 	tInit = rt_get_time_ns();
 	do {
 		currentT = rt_get_time_ns() - tInit;
@@ -152,9 +153,11 @@ void *robotRefModSimX(void *ptr)
 		total = currentT / SEC2NANO(1);
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
+	printf("x1\n\r");
 	taskFinishRtaiRefSim(simtask);
-	free(refmod);
-	free(local);
+	printf("x2\n\r");
+	//free(refmod);
+	printf("x3\n\r");
 	return NULL;
 }
 

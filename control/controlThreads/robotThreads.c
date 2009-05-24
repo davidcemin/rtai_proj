@@ -37,9 +37,9 @@ static int robotSharedInit(void *ptr)
 {
 	st_robotControlShared *shared = ptr;
 
-	pthread_mutex_init(&shared->mutexControl, NULL);
-	pthread_mutex_init(&shared->mutexLin, NULL);
-	pthread_mutex_init(&shared->mutexGen, NULL);
+	pthread_mutex_init(&shared->mutex.mutexControl, NULL);
+	pthread_mutex_init(&shared->mutex.mutexLin, NULL);
+	pthread_mutex_init(&shared->mutex.mutexGen, NULL);
 
 	//robotShared->sem.rt_sem = rt_sem_init(nam2num("SEM_RT"), 0);
 
@@ -62,9 +62,9 @@ static void robotSharedCleanUp(void *ptr)
 {
 	st_robotControlShared *shared = ptr;
 
-	pthread_mutex_destroy(&shared->mutexControl);
-	pthread_mutex_destroy(&shared->mutexLin);
-	pthread_mutex_destroy(&shared->mutexGen);
+	pthread_mutex_destroy(&shared->mutex.mutexControl);
+	pthread_mutex_destroy(&shared->mutex.mutexLin);
+	pthread_mutex_destroy(&shared->mutex.mutexGen);
 	//rt_sem_delete(robotShared->sem.rt_sem);
 	stop_rt_timer();
 	free(shared);
@@ -79,6 +79,8 @@ void robotControlThreadsMain(void)
 	int rt_controlTask_thread;
 	int rt_genTask_thread;
 	int rt_linTask_thread;
+	int rt_refXTask_thread;
+	int rt_refYTask_thread;
 	int stkSize;
 
 	if ( (shared = (st_robotControlShared*) malloc(sizeof(st_robotControlShared)) ) == NULL ) { 
@@ -100,28 +102,46 @@ void robotControlThreadsMain(void)
 	stkSize = sizeof(st_robotControlShared) + 10000;
 
 	printf("a\n\r");
-	if(!(rt_controlTask_thread = rt_thread_create(robotControl, shared, stkSize))) {
-		fprintf(stderr, "Error Creating control Thread!!\n");
-		robotSharedCleanUp(shared);
-		return;
-	}	
-	
 	if(!(rt_genTask_thread = rt_thread_create(robotGeneration, shared, stkSize))) {
 		fprintf(stderr, "Error Creating generation Thread!!\n");
 		robotSharedCleanUp(shared);
 		return;
 	}	
 
+	printf("b\n\r");
+	if(!(rt_controlTask_thread = rt_thread_create(robotControl, shared, stkSize))) {
+		fprintf(stderr, "Error Creating control Thread!!\n");
+		robotSharedCleanUp(shared);
+		return;
+	}	
+	
+	printf("c\n\r");
 	if(!(rt_linTask_thread = rt_thread_create(robotLin, shared, stkSize))) {
 		fprintf(stderr, "Error Creating linearization Thread!!\n");
 		robotSharedCleanUp(shared);
 		return;
+	}
+	
+	printf("d\n\r");
+	if(!(rt_refYTask_thread = rt_thread_create(robotRefModSimY, shared, stkSize))) {
+		fprintf(stderr, "Error Creating refY Thread!!\n");
+		robotSharedCleanUp(shared);
+		return;
 	}	
 
+	printf("e\n\r");
+	if(!(rt_refXTask_thread = rt_thread_create(robotRefModSimX, shared, stkSize))) {
+		fprintf(stderr, "Error Creating refX Thread!!\n");
+		robotSharedCleanUp(shared);
+		return;
+	}	
+	
 	/* Wait for all threads to complete */
 	rt_thread_join(rt_controlTask_thread);
 	rt_thread_join(rt_genTask_thread);
 	rt_thread_join(rt_linTask_thread);
+	rt_thread_join(rt_refXTask_thread);
+	rt_thread_join(rt_refYTask_thread);
 
 	/* Clean up and exit */
 	robotSharedCleanUp(shared);

@@ -50,7 +50,6 @@ static inline int taskCreateRtaiSim(RT_TASK *task, unsigned long taskName, char 
 	/*Es ist nicht noetig um die priority im sched_param structure anzusetzen, da 
 	 * es bereits im rt_task_init_schmod Function angesetzt ist.
 	 */
-	
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);
 	
@@ -87,6 +86,9 @@ static inline void taskFinishRtaiSim(RT_TASK *task)
 	 * already use it(base/include/rtai_lxrt.h:842)
 	 */
 	rt_task_delete(task);
+	
+	/*release pagination*/
+	munlockall();
 }
 
 /*****************************************************************************/
@@ -143,7 +145,7 @@ void *robotSimulation(void *ptr)
 
 	RT_TASK *simtask = NULL;
 	unsigned long simtask_name = nam2num("SIMTASK");
-
+	
 	/* Allocates memory to robot structure */
 	if ( (robot = (st_robotMainArrays*) malloc(sizeof(robot)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to main!\n\r");
@@ -152,6 +154,11 @@ void *robotSimulation(void *ptr)
 	
 	if ( (simulPack = (st_robotSimulPacket*) malloc(sizeof(simulPack)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to simul packet!\n\r");
+		return NULL;
+	}	
+	
+	if ( (recvLin = (st_rtnetReceive*)malloc(sizeof(recvLin))) == NULL ) {
+		fprintf(stderr, "Not possible to allocate memory to recvLin packet\n\r");
 		return NULL;
 	}
 	
@@ -165,22 +172,19 @@ void *robotSimulation(void *ptr)
 		return NULL;
 	}
 	
-	if ( (recvLin = (st_rtnetReceive*)malloc(sizeof(recvLin))) == NULL ) {
-		fprintf(stderr, "Not possible to allocate memory to recvLin packet\n\r");
-		return NULL;
-	}
-
-	//robotInit(robot);
-	memset(simulPack, 0, sizeof(simulPack));
-	rtnetSendPacketInit(sendCtrl, "CTRLTASK");
-	rtnetSendPacketInit(sendLin, "LINTASK");
-	rtnetRecvPacketInit(recvLin, "LINTASK");
-
+	printf("Simulation!\n\r");
 	if(taskCreateRtaiSim(simtask, simtask_name, SIMPRIORITY, STEPTIMESIMNANO) < 0) {
 		fprintf(stderr, "Simulation!\n");
 		free(robot);
 		return NULL;
 	}
+
+	printf("rt init done\n\r");
+	memset(robot, 0, sizeof(robot));
+	memset(simulPack, 0, sizeof(simulPack));
+	rtnetRecvPacketInit(recvLin, "LINTASK");
+	rtnetSendPacketInit(sendLin, "LINTASK");
+	rtnetSendPacketInit(sendCtrl, "CTRLTASK");
 
 	tInit = rt_get_time_ns();
 	do {
@@ -190,8 +194,11 @@ void *robotSimulation(void *ptr)
 		robotNewX(robot);
 
 		/* get u from lin thread*/
-		robotGetPacket(recvLin, (void*)simulPack->u);
-
+		if(robotGetPacket(recvLin, (void*)simulPack->u) < 0) {
+			simulPack->u[0] = 0;
+			simulPack->u[1] = 0;
+		}
+		
 		/*Copy u into robot structure*/
 		cpUIntoRobot(robot, simulPack->u);
 		
@@ -235,12 +242,7 @@ void *robotSimulation(void *ptr)
 	rtnetSendPacketFinish(sendCtrl);
 	rtnetSendPacketFinish(sendLin);
 	rtnetRecvPacketFinish(recvLin);
-	free(sendCtrl);
-	free(sendLin);
-	free(recvLin);
 	taskFinishRtaiSim(simtask);
-	free(simulPack);
-	free(robot);
 	return NULL;
 }
 

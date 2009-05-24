@@ -57,12 +57,26 @@ typedef struct {
 	unsigned char alpha[ALPHA_DIMENSION];
 } st_robotControl;	
 
-//! Monitor shared structure
+//! Control structure with mutexes
 typedef struct {
-	st_robotControl control;
 	pthread_mutex_t mutexControl;
 	pthread_mutex_t	mutexGen;
 	pthread_mutex_t mutexLin;
+} st_controlMutex;
+
+//! Control structure with semaphores
+typedef struct {	
+	SEM *sm_refx;
+	SEM *sm_refy;
+	SEM *sm_control;
+	SEM *sm_lin;
+} st_controlSem;
+
+//! Monitor shared structure
+typedef struct {
+	st_robotControl control;
+	st_controlMutex mutex;
+	st_controlSem sem;
 } st_robotControlShared;
 
 //! Linearization packet structure
@@ -96,15 +110,16 @@ typedef struct {
 	double t;
 	st_robotSimulPacket simul_t;
 	pthread_mutex_t mutexSim;
+	sem_t disp_sem;
 } st_robotSimulShared;
 
 /**************************** rtnet structures *******************************/
 
 //! rtnet receive packet information
 typedef struct {
-	RT_TASK *recvfrom;
-	unsigned long recvnode;
-	unsigned long recvport;
+	RT_TASK  *recvfrom;
+	unsigned int recvnode;
+	unsigned int recvport;
 	struct sockaddr_in addr;
 	long len;
 } st_rtnetReceive;

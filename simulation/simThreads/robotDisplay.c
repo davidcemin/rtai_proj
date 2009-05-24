@@ -54,6 +54,9 @@ void *robotThreadDisplay(void *ptr)
 	double currentT = 0;
 	double t = 0;
 
+	mlockall(MCL_CURRENT | MCL_FUTURE);
+
+	printf("display\n");
 	/* Allocates memory to shared's copy structure */
 	if ( (packet = (st_robotSimulPacket*) malloc(sizeof(packet)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to display packet!\n\r");
@@ -80,7 +83,7 @@ void *robotThreadDisplay(void *ptr)
 		}
 	} while (currentT < (double)TOTAL_TIME * 1000);
 	
-	free(packet);
+	munlockall();
 	return NULL;
 }
 

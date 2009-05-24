@@ -177,19 +177,20 @@ void *robotControl(void *ptr)
 		return NULL;
 	}
 
-	/* Pointers init*/
-	memset(local, 0, sizeof(local));
-	memset(sample, 0, sizeof(sample) );
-	memset(simulPacket, 0, sizeof(simulPacket));
-	rtnetRecvPacketInit(recvSim, "SIMTASK");
-
 	if(taskCreateRtai(calctask, calctask_name, CALCPRIORITY, STEPTIMECALCNANO) < 0){
 		fprintf(stderr, "Calculation!\n");
 		free(sample);
 		return NULL;
 	}
 
-	printf("control\n\r");
+	/* Pointers init*/
+	memset(local, 0, sizeof(local));
+	memset(sample, 0, sizeof(sample) );
+	memset(simulPacket, 0, sizeof(simulPacket));
+	rtnetRecvPacketInit(recvSim, "SIMTASK");
+
+
+	printf("CONTROL\n\r");
 	tInit = rt_get_time_ns();
 	do {
 		currentT = rt_get_time_ns() - tInit;
@@ -207,7 +208,10 @@ void *robotControl(void *ptr)
 		monitorControlMain(shared, local, MONITOR_GET_YMY);
 
 		/* get y */
-		robotGetPacket(recvSim, (void*)simulPacket->y);
+		if (robotGetPacket(recvSim, (void*)simulPacket->y) < 0) {
+			simulPacket->y[XM_POSITION] = 0;
+			simulPacket->y[YM_POSITION] = 0;
+		}
 
 		/*first we get alpha values, not in crictical session */
 		local->alpha[ALPHA_1] = shared->control.alpha[ALPHA_1];
@@ -228,13 +232,15 @@ void *robotControl(void *ptr)
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
 	/*log data*/
-	if(	robotLogData(sample) < 0) 
-		fprintf(stderr, "Error! It was not possible to log data!\n\r");
+	//if(	robotLogData(sample) < 0) 
+	//	fprintf(stderr, "Error! It was not possible to log data!\n\r");
 
+	printf("c1\n\r");
 	rtnetRecvPacketFinish(recvSim);
+	printf("c2\n\r");
 	taskFinishRtai(calctask);
-	free(recvSim);
+	printf("c3\n\r");
 	free(sample);
-	free(local);
+	printf("c4\n\r");
 	return NULL;
 }

@@ -30,18 +30,16 @@
  * \param  shared Void pointer to shared memory
  * \return 0 Ok, -1 Error. 
  */
-static int robotSharedInit(void *ptr)
+static int robotSimSharedInit(void *ptr)
 {
 	st_robotSimulShared *shared = ptr;
 
 	pthread_mutex_init(&shared->mutexSim, NULL);
 
-	//robotShared->sem.rt_sem = rt_sem_init(nam2num("SEM_RT"), 0);
-
-	///if ( (sem_init(&robotShared->sem.disp_sem, 0, 0) < 0) ) {
-	//	fprintf(stderr, "Error in sem_init: %d\n", errno);
-	//	return -1;
-	//}
+	if ( (sem_init(&shared->disp_sem, 0, 0) < 0) ) {
+		fprintf(stderr, "Error in sem_init: %d\n", errno);
+		return -1;
+	}
 
 	return 0;
 }
@@ -53,13 +51,12 @@ static int robotSharedInit(void *ptr)
  * \param shared void pointer to shared memory
  * \return void
  */
-static void robotSharedCleanUp(void *ptr)
+static void robotSimSharedCleanUp(void *ptr)
 {
 	st_robotSimulShared *shared = ptr;
 
 	pthread_mutex_destroy(&shared->mutexSim);
-	//rt_sem_delete(robotShared->sem.rt_sem);
-	//sem_destroy(&robotShared->sem.disp_sem);
+	sem_destroy(&shared->disp_sem);
 	stop_rt_timer();
 	free(shared);
 }
@@ -84,7 +81,7 @@ void robotSimThreadsMain(void)
 	
 	/* shared init */
 	memset(shared, 0, sizeof(st_robotSimulShared) );
-	if( robotSharedInit(shared) < 0){
+	if( robotSimSharedInit(shared) < 0){
 		free(shared);
 		return;
 	}
@@ -98,7 +95,7 @@ void robotSimThreadsMain(void)
 	/*rtai simulation thread*/
 	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, stkSize))) {
 		fprintf(stderr, "Error Creating Simulation Thread!!\n");
-		robotSharedCleanUp(shared);
+		robotSimSharedCleanUp(shared);
 		return;
 	}	
 	
@@ -111,7 +108,7 @@ void robotSimThreadsMain(void)
 	if ( (ret = pthread_create(&threadDisplay, &attr, robotThreadDisplay, shared) ) ) {
 		fprintf(stderr, "Error Creating Display Thread: %d\n", ret);
 		pthread_attr_destroy(&attr);
-		robotSharedCleanUp(shared);
+		robotSimSharedCleanUp(shared);
 		return;
 	}
 
@@ -121,7 +118,7 @@ void robotSimThreadsMain(void)
 
 	/* Clean up and exit */
 	pthread_attr_destroy(&attr);
-	robotSharedCleanUp(shared);
+	robotSimSharedCleanUp(shared);
 	return; 
 }
 /*****************************************************************************/

@@ -16,7 +16,7 @@
 
 //! Simulation timers
 #define INIT_TIME			0.0
-#define FINAL_TIME			20.0
+#define FINAL_TIME			2.0
 #define TOTAL_TIME	 ( FINAL_TIME - INIT_TIME ) 
 
 //! Step times
@@ -70,7 +70,7 @@
 #define RADIUS	(0.5 * DIST)
 
 //! Maximum quantity of data
-#define MAX_DATA_VALUE	(int)(ceil( ( (double)( (TOTAL_TIME) / (STEPTIMESIM) ) ) ) + 1 )
+#define MAX_DATA_VALUE	(int)(ceil( ( (double)( (TOTAL_TIME) / (STEPTIMESIM) ) ) ) + 10 )
 
 //! Monitor defines
 #define MONITOR_GET_REFERENCE	0

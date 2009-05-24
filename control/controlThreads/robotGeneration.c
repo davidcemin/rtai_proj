@@ -133,7 +133,8 @@ void *robotGeneration(void *ptr)
 
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
+	printf("g1\n\r");
 	taskFinishRtaiGen(gentask);
-	free(local);
+	printf("g2\n\r");
 	return NULL;
 }

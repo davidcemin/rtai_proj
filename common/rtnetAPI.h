@@ -15,7 +15,7 @@
 /**
  * \brief  
  */
-extern inline void robotGetPacket(st_rtnetReceive *recv, void *msg);
+extern inline int robotGetPacket(st_rtnetReceive *recv, void *msg);
 
 /*****************************************************************************/
 

@@ -46,7 +46,6 @@ static inline int taskCreateRtaiRefY(RT_TASK *task, unsigned long taskName, char
 	/*Es ist nicht noetig um die priority im sched_param structure anzusetzen, da 
 	 * es bereits im rt_task_init_schmod Function angesetzt ist.
 	 */
-	
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);
 	
@@ -120,6 +119,7 @@ void *robotRefModSimY(void *ptr)
 		return NULL;
 	}
 
+	printf("REFMODY\n\r");
 	tInit = rt_get_time_ns();
 	do {
 		currentT = rt_get_time_ns() - tInit;
@@ -153,7 +153,6 @@ void *robotRefModSimY(void *ptr)
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
 	taskFinishRtaiRefSim(simtask);
-	free(local);
 	free(refmod);
 	return NULL;
 }

@@ -137,6 +137,7 @@ void *robotLin(void *ptr)
 	rtnetSendPacketInit(sendSim, "SIMTASK");
 	rtnetRecvPacketInit(recvSim, "SIMTASK");
 
+	printf("LIN\n\r");
 	tInit = rt_get_time_ns();
 	do {
 		currentT = rt_get_time_ns() - tInit;
@@ -149,7 +150,11 @@ void *robotLin(void *ptr)
 		 */
 
 		/* Get x from simulation thread*/
-		robotGetPacket(recvSim, (void*)linPacket->x);
+		if (robotGetPacket(recvSim, (void*)linPacket->x) < 0)  {
+			linPacket->x[0] = 0;
+			linPacket->x[1] = 0;
+			linPacket->x[2] = 0;
+		}
 	
 		/* Get v */
 		monitorControlMain(shared, local, MONITOR_GET_V);
@@ -169,12 +174,13 @@ void *robotLin(void *ptr)
 
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
+	printf("l1\n\r");
 	rtnetSendPacketFinish(sendSim);
+	printf("l2\n\r");
 	rtnetRecvPacketFinish(recvSim);
-	free(sendSim);
-	free(recvSim);
-	free(local);
+	printf("l3\n\r");
 	taskFinishRtaiLin(lintask);
+	printf("l4\n\r");
 	return NULL;
 }
 

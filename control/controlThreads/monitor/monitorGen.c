@@ -23,11 +23,11 @@
  */
 inline int monitorGenSet(st_robotControlShared *shared, st_robotControl *local)
 {
-	pthread_mutex_lock(&shared->mutexGen);
+	pthread_mutex_lock(&shared->mutex.mutexGen);
 
 	memcpy(&shared->control.generation_t, &local->generation_t, sizeof(st_robotGeneration_t));
 
-	pthread_mutex_unlock(&shared->mutexGen);
+	pthread_mutex_unlock(&shared->mutex.mutexGen);
 
 	return 0;
 }
@@ -42,11 +42,11 @@ inline int monitorGenSet(st_robotControlShared *shared, st_robotControl *local)
  */
 inline int monitorGenGet(st_robotControl *local, st_robotControlShared *shared)
 {	
-	pthread_mutex_lock(&shared->mutexGen);
+	pthread_mutex_lock(&shared->mutex.mutexGen);
 
 	memcpy(&local->generation_t, &shared->control.generation_t, sizeof(st_robotGeneration_t));
 
-	pthread_mutex_unlock(&shared->mutexGen);
+	pthread_mutex_unlock(&shared->mutex.mutexGen);
 
 	return 0;
 }
