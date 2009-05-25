@@ -38,10 +38,18 @@
 //! Priorities
 #define GENPRIORITY	1
 #define SIMPRIORITY		(GENPRIORITY + 1)
-#define CALCPRIORITY	(GENPRIORITY + 2)
-#define REFMODXPRIORITY	(GENPRIORITY + 3)
-#define REFMODYPRIORITY	(GENPRIORITY + 4)
+#define REFMODXPRIORITY	(GENPRIORITY + 2)
+#define REFMODYPRIORITY	(GENPRIORITY + 3)
+#define CALCPRIORITY	(GENPRIORITY + 4)
 #define LINPRIORITY		(GENPRIORITY + 5)
+
+//! Tasks names
+#define GENTASK		"GEN"
+#define REFMODX		"REFX"
+#define REFMODY		"REFY"
+#define CONTROLTSK	"CTRL"
+#define LINEARTSK	"LIN"
+#define SIMTSK		"SIM"
 
 //! below this value I consider that it equals to zero
 #define	CALCERROR	0.00001
@@ -73,20 +81,23 @@
 #define MAX_DATA_VALUE	(int)(ceil( ( (double)( (TOTAL_TIME) / (STEPTIMESIM) ) ) ) + 10 )
 
 //! Monitor defines
-#define MONITOR_GET_REFERENCE	0
-#define MONITOR_SET_REFERENCE	1
+#define MONITOR_GET_REFERENCE_X	0
+#define MONITOR_SET_REFERENCE_X	1
 
-#define MONITOR_GET_YMX			2
-#define MONITOR_SET_YMX			3
+#define MONITOR_GET_REFERENCE_Y 2
+#define MONITOR_SET_REFERENCE_Y 3
 
-#define MONITOR_GET_YMY			4
-#define MONITOR_SET_YMY			5
+#define MONITOR_GET_YMX			4
+#define MONITOR_SET_YMX			5
 
-#define MONITOR_GET_V			6
-#define MONITOR_SET_V			7
+#define MONITOR_GET_YMY			6
+#define MONITOR_SET_YMY			7
 
-#define MONITOR_GET_SIM_SHARED	8
-#define MONITOR_SET_SIM_SHARED	9
+#define MONITOR_GET_V			8
+#define MONITOR_SET_V			9
+
+#define MONITOR_GET_SIM_SHARED	10
+#define MONITOR_SET_SIM_SHARED	11
 
 
 #endif //! _ROBOTDEFINES_H

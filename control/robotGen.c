@@ -25,9 +25,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 	
-	printf("control init\n\r");
 	robotControlThreadsMain();
-
 	return 0;
 }
 

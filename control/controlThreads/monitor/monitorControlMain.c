@@ -8,6 +8,7 @@
 
 /* libc */
 #include <stdio.h>
+#include <rtai_sem.h>
 
 /* robot */
 #include "monitorControlMain.h"
@@ -23,12 +24,20 @@ inline void monitorControlMain(st_robotControlShared *shared, st_robotControl *l
 {
 
 	switch (type) {
-		case MONITOR_GET_REFERENCE:
-			monitorGenGet(local, shared);
+		case MONITOR_GET_REFERENCE_X:
+			monitorGenGetX(local, shared);
 			break;
 
-		case MONITOR_SET_REFERENCE:
-			monitorGenSet(shared, local);
+		case MONITOR_SET_REFERENCE_X:
+			monitorGenSetX(shared, local);
+			break;	
+		
+		case MONITOR_GET_REFERENCE_Y:
+			monitorGenGetY(local, shared);
+			break;
+
+		case MONITOR_SET_REFERENCE_Y:
+			monitorGenSetY(shared, local);
 			break;
 
 		case MONITOR_GET_YMX:
@@ -61,5 +70,4 @@ inline void monitorControlMain(st_robotControlShared *shared, st_robotControl *l
 	}
 
 }
-
 

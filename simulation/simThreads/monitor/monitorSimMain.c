@@ -8,6 +8,7 @@
 
 /* libc */
 #include <stdio.h>
+#include <semaphore.h>
 
 /* robot */
 #include "monitorSim.h"

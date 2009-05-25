@@ -24,6 +24,7 @@
 #include "robotStructs.h"
 
 /*rtai includes*/
+#include <rtai_sem.h>
 #include <rtai_lxrt.h>
 
 /*****************************************************************************/
@@ -31,17 +32,24 @@
 /**
  * \brief  Initializes shared memory
  * \param  shared Void pointer to shared memory
- * \return 0 Ok, -1 Error. 
+ * \return 
  */
 static int robotSharedInit(void *ptr)
 {
 	st_robotControlShared *shared = ptr;
+	int ret = 0;
 
-	pthread_mutex_init(&shared->mutex.mutexControl, NULL);
-	pthread_mutex_init(&shared->mutex.mutexLin, NULL);
-	pthread_mutex_init(&shared->mutex.mutexGen, NULL);
+	ret += pthread_mutex_init(&shared->mutex.mutexControl, NULL);
+	ret += pthread_mutex_init(&shared->mutex.mutexLin, NULL);
+	ret += pthread_mutex_init(&shared->mutex.mutexGen, NULL);
 
-	//robotShared->sem.rt_sem = rt_sem_init(nam2num("SEM_RT"), 0);
+	shared->sem.sm_refx = rt_sem_init(nam2num("SEM1"), 0);	
+	shared->sem.sm_refy = rt_sem_init(nam2num("SEM2"), 0);
+	shared->sem.sm_control = rt_sem_init(nam2num("SEM3"), 0);
+	shared->sem.sm_lin = rt_sem_init(nam2num("SEM4"), 0);
+
+	if(shared->sem.sm_refx == NULL)
+		printf("sem x null\n\r");
 
 	//if ( (sem_init(&robotShared->sem.disp_sem, 0, 0) < 0) ) {
 	//	fprintf(stderr, "Error in sem_init: %d\n", errno);
@@ -65,7 +73,10 @@ static void robotSharedCleanUp(void *ptr)
 	pthread_mutex_destroy(&shared->mutex.mutexControl);
 	pthread_mutex_destroy(&shared->mutex.mutexLin);
 	pthread_mutex_destroy(&shared->mutex.mutexGen);
-	//rt_sem_delete(robotShared->sem.rt_sem);
+	rt_sem_delete(shared->sem.sm_refx);
+	rt_sem_delete(shared->sem.sm_refy);
+	rt_sem_delete(shared->sem.sm_control);
+	rt_sem_delete(shared->sem.sm_lin);
 	stop_rt_timer();
 	free(shared);
 }
@@ -76,11 +87,11 @@ void robotControlThreadsMain(void)
 {
 	void *shared; 
 	
-	int rt_controlTask_thread;
 	int rt_genTask_thread;
-	int rt_linTask_thread;
 	int rt_refXTask_thread;
 	int rt_refYTask_thread;
+	int rt_controlTask_thread;
+	int rt_linTask_thread;
 	int stkSize;
 
 	if ( (shared = (st_robotControlShared*) malloc(sizeof(st_robotControlShared)) ) == NULL ) { 
@@ -89,7 +100,7 @@ void robotControlThreadsMain(void)
 	}
 	
 	/* shared init */
-	memset(shared, 0, sizeof(st_robotControlShared) );
+	//memset(shared, 0, sizeof(st_robotControlShared) );
 	if( robotSharedInit(shared) < 0){
 		free(shared);
 		return;
@@ -108,41 +119,40 @@ void robotControlThreadsMain(void)
 		return;
 	}	
 
-	printf("b\n\r");
-	if(!(rt_controlTask_thread = rt_thread_create(robotControl, shared, stkSize))) {
-		fprintf(stderr, "Error Creating control Thread!!\n");
-		robotSharedCleanUp(shared);
-		return;
-	}	
-	
 	printf("c\n\r");
-	if(!(rt_linTask_thread = rt_thread_create(robotLin, shared, stkSize))) {
-		fprintf(stderr, "Error Creating linearization Thread!!\n");
+	if(!(rt_refXTask_thread = rt_thread_create(robotRefModSimX, shared, stkSize))) {
+		fprintf(stderr, "Error Creating refX Thread!!\n");
 		robotSharedCleanUp(shared);
 		return;
-	}
-	
-	printf("d\n\r");
+	}		
+	printf("b\n\r");
 	if(!(rt_refYTask_thread = rt_thread_create(robotRefModSimY, shared, stkSize))) {
 		fprintf(stderr, "Error Creating refY Thread!!\n");
 		robotSharedCleanUp(shared);
 		return;
 	}	
 
-	printf("e\n\r");
-	if(!(rt_refXTask_thread = rt_thread_create(robotRefModSimX, shared, stkSize))) {
-		fprintf(stderr, "Error Creating refX Thread!!\n");
+	printf("d\n\r");
+	if(!(rt_controlTask_thread = rt_thread_create(robotControl, shared, stkSize))) {
+		fprintf(stderr, "Error Creating control Thread!!\n");
 		robotSharedCleanUp(shared);
 		return;
 	}	
 	
+	printf("e\n\r");
+	if(!(rt_linTask_thread = rt_thread_create(robotLin, shared, stkSize))) {
+		fprintf(stderr, "Error Creating linearization Thread!!\n");
+		robotSharedCleanUp(shared);
+		return;
+	}
+	
 	/* Wait for all threads to complete */
-	rt_thread_join(rt_controlTask_thread);
 	rt_thread_join(rt_genTask_thread);
-	rt_thread_join(rt_linTask_thread);
 	rt_thread_join(rt_refXTask_thread);
 	rt_thread_join(rt_refYTask_thread);
-
+	rt_thread_join(rt_controlTask_thread);
+	rt_thread_join(rt_linTask_thread);
+	
 	/* Clean up and exit */
 	robotSharedCleanUp(shared);
 	return; 

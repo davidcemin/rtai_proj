@@ -20,6 +20,7 @@
 #include "robotStructs.h"
 #include "rtnetAPI.h"
 #include "simThreads.h"
+#include "rtaiCtrl.h"
 
 /*rtai includes*/
 #include <rtai_netrpc.h>
@@ -27,69 +28,6 @@
 
 //! Defined used in jitter calculations and the like.
 #define CALC_DATA
-
-/*****************************************************************************/
-
-/**
- * \brief  It creates a rtai task
- * \param  task Pointer to task 
- * \param  taskName Task's name
- * \param  priority Task's priority
- * \param  stepTick Step timer
- * \return -1 error, 0 ok.
- */
-static inline int taskCreateRtaiSim(RT_TASK *task, unsigned long taskName, char priority, double stepTick) 
-{
-	int period;
-	int stkSize;
-	int msgSize;
-
-	/*set root permissions to user space*/
-	rt_allow_nonroot_hrt();
-
-	/*Es ist nicht noetig um die priority im sched_param structure anzusetzen, da 
-	 * es bereits im rt_task_init_schmod Function angesetzt ist.
-	 */
-	/*It Prevents the memory to be paged*/
-    mlockall(MCL_CURRENT | MCL_FUTURE);
-	
-	msgSize = sizeof(st_robotSimulShared);
-	stkSize = msgSize + 10000;
-
-	if(!(task = rt_task_init_schmod(taskName, priority, stkSize, msgSize, SCHED_FIFO, 0xff) ) ) {	
-		fprintf(stderr, "Cannot Init Task: ");
-		return -1;
-	}
-
-	/*make it hard real time*/	
-    rt_make_hard_real_time();
-
-	/*set the period according to our desired tick*/
-	period = (int)nano2count((RTIME)stepTick);
-
-	/*start the task*/
-	rt_task_make_periodic(task, rt_get_time()+period, period);
-
-	return 0;
-}
-
-/*****************************************************************************/
-
-/**
- * \brief  It destroys a rtai task
- * \param  task pointer to task to be destroyed
- * \return void
- */
-static inline void taskFinishRtaiSim(RT_TASK *task)
-{
-	/* Here also is not necessary to use rt_make_soft_real_time because rt_task_delete 
-	 * already use it(base/include/rtai_lxrt.h:842)
-	 */
-	rt_task_delete(task);
-	
-	/*release pagination*/
-	munlockall();
-}
 
 /*****************************************************************************/
 
@@ -144,7 +82,6 @@ void *robotSimulation(void *ptr)
 	double tInit = 0;
 
 	RT_TASK *simtask = NULL;
-	unsigned long simtask_name = nam2num("SIMTASK");
 	
 	/* Allocates memory to robot structure */
 	if ( (robot = (st_robotMainArrays*) malloc(sizeof(robot)) ) == NULL ) { 
@@ -173,7 +110,7 @@ void *robotSimulation(void *ptr)
 	}
 	
 	printf("Simulation!\n\r");
-	if(taskCreateRtaiSim(simtask, simtask_name, SIMPRIORITY, STEPTIMESIMNANO) < 0) {
+	if(taskCreateRtai(simtask, SIMTSK, SIMPRIORITY, STEPTIMESIMNANO, sizeof(st_robotSimulShared) ) < 0) {
 		fprintf(stderr, "Simulation!\n");
 		free(robot);
 		return NULL;
@@ -182,9 +119,9 @@ void *robotSimulation(void *ptr)
 	printf("rt init done\n\r");
 	memset(robot, 0, sizeof(robot));
 	memset(simulPack, 0, sizeof(simulPack));
-	rtnetRecvPacketInit(recvLin, "LINTASK");
-	rtnetSendPacketInit(sendLin, "LINTASK");
-	rtnetSendPacketInit(sendCtrl, "CTRLTASK");
+	rtnetRecvPacketInit(recvLin, LINEARTSK);
+	rtnetSendPacketInit(sendLin, LINEARTSK);
+	rtnetSendPacketInit(sendCtrl, CONTROLTSK);
 
 	tInit = rt_get_time_ns();
 	do {
@@ -195,6 +132,7 @@ void *robotSimulation(void *ptr)
 
 		/* get u from lin thread*/
 		if(robotGetPacket(recvLin, (void*)simulPack->u) < 0) {
+			/*We need to keep the last packet when kein packet is received*/
 			simulPack->u[0] = 0;
 			simulPack->u[1] = 0;
 		}
@@ -242,7 +180,7 @@ void *robotSimulation(void *ptr)
 	rtnetSendPacketFinish(sendCtrl);
 	rtnetSendPacketFinish(sendLin);
 	rtnetRecvPacketFinish(recvLin);
-	taskFinishRtaiSim(simtask);
+	taskFinishRtai(simtask);
 	return NULL;
 }
 

@@ -17,11 +17,13 @@
 /*robot includes*/
 #include "libRobot.h"
 #include "monitorControlMain.h"
+#include "robotDefines.h"
 #include "robotStructs.h"
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
 #include "robotControl.h"
 #include "rtnetAPI.h"
+#include "rtaiCtrl.h"
 
 /*rtai includes*/
 #include <rtai_lxrt.h>
@@ -53,68 +55,6 @@ static inline int robotLogData(st_robotSample *sample)
 	fclose(fd);
 	return 0;
 }
-
-/*****************************************************************************/
-
-/**
- * \brief  It creates a rtai task
- * \param  task Pointer to task 
- * \param  taskName Task's name
- * \param  priority Task's priority
- * \param  stepTick Step timer
- * \return -1 error, 0 ok.
- */
-static inline int taskCreateRtai(RT_TASK *task, unsigned long taskName, char priority, double stepTick) 
-{
-	int period;
-	int stkSize;
-	int msgSize;
-
-	/*set root permissions to user space*/
-	rt_allow_nonroot_hrt();
-
-	/*Es ist nicht noetig um die priority im sched_param structure anzusetzen, da 
-	 * es bereits im rt_task_init_schmod Function angesetzt ist.
-	 */
-	
-	/*It Prevents the memory to be paged*/
-    mlockall(MCL_CURRENT | MCL_FUTURE);
-	
-	msgSize = sizeof(st_robotControlShared);
-	stkSize = msgSize + 10000;
-
-	if(!(task = rt_task_init_schmod(taskName, priority, stkSize, msgSize, SCHED_FIFO, 0xff) ) ) {	
-		fprintf(stderr, "Cannot Init Task: ");
-		return -1;
-	}
-
-	/*make it hard real time*/	
-    rt_make_hard_real_time();
-
-	/*set the period according to our desired tick*/
-	period = (int)nano2count((RTIME)stepTick);
-
-	/*start the task*/
-	rt_task_make_periodic(task, rt_get_time()+period, period);
-
-	return 0;
-}
-
-/*****************************************************************************/
-
-/**
- * \brief  It destroys a rtai task
- * \param  task pointer to task to be destroyed
- * \return void
- */
-static inline void taskFinishRtai(RT_TASK *task)
-{
-	/* Here also is not necessary to use rt_make_soft_real_time because rt_task_delete 
-	 * already use it(base/include/rtai_lxrt.h:842)
-	 */
-	rt_task_delete(task);
-}
-
 
 /*****************************************************************************/
 
@@ -151,9 +91,7 @@ void *robotControl(void *ptr)
 	double lastT = 0;
 	double total = 0;
 	double tInit = 0;
-
 	RT_TASK *calctask = NULL;
-	unsigned long calctask_name = nam2num("CTRLTASK");
 	
 	/* Allocates memory to robot structure */
 	if ( (sample = (st_robotSample*)malloc(sizeof(sample)) ) == NULL ) { 
@@ -176,8 +114,8 @@ void *robotControl(void *ptr)
 		free(local);
 		return NULL;
 	}
-
-	if(taskCreateRtai(calctask, calctask_name, CALCPRIORITY, STEPTIMECALCNANO) < 0){
+	
+	if(taskCreateRtai(calctask, CONTROLTSK, CALCPRIORITY, STEPTIMECALCNANO, sizeof(st_robotControlShared)) < 0) {
 		fprintf(stderr, "Calculation!\n");
 		free(sample);
 		return NULL;
@@ -187,8 +125,11 @@ void *robotControl(void *ptr)
 	memset(local, 0, sizeof(local));
 	memset(sample, 0, sizeof(sample) );
 	memset(simulPacket, 0, sizeof(simulPacket));
-	rtnetRecvPacketInit(recvSim, "SIMTASK");
+	rtnetRecvPacketInit(recvSim, SIMTSK);
 
+	rt_sem_wait(shared->sem.sm_control);
+	rt_sem_wait(shared->sem.sm_control);
+	rt_sem_signal(shared->sem.sm_lin);
 
 	printf("CONTROL\n\r");
 	tInit = rt_get_time_ns();
