@@ -70,8 +70,10 @@ static inline void robotCalcV(st_robotControl *local, double *y)
 	double ymy = local->control_t.ym[YM_POSITION];
 	double dymx = local->control_t.dym[XM_POSITION];
 	double dymy = local->control_t.dym[YM_POSITION];
-	unsigned char alpha1 = local->alpha[ALPHA_1];
-	unsigned char alpha2 = local->alpha[ALPHA_2];
+	unsigned char alpha1 = 1;
+	unsigned char alpha2 = 1;
+	//unsigned char alpha1 = local->alpha[ALPHA_1];
+	//unsigned char alpha2 = local->alpha[ALPHA_2];
 
 	local->lin_t.v[0] = dymx + alpha1*(ymx - y[0]);
 	local->lin_t.v[1] = dymy + alpha2*(ymy - y[1]);
@@ -85,13 +87,18 @@ void *robotControl(void *ptr)
 	st_robotControl *local;
 	st_robotSample *sample;
 	st_robotSimulPacket *simulPacket;
-	st_rtnetReceive *recvSim;
+	RT_TASK *recvSim = NULL;
 
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
 	double tInit = 0;
 	RT_TASK *calctask = NULL;
+	
+	printf("antes\n\r");
+	/*init rtnet*/
+	rtnetPacketInit(&shared->rtnet);
+	printf("depois\n\r");
 	
 	/* Allocates memory to robot structure */
 	if ( (sample = (st_robotSample*)malloc(sizeof(sample)) ) == NULL ) { 
@@ -104,11 +111,6 @@ void *robotControl(void *ptr)
 		return NULL;
 	}
 
-	if ( (recvSim = (st_rtnetReceive*)malloc(sizeof(recvSim))) == NULL ) {
-		fprintf(stderr, "Not possible to allocate memory to recvSim packet\n\r");
-		return NULL;
-	}	
-	
 	if ( (local = (st_robotControl*)malloc(sizeof(local))) == NULL ) {
 		fprintf(stderr, "Error in generation structure memory allocation\n");
 		free(local);
@@ -125,7 +127,7 @@ void *robotControl(void *ptr)
 	memset(local, 0, sizeof(local));
 	memset(sample, 0, sizeof(sample) );
 	memset(simulPacket, 0, sizeof(simulPacket));
-	rtnetRecvPacketInit(recvSim, SIMTSK);
+	rtnetTaskWait(&shared->rtnet, recvSim, SIMTSK);
 
 	rt_sem_wait(shared->sem.sm_control);
 	rt_sem_wait(shared->sem.sm_control);
@@ -149,11 +151,12 @@ void *robotControl(void *ptr)
 		monitorControlMain(shared, local, MONITOR_GET_YMY);
 
 		/* get y */
-		if (robotGetPacket(recvSim, (void*)simulPacket->y) < 0) {
+		if (robotGetPacket(&shared->rtnet, recvSim, (void*)simulPacket->y) == 0) {
 			simulPacket->y[XM_POSITION] = 0;
 			simulPacket->y[YM_POSITION] = 0;
 		}
 
+		printf("%f\t%f\n\r", simulPacket->y[0], simulPacket->y[1]);
 		/*first we get alpha values, not in crictical session */
 		local->alpha[ALPHA_1] = shared->control.alpha[ALPHA_1];
 		local->alpha[ALPHA_2] = shared->control.alpha[ALPHA_2];
@@ -176,12 +179,8 @@ void *robotControl(void *ptr)
 	//if(	robotLogData(sample) < 0) 
 	//	fprintf(stderr, "Error! It was not possible to log data!\n\r");
 
-	printf("c1\n\r");
-	rtnetRecvPacketFinish(recvSim);
-	printf("c2\n\r");
 	taskFinishRtai(calctask);
-	printf("c3\n\r");
 	free(sample);
-	printf("c4\n\r");
+	rtnetPacketFinish(&shared->rtnet);
 	return NULL;
 }

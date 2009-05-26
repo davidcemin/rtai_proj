@@ -34,8 +34,8 @@ void *robotLin(void *ptr)
 	st_robotControlShared *shared = ptr;
 	st_robotControl *local;
 	st_robotLinPacket *linPacket;
-	st_rtnetSend *sendSim; 
-	st_rtnetReceive *recvSim;
+	RT_TASK *sendSim = NULL; 
+	RT_TASK *recvSim = NULL;
 
 	double currentT = 0;
 	double lastT = 0;
@@ -45,16 +45,6 @@ void *robotLin(void *ptr)
 
 	if ( (linPacket = (st_robotLinPacket*)malloc(sizeof(linPacket)) ) == NULL ) {
 		fprintf(stderr, "Error in linPacket malloc\n");
-		return NULL;
-	}
-	
-	if ( (sendSim = (st_rtnetSend*)malloc(sizeof(sendSim))) == NULL ) {
-		fprintf(stderr, "Not possible to allocate memroy to sendSim packet\n\r");
-		return NULL;
-	}
-	
-	if ( (recvSim = (st_rtnetReceive*)malloc(sizeof(recvSim))) == NULL ) {
-		fprintf(stderr, "Not possible to allocate memory to recvSim packet\n\r");
 		return NULL;
 	}
 	
@@ -73,8 +63,8 @@ void *robotLin(void *ptr)
 	memset(local, 0, sizeof(local));
 	memset(linPacket, 0, sizeof(linPacket));
 	rt_sem_wait(shared->sem.sm_lin);
-	rtnetSendPacketInit(sendSim, SIMTSK);
-	rtnetRecvPacketInit(recvSim, SIMTSK);
+	rtnetTaskWait(&shared->rtnet, sendSim, SIMTSK);
+	rtnetTaskWait(&shared->rtnet, recvSim, SIMTSK);
 
 	printf("LIN\n\r");
 	tInit = rt_get_time_ns();
@@ -89,7 +79,7 @@ void *robotLin(void *ptr)
 		 */
 
 		/* Get x from simulation thread*/
-		if (robotGetPacket(recvSim, (void*)linPacket->x) < 0)  {
+		if (robotGetPacket(&shared->rtnet, recvSim, (void*)linPacket->x) == 0)  {
 			linPacket->x[0] = 0;
 			linPacket->x[1] = 0;
 			linPacket->x[2] = 0;
@@ -105,7 +95,7 @@ void *robotLin(void *ptr)
 		robotGenU(linPacket);
 
 		/* send u */
-		robotSendPacket(sendSim, (void*)linPacket->u);
+		robotSendPacket(&shared->rtnet, sendSim, (void*)linPacket->u);
 
 		lastT = currentT;
 		total = currentT / SEC2NANO(1); 	
@@ -113,13 +103,7 @@ void *robotLin(void *ptr)
 
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
-	printf("l1\n\r");
-	rtnetSendPacketFinish(sendSim);
-	printf("l2\n\r");
-	rtnetRecvPacketFinish(recvSim);
-	printf("l3\n\r");
 	taskFinishRtai(lintask);
-	printf("l4\n\r");
 	return NULL;
 }
 

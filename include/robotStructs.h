@@ -19,6 +19,15 @@
 /*robot includes*/
 #include "robotDefines.h"
 
+/**************************** rtnet structures *******************************/
+
+//! rtnet main structure
+typedef struct {
+	unsigned int node;
+	unsigned int port;
+	struct sockaddr_in addr;
+} st_rtnetRobot;
+
 
 /************************* control structures ****************************/
 
@@ -75,6 +84,7 @@ typedef struct {
 //! Monitor shared structure
 typedef struct {
 	st_robotControl control;
+	st_rtnetRobot rtnet;
 	st_controlMutex mutex;
 	st_controlSem sem;
 } st_robotControlShared;
@@ -109,28 +119,10 @@ typedef struct {
 typedef struct {
 	double t;
 	st_robotSimulPacket simul_t;
+	st_rtnetRobot rtnet;
 	pthread_mutex_t mutexSim;
 	sem_t disp_sem;
 } st_robotSimulShared;
-
-/**************************** rtnet structures *******************************/
-
-//! rtnet receive packet information
-typedef struct {
-	RT_TASK  *recvfrom;
-	unsigned int recvnode;
-	unsigned int recvport;
-	struct sockaddr_in addr;
-	long len;
-} st_rtnetReceive;
-
-//! rtnet send packet information
-typedef struct {
-	RT_TASK *sendto;
-	unsigned int sendnode;
-	unsigned int sendport;
-	struct sockaddr_in addr;
-} st_rtnetSend;
 
 /******************************************************************************/
 

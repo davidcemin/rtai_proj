@@ -17,11 +17,11 @@ insmodules () {
 	insmod /usr/realtime/modules/rtai_sem.ko
 	insmod /usr/realtime/modules/rtai_mbx.ko
 	insmod /usr/realtime/modules/rtai_netrpc.ko ThisSoftNode="127.0.0.1"
-#	insmod /usr/realtime/modules/rtai_msg.ko
+	insmod /usr/realtime/modules/rtai_msg.ko
 }
 
 rmmodules() {
-#	rmmod rtai_msg
+	rmmod rtai_msg
 	rmmod rtai_netrpc
 	rmmod rtai_mbx
 	rmmod rtai_sem

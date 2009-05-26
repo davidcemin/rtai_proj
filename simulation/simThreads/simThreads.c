@@ -18,6 +18,7 @@
 #include "robotSimulation.h"
 #include "simThreads.h"
 #include "robotDisplay.h"
+#include "rtnetAPI.h"
 
 /*rtai includes*/
 #include <rtai_lxrt.h>
@@ -70,9 +71,9 @@ void robotSimThreadsMain(void)
 	int rt_simTask_thread;
 	int stkSize;
 
-	pthread_t threadDisplay;
-	pthread_attr_t attr;
-	int ret;
+	//pthread_t threadDisplay;
+	//pthread_attr_t attr;
+	//int ret;
 	
 	if ( (shared = (st_robotSimulShared*) malloc(sizeof(st_robotSimulShared)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to shared!\n\r");
@@ -92,6 +93,7 @@ void robotSimThreadsMain(void)
 
 	stkSize = sizeof(st_robotSimulShared) + 10000;
 
+
 	/*rtai simulation thread*/
 	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, stkSize))) {
 		fprintf(stderr, "Error Creating Simulation Thread!!\n");
@@ -102,22 +104,22 @@ void robotSimThreadsMain(void)
 	/*Create display thread*/
 	
 	/* For portability, explicitly create threads in a joinable state */
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	//pthread_attr_init(&attr);
+	//pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-	if ( (ret = pthread_create(&threadDisplay, &attr, robotThreadDisplay, shared) ) ) {
-		fprintf(stderr, "Error Creating Display Thread: %d\n", ret);
-		pthread_attr_destroy(&attr);
-		robotSimSharedCleanUp(shared);
-		return;
-	}
+	//if ( (ret = pthread_create(&threadDisplay, &attr, robotThreadDisplay, shared) ) ) {
+	//	fprintf(stderr, "Error Creating Display Thread: %d\n", ret);
+	//	pthread_attr_destroy(&attr);
+	//	robotSimSharedCleanUp(shared);
+	//	return;
+	//}
 
 	/* Wait for all threads to complete */
 	rt_thread_join(rt_simTask_thread);
-	pthread_join(threadDisplay, NULL);
+	//pthread_join(threadDisplay, NULL);
 
 	/* Clean up and exit */
-	pthread_attr_destroy(&attr);
+	//pthread_attr_destroy(&attr);
 	robotSimSharedCleanUp(shared);
 	return; 
 }

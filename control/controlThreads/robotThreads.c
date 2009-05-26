@@ -22,6 +22,7 @@
 #include "robotLin.h"
 #include "robotRefModels.h"
 #include "robotStructs.h"
+#include "rtnetAPI.h"
 
 /*rtai includes*/
 #include <rtai_sem.h>
@@ -43,10 +44,10 @@ static int robotSharedInit(void *ptr)
 	ret += pthread_mutex_init(&shared->mutex.mutexLin, NULL);
 	ret += pthread_mutex_init(&shared->mutex.mutexGen, NULL);
 
-	shared->sem.sm_refx = rt_sem_init(nam2num("SEM1"), 0);	
-	shared->sem.sm_refy = rt_sem_init(nam2num("SEM2"), 0);
-	shared->sem.sm_control = rt_sem_init(nam2num("SEM3"), 0);
-	shared->sem.sm_lin = rt_sem_init(nam2num("SEM4"), 0);
+	shared->sem.sm_refx = rt_sem_init(nam2num("1l"), 0);	
+	shared->sem.sm_refy = rt_sem_init(nam2num("2l"), 0);
+	shared->sem.sm_control = rt_sem_init(nam2num("3l"), 0);
+	shared->sem.sm_lin = rt_sem_init(nam2num("4l"), 0);
 
 	if(shared->sem.sm_refx == NULL)
 		printf("sem x null\n\r");
@@ -112,6 +113,7 @@ void robotControlThreadsMain(void)
 
 	stkSize = sizeof(st_robotControlShared) + 10000;
 
+	
 	printf("a\n\r");
 	if(!(rt_genTask_thread = rt_thread_create(robotGeneration, shared, stkSize))) {
 		fprintf(stderr, "Error Creating generation Thread!!\n");

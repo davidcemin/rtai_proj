@@ -78,5 +78,6 @@ void *robotGeneration(void *ptr)
 	printf("g1\n\r");
 	taskFinishRtai(gentask);
 	printf("g2\n\r");
+	free(local);
 	return NULL;
 }
