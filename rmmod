@@ -1,0 +1,8 @@
+#!/bin/bash
+sudo rmmod rtai_netrpc
+sudo rmmod rtai_msg
+sudo rmmod rtai_mbx
+sudo rmmod rtai_sem
+sudo rmmod rtai_wd
+sudo rmmod rtai_lxrt
+sudo rmmod rtai_hal

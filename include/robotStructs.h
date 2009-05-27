@@ -23,8 +23,8 @@
 
 //! rtnet main structure
 typedef struct {
-	unsigned int node;
-	unsigned int port;
+	unsigned long node;
+	int port;
 	struct sockaddr_in addr;
 } st_rtnetRobot;
 
@@ -33,18 +33,16 @@ typedef struct {
 
 //! Structure with reference models
 typedef struct {
-	double timeInstant[MAX_DATA_VALUE];	//! Current time
-	double ref[MAX_DATA_VALUE];			//! x and y reference
-	double ym[MAX_DATA_VALUE];			//! ymx and ymy
-	double dRef[MAX_DATA_VALUE];		//! ref'
-	int alpha;							//! alpha used
-	int kIndex;							//! current index
+	double timeInstant[MAX_DATA_VALUE];	
+	double ref[MAX_DATA_VALUE];			
+	double ym[MAX_DATA_VALUE];			
+	double dRef[MAX_DATA_VALUE];		
+	int kIndex;							
 } st_robotRefMod;
 
 //! Structure used in reference generation
 typedef struct {
-	double xref;
-	double yref;
+	double ref[REF_DIMENSION];
 } st_robotGeneration_t;
 
 //! Control structure

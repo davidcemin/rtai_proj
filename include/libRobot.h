@@ -102,10 +102,13 @@ extern void robotNewYm(st_robotRefMod *refmod);
 
 /**
  * \brief  It calculates the first derivative from ym
- * \param  refmod Pointer to st_robotRefMod structure
+ * \param  refmod Pointer to st_robotRefMod structure 
+ * \param  local Pointer to st_robotControl structure
+ * \param  type xref or yref
+
  * \return void
  */
-extern void robotDxYm(st_robotRefMod *refmod);
+extern void robotDxYm(st_robotRefMod *refmod, st_robotControl *local, int type);
 
 /******************************************************************************/
 

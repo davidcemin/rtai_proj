@@ -29,13 +29,14 @@
 
 void *robotGeneration(void *ptr)
 {
-	st_robotControlShared *shared = ptr;
+	st_robotControlShared *shared = (st_robotControlShared*)ptr;
 	st_robotControl *local;
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
 	double tInit = 0;
 	RT_TASK *gentask = NULL;
+	int started_timer = 0;
 	
 	if ( (local = (st_robotControl*)malloc(sizeof(local))) == NULL ) {
 		fprintf(stderr, "Error in generation structure memory allocation\n");
@@ -43,13 +44,16 @@ void *robotGeneration(void *ptr)
 		return NULL;
 	}
 
-	if(taskCreateRtai(gentask, GENTASK, GENPRIORITY, STEPTIMEGENERNANO, sizeof(st_robotControlShared)) < 0){
+	if( (started_timer = taskCreateRtai(gentask, GENTASK, GENPRIORITY, STEPTIMEGENERNANO, sizeof(st_robotControlShared)) ) < 0){
 		fprintf(stderr, "Generation!\n");
 		return NULL;
-	}	
-	
+	}
+	mkTaksRealTime(gentask, STEPTIMEGENERNANO, GENTASK);
+
 	rt_sem_signal(shared->sem.sm_refx);
+	printf("release x..\n\r");
 	rt_sem_signal(shared->sem.sm_refy);
+	printf("reelase y...");
 
 	memset(local, 0, sizeof(local));
 
@@ -62,7 +66,6 @@ void *robotGeneration(void *ptr)
 		 * 1) Generate xref and yref;
 		 * 2) Put it inside shared memory
 		 */
-
 		robotRefGen(local, total);
 
 		/*Set xref and yref into shared memory*/
@@ -72,12 +75,8 @@ void *robotGeneration(void *ptr)
 		lastT = currentT;
 		total = currentT / SEC2NANO(1); 	
 		rt_task_wait_period();
-
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
-	printf("g1\n\r");
-	taskFinishRtai(gentask);
-	printf("g2\n\r");
-	free(local);
+	taskFinishRtai(gentask, started_timer);
 	return NULL;
 }

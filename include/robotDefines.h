@@ -16,7 +16,7 @@
 
 //! Simulation timers
 #define INIT_TIME			0.0
-#define FINAL_TIME			20.0
+#define FINAL_TIME			2.0
 #define TOTAL_TIME	 ( FINAL_TIME - INIT_TIME ) 
 
 //! Step times
@@ -36,20 +36,20 @@
 #define STEPTIMEREFMODELYNANO	SEC2NANO(STEPTIMEREFMODELY)
 
 //! Priorities
-#define GENPRIORITY	1
-#define SIMPRIORITY		(GENPRIORITY + 1)
-#define REFMODXPRIORITY	(GENPRIORITY + 2)
-#define REFMODYPRIORITY	(GENPRIORITY + 3)
-#define CALCPRIORITY	(GENPRIORITY + 4)
-#define LINPRIORITY		(GENPRIORITY + 5)
+#define SIMPRIORITY	1
+#define GENPRIORITY		(SIMPRIORITY + 1)
+#define REFMODXPRIORITY	(SIMPRIORITY + 2)
+#define REFMODYPRIORITY	(SIMPRIORITY + 3)
+#define CALCPRIORITY	(SIMPRIORITY + 4)
+#define LINPRIORITY		(SIMPRIORITY + 5)
 
 //! Tasks names
-#define GENTASK		"GEN"
-#define REFMODX		"REFX"
-#define REFMODY		"REFY"
-#define CONTROLTSK	"CTRL"
-#define LINEARTSK	"LIN"
-#define SIMTSK		"SIM"
+#define GENTASK		"GEN7"
+#define REFMODX		"REFX7"
+#define REFMODY		"REFY7"
+#define CONTROLTSK	"CTRL7"
+#define LINEARTSK	"LIN7"
+#define SIMTSK		"SIM7"
 
 //! below this value I consider that it equals to zero
 #define	CALCERROR	0.00001
@@ -65,6 +65,11 @@
 #define YM_DIMENSION	2
 #define XM_POSITION		0
 #define YM_POSITION		1
+
+//! ref vector
+#define XREF_POSITION	0
+#define YREF_POSITION	1
+
 
 //! ALPHA DEFINES
 #define ALPHA_DIMENSION	2

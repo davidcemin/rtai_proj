@@ -14,20 +14,17 @@
 void robotNewYm(st_robotRefMod *refmod)
 {
 	int k = refmod->kIndex;
-	double ts;
-
-	/* ymx(k) = y'(k) * T*/
-	ts = (refmod->timeInstant[k] - refmod->timeInstant[k-1]);
-
-	refmod->ym[k] = refmod->dRef[k-1] * ts;
+	double ts = (refmod->timeInstant[k] - refmod->timeInstant[k-1]);
+	
+	refmod->ym[k] = refmod->dRef[k] * ts;
 }
 
 /******************************************************************************/
 
-void robotDxYm(st_robotRefMod *refmod)
+void robotDxYm(st_robotRefMod *refmod, st_robotControl *local, int type)
 {
 	int k = refmod->kIndex;
-	int alpha = refmod->alpha;
+	int alpha = local->alpha[type];
 
 	refmod->dRef[k] = alpha * (refmod->ref[k] - refmod->ym[k]);
 }

@@ -22,18 +22,29 @@
  * \param  taskName Task's name
  * \param  priority Task's priority
  * \param  stepTick Step timer
- * \return -1 error, 0 ok.
+ * \return -1 error, 0 ok, 1 started_timer.
  */
-inline int taskCreateRtai(RT_TASK *task, char *task_name, char priority, double stepTick, int msgSize);
+extern inline int taskCreateRtai(RT_TASK *task, char *task_name, char priority, double stepTick, int msgSize);
 
 /*****************************************************************************/
 
 /**
- * \brief  It destroys a rtai task
- * \param  task pointer to task to be destroyed
+ * \brief  Make a rtai task hard real time
+ * \param  task Pointer to the task
+ * \param  stepTick Clock tick
+ * \param  task_name Name of the current task
  * \return void
  */
-inline void taskFinishRtai(RT_TASK *task);
+extern inline void mkTaksRealTime(RT_TASK *task, double stepTick, char *task_name);
+
+/*****************************************************************************/
+/**
+ * \brief  It destroys a rtai task
+ * \param  task pointer to task to be destroyed
+ * \param  started_timer flag to tell if the timer was initialized
+ * \return void
+ */
+extern inline void taskFinishRtai(RT_TASK *task, int started_timer);
 
 #endif /*_RTAI_CTRL_H */
 

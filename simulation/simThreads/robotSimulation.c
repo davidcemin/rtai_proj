@@ -71,22 +71,22 @@ void *robotSimulation(void *ptr)
 {	
 	st_robotSimulShared *shared = ptr;
 	st_robotSimulPacket *simulPack;
+	st_robotSimulPacket *simRemote;
 	st_robotMainArrays *robot;
 	RT_TASK *sendCtrl = NULL;
 	RT_TASK *sendLin = NULL; 
 	RT_TASK *recvLin = NULL;
+	int started_timer = 0;
 
+	long len = 0;
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
 	double tInit = 0;
+	int stack = sizeof(st_robotSimulShared) + 2*sizeof(st_robotSimulPacket) + sizeof(st_robotMainArrays) + 10000;
 
 	RT_TASK *simtask = NULL;
-
-	printf("rtnet init\n\r");
-	/*init rtnet*/
-	rtnetPacketInit(&shared->rtnet);
-	
+		
 	/* Allocates memory to robot structure */
 	if ( (robot = (st_robotMainArrays*) malloc(sizeof(robot)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to main!\n\r");
@@ -97,19 +97,33 @@ void *robotSimulation(void *ptr)
 		fprintf(stderr, "Not possible to allocate memory to simul packet!\n\r");
 		return NULL;
 	}	
-	
-	printf("Simulation!\n\r");
-	if(taskCreateRtai(simtask, SIMTSK, SIMPRIORITY, STEPTIMESIMNANO, sizeof(st_robotSimulShared) ) < 0) {
+
+	if ( (simRemote = (st_robotSimulPacket*) malloc(sizeof(simRemote)) ) == NULL ) { 
+		fprintf(stderr, "Not possible to allocate memory to simul packet!\n\r");
+		return NULL;
+	}	
+
+	/*init task*/
+	if( (started_timer = taskCreateRtai(simtask, SIMTSK, SIMPRIORITY, STEPTIMESIMNANO, stack ) ) < 0) {
 		fprintf(stderr, "Simulation!\n");
 		free(robot);
 		return NULL;
 	}
 
-	memset(robot, 0, sizeof(robot));
-	memset(simulPack, 0, sizeof(simulPack));
+	/*init rtnet*/
+	rtnetPacketInit(&shared->rtnet);
+
+	/*init handlers*/
 	rtnetTaskWait(&shared->rtnet, recvLin, LINEARTSK);
 	rtnetTaskWait(&shared->rtnet, sendLin, LINEARTSK);
 	rtnetTaskWait(&shared->rtnet, sendCtrl, CONTROLTSK);
+
+	/*make it real time*/
+	mkTaksRealTime(simtask, STEPTIMESIMNANO, SIMTSK);
+	
+	/*pointers init*/
+	memset(robot, 0, sizeof(robot));
+	memset(simulPack, 0, sizeof(simulPack));
 
 	printf("SIMULATION\n\r");
 	tInit = rt_get_time_ns();
@@ -120,12 +134,17 @@ void *robotSimulation(void *ptr)
 		robotNewX(robot);
 
 		/* get u from lin thread*/
-		if(robotGetPacket(&shared->rtnet, recvLin, (void*)simulPack->u) == 0) {
-			/*We need to keep the last packet when kein packet is received*/
-			simulPack->u[0] = 0;
-			simulPack->u[1] = 0;
+		//robotGetPacket(&shared->rtnet, recvLin, (void*)simulPack->u);
+	
+		printf("RCTRL: node: 0x%lx port: %d\n\r", shared->rtnet.node, shared->rtnet.port);
+		RT_receivex(shared->rtnet.node, shared->rtnet.port, recvLin, (void*)simRemote->u, sizeof(simRemote->u), &len);
+
+		if( len != sizeof(simRemote->u) ) {
+			printf("len: %ld msg: %d\n\r", len, sizeof(simRemote->u));
 		}
-		
+		else
+			memcpy(&simulPack->u, &simRemote->u, sizeof(simRemote->u));
+
 		/*Copy u into robot structure*/
 		cpUIntoRobot(robot, simulPack->u);
 		
@@ -139,10 +158,12 @@ void *robotSimulation(void *ptr)
 		cpXYIntoPacket(simulPack, robot);
 	
 		/* send y to control thread*/
-		robotSendPacket(&shared->rtnet, sendCtrl, (void*)simulPack->y);
+		//robotSendPacket(&shared->rtnet, sendCtrl, (void*)simulPack->y);
+		RT_sendx(shared->rtnet.node, shared->rtnet.port, sendCtrl, (void*)simulPack->y, sizeof(simulPack->y));
 
 		/* send x to lin thread */
-		robotSendPacket(&shared->rtnet, sendLin, (void*)simulPack->x);
+		//robotSendPacket(&shared->rtnet, sendLin, (void*)simulPack->x);
+		RT_sendx(shared->rtnet.node, shared->rtnet.port, sendLin, (void*)simulPack->x, sizeof(simulPack->x));
 	
 		/*monitor set shared to display*/
 		monitorSimMain(shared, simulPack, MONITOR_SET_SIM_SHARED);
@@ -166,8 +187,11 @@ void *robotSimulation(void *ptr)
 //	}
 //#endif /*CALC_DATA*/
 
-	taskFinishRtai(simtask);
 	rtnetPacketFinish(&shared->rtnet);
+	taskFinishRtai(simtask, started_timer);
+	free(robot);
+	free(simulPack);
+	free(simRemote);
 	return NULL;
 }
 

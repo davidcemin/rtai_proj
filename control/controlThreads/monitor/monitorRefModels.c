@@ -23,6 +23,7 @@ inline int monitorRefXSet(st_robotControlShared *shared, st_robotControl *local)
 
 	shared->control.control_t.ym[XM_POSITION] = local->control_t.ym[XM_POSITION];
 	shared->control.control_t.dym[XM_POSITION] = local->control_t.dym[XM_POSITION];
+	printf("%f \n\r", shared->control.control_t.ym[XM_POSITION]);
 
 	pthread_mutex_unlock(&shared->mutex.mutexControl);
 

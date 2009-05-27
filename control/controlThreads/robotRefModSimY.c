@@ -37,6 +37,7 @@ void *robotRefModSimY(void *ptr)
 	double total = 0;
 	double tInit = 0;
 	RT_TASK *simtask = NULL;
+	int started_timer = 0;
 
 	if ( (refmod = (st_robotRefMod*)malloc(sizeof(st_robotRefMod))) == NULL ) {
 		fprintf(stderr, "Error in refmod memory allocation!\n");
@@ -49,16 +50,24 @@ void *robotRefModSimY(void *ptr)
 		return NULL;
 	}
 	
-
-	if(taskCreateRtai(simtask, REFMODY, REFMODYPRIORITY, STEPTIMEREFMODELYNANO, sizeof(st_robotControlShared) < 0)) {
+	/*init task*/
+	if( (started_timer = taskCreateRtai(simtask, REFMODY, REFMODYPRIORITY, STEPTIMEREFMODELYNANO, sizeof(st_robotControlShared) ) < 0)) {
 		fprintf(stderr, "Reference model Y\n");
 		free(refmod);
 		return NULL;
-	}
-
+	}	
+	
+	printf("Y: wait sync\n\r");
+	/*wait sync*/
 	rt_sem_wait(shared->sem.sm_refy);
+	printf("release control: y\n\r");
 	rt_sem_signal(shared->sem.sm_control);
 
+	
+	/*make it real time */
+	mkTaksRealTime(simtask, STEPTIMEGENERNANO, REFMODY);
+
+	/*init some pointers..*/
 	memset(local, 0, sizeof(local));
 	memset(refmod, 0, sizeof(st_robotRefMod));
 
@@ -66,19 +75,23 @@ void *robotRefModSimY(void *ptr)
 	tInit = rt_get_time_ns();
 	do {
 		currentT = rt_get_time_ns() - tInit;
-		
+		refmod->kIndex++;
+			
+		/*get alpha*/
+		local->alpha[YREF_POSITION] = 1;
+
 		/* Monitor get ref*/
 		monitorControlMain(shared, local, MONITOR_GET_REFERENCE_Y);
 
 		/* Copy reference from local memory */
-		refmod->ref[refmod->kIndex] = local->generation_t.yref;
+		refmod->ref[refmod->kIndex] = local->generation_t.ref[YREF_POSITION];
+
+		/* Calculate ym' */
+		robotDxYm(refmod, local, YREF_POSITION);
 
 		/* Calculate ym */
 		robotNewYm(refmod);
 
-		/* Calculate ym' */
-		robotDxYm(refmod);
-		
 		/* Copy ym and ym' into local shared */
 		local->control_t.ym[YM_POSITION] = refmod->ym[refmod->kIndex];
 		local->control_t.dym[YM_POSITION] = refmod->dRef[refmod->kIndex];
@@ -87,7 +100,6 @@ void *robotRefModSimY(void *ptr)
 		monitorControlMain(shared, local, MONITOR_SET_YMY);
 
 		rt_task_wait_period();
-		refmod->kIndex++;
 		refmod->timeInstant[refmod->kIndex] = currentT / SEC2NANO(1);	
 		
 		/*Timers procedure*/
@@ -95,8 +107,7 @@ void *robotRefModSimY(void *ptr)
 		total = currentT / SEC2NANO(1);
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
-	taskFinishRtai(simtask);
-	free(refmod);
+	taskFinishRtai(simtask, started_timer);
 	return NULL;
 }
 
