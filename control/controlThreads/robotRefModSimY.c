@@ -71,6 +71,7 @@ void *robotRefModSimY(void *ptr)
 	memset(local, 0, sizeof(local));
 	memset(refmod, 0, sizeof(st_robotRefMod));
 
+	rt_sem_wait(shared->sem.sm_refy);
 	printf("REFMODY\n\r");
 	tInit = rt_get_time_ns();
 	do {

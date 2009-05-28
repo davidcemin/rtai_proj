@@ -37,7 +37,7 @@ static int robotSimSharedInit(void *ptr)
 
 	pthread_mutex_init(&shared->mutexSim, NULL);
 
-	if ( (sem_init(&shared->disp_sem, 0, 0) < 0) ) {
+	if ( (sem_init(&shared->sm_disp, 0, 0) < 0) ) {
 		fprintf(stderr, "Error in sem_init: %d\n", errno);
 		return -1;
 	}
@@ -57,7 +57,7 @@ static void robotSimSharedCleanUp(void *ptr)
 	st_robotSimulShared *shared = ptr;
 
 	pthread_mutex_destroy(&shared->mutexSim);
-	sem_destroy(&shared->disp_sem);
+	sem_destroy(&shared->sm_disp);
 	stop_rt_timer();
 	free(shared);
 }

@@ -30,8 +30,33 @@ extern inline int monitorLinSet(st_robotControlShared *shared, st_robotControl *
  * \param  local Pointer to local memory
  * \return 0
  */
-extern inline int monitorLitGet(st_robotControl *local, st_robotControlShared *shared);
+extern inline int monitorLinGet(st_robotControl *local, st_robotControlShared *shared);
 
 /******************************************************************************/
+
+/**
+ * \brief  
+ */
+extern inline int monitorLinGetX(st_robotControl *local, st_robotControlShared *shared);
+
+/******************************************************************************/
+/**
+ * \brief  
+ */
+extern inline int monitorLinSetX(st_robotControlShared *shared, st_robotControl *local);
+/******************************************************************************/
+
+/**
+ * \brief  
+ */
+extern inline int monitorLinGetU(st_robotControl *local, st_robotControlShared *shared);
+
+/******************************************************************************/
+/**
+ * \brief  
+ */
+extern inline int monitorLinSetU(st_robotControlShared *shared, st_robotControl *local);
+/******************************************************************************/
+
 
 #endif

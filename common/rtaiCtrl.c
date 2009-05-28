@@ -30,11 +30,11 @@ inline int taskCreateRtai(RT_TASK *task, char *task_name, char priority, double 
 	int started_timer=0;
 	int period = (int) nano2count((RTIME)stepTick);
 
-	sched.sched_priority = sched_get_priority_max(SCHED_FIFO) - 1;
-	sched_setscheduler(0,SCHED_FIFO,&sched);
-
 	/*set root permissions to user space*/
 	rt_allow_nonroot_hrt();
+
+	sched.sched_priority = sched_get_priority_max(SCHED_FIFO) - 1;
+	sched_setscheduler(0,SCHED_FIFO,&sched);
 
 	/*It Prevents the memory to be paged*/
     mlockall(MCL_CURRENT | MCL_FUTURE);

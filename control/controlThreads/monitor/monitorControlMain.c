@@ -25,51 +25,79 @@ inline void monitorControlMain(st_robotControlShared *shared, st_robotControl *l
 
 	switch (type) {
 		case MONITOR_GET_REFERENCE_X:
-			printf("Get ref x\n\r");
+			if( !(rt_sem_wait(shared->sem.sm_refx) ) )
+				break;
 			monitorGenGetX(local, shared);
 			break;
 
 		case MONITOR_SET_REFERENCE_X:
-			printf("Set ref x\n\r");
 			monitorGenSetX(shared, local);
+			rt_sem_signal(shared->sem.sm_refx);
 			break;	
 		
 		case MONITOR_GET_REFERENCE_Y:
-			printf("Get ref y\n\r");
+			if( !(rt_sem_wait(shared->sem.sm_refy) ) )
+				break;
 			monitorGenGetY(local, shared);
 			break;
 
 		case MONITOR_SET_REFERENCE_Y:
-			printf("Set ref y\n\r");
 			monitorGenSetY(shared, local);
+			rt_sem_signal(shared->sem.sm_refy);
 			break;
 
 		case MONITOR_GET_YMX:
-			printf("Get ymx\n\r");
+			if( !(rt_sem_wait(shared->sem.sm_control)) )
+				break;
 			monitorRefXGet(local, shared);
 			break;
 
 		case MONITOR_SET_YMX:
-			printf("Set ymx\n\r");
 			monitorRefXSet(shared, local);
+			rt_sem_signal(shared->sem.sm_control);
 			break;
 
 		case MONITOR_GET_YMY:
-			printf("Get ymy\n\r");
+			if( !(rt_sem_wait(shared->sem.sm_control) ) )
 			monitorRefYGet(local, shared);
 			break;
 
 		case MONITOR_SET_YMY:
-			printf("Set ymy\n\r");
 			monitorRefYSet(shared, local);
+			rt_sem_signal(shared->sem.sm_control);
 			break;
 
 		case MONITOR_GET_V:
-			monitorLitGet(local, shared);
+			if( !(rt_sem_wait(shared->sem.sm_lin) ) )
+				break;
+			monitorLinGet(local, shared);
 			break;	
 		
 		case MONITOR_SET_V:
 			monitorLinSet(shared, local);
+			rt_sem_signal(shared->sem.sm_lin);
+			break;
+	
+		case MONITOR_GET_U:
+			if( !(rt_sem_wait(shared->sem.sm_lin) ) )
+				break;
+			monitorLinGetU(local, shared);
+			break;	
+		
+		case MONITOR_SET_U:
+			monitorLinSet(shared, local);
+			rt_sem_signal(shared->sem.sm_lin);
+			break;	
+		
+		case MONITOR_GET_X:
+			if( !(rt_sem_wait(shared->sem.sm_lin) ) )
+				break;
+			monitorLinGetX(local, shared);
+			break;	
+		
+		case MONITOR_SET_X:
+			monitorLinSetX(shared, local);
+			rt_sem_signal(shared->sem.sm_lin);
 			break;
 
 		default:

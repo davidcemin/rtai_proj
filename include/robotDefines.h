@@ -21,7 +21,8 @@
 
 //! Step times
 #define STEPTIMECALC		0.05
-#define STEPTIMESIM			0.03
+//#define STEPTIMESIM			0.03
+#define STEPTIMESIM			0.05
 #define STEPTIMELIN			0.04
 #define STEPTIMEGENERATION	0.120
 #define STEPTIMEREFMODELX	0.05
@@ -37,19 +38,19 @@
 
 //! Priorities
 #define SIMPRIORITY	1
-#define GENPRIORITY		(SIMPRIORITY + 1)
-#define REFMODXPRIORITY	(SIMPRIORITY + 2)
-#define REFMODYPRIORITY	(SIMPRIORITY + 3)
-#define CALCPRIORITY	(SIMPRIORITY + 4)
+#define CALCPRIORITY	(SIMPRIORITY + 1)
+#define GENPRIORITY		(SIMPRIORITY + 2)
+#define REFMODXPRIORITY	(SIMPRIORITY + 3)
+#define REFMODYPRIORITY	(SIMPRIORITY + 4)
 #define LINPRIORITY		(SIMPRIORITY + 5)
 
 //! Tasks names
-#define GENTASK		"GEN7"
-#define REFMODX		"REFX7"
-#define REFMODY		"REFY7"
-#define CONTROLTSK	"CTRL7"
-#define LINEARTSK	"LIN7"
-#define SIMTSK		"SIM7"
+#define GENTASK		"GEN5"
+#define REFMODX		"REFX5"
+#define REFMODY		"REFY5"
+#define CONTROLTSK	"CTRL5"
+#define LINEARTSK	"LIN5"
+#define SIMTSK		"SIM5"
 
 //! below this value I consider that it equals to zero
 #define	CALCERROR	0.00001
@@ -103,6 +104,12 @@
 
 #define MONITOR_GET_SIM_SHARED	10
 #define MONITOR_SET_SIM_SHARED	11
+
+#define MONITOR_GET_U			12
+#define MONITOR_SET_U			13
+
+#define MONITOR_GET_X			14
+#define MONITOR_SET_X			15
 
 
 #endif //! _ROBOTDEFINES_H

@@ -31,21 +31,15 @@
 
 void *robotLin(void *ptr)
 {
-	st_robotControlShared *shared = ptr;
+	//st_robotControlShared *shared = ptr;
 	st_robotControl *local;
 	st_robotLinPacket *linPacket;
 	st_robotLinPacket *linRemote;
-	RT_TASK *sendSim = NULL; 
-	RT_TASK *recvSim = NULL;
-	int stack = sizeof(st_robotControl) + 2*sizeof(st_robotLinPacket);
-	int started_timer = 0;
-		
-	long len = 0;
+	
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
 	double tInit = 0;
-	RT_TASK *lintask = NULL;
 
 	if ( (linPacket = (st_robotLinPacket*)malloc(sizeof(linPacket)) ) == NULL ) {
 		fprintf(stderr, "Error in linPacket malloc\n");
@@ -62,30 +56,29 @@ void *robotLin(void *ptr)
 		return NULL;
 	}
 
-	/*sync*/
-	rt_sem_wait(shared->sem.sm_lin);
+	memset(linPacket, 0, sizeof(linPacket));
+	memset(linRemote, 0, sizeof(linRemote));
+	memset(local, 0, sizeof(local));
+
+	RT_TASK *lintask = NULL;
+	int started_timer = 0;	
 	
 	/*init task*/
-	if( (started_timer = taskCreateRtai(lintask, LINEARTSK, LINPRIORITY, STEPTIMELINNANO, stack)) < 0) {
+	if( (started_timer = taskCreateRtai(lintask, LINEARTSK, LINPRIORITY, STEPTIMELINNANO, 0)) < 0) {
 		fprintf(stderr, "Linearization!\n");
 		return NULL;
 	}
-
-	/*wait handler, it was alredy initialized...*/
-	rtnetTaskWait(&shared->rtnet, recvSim, SIMTSK);
+	
+	/*sync*/
+	//rt_sem_wait(shared->sem.sm_lin);
 	
 	/*make task real time*/
-	mkTaksRealTime(lintask, STEPTIMELINNANO, LINEARTSK);
-
-	/* Pointers init*/
-	memset(local, 0, sizeof(local));
-	memset(linPacket, 0, sizeof(linPacket));
-
+	//mkTaksRealTime(lintask, STEPTIMELINNANO, LINEARTSK);
+	
 	printf("LIN\n\r");
 	tInit = rt_get_time_ns();
 	do {
 		currentT = rt_get_time_ns() - tInit;
-
 		/*Algorithm:
 		 * 1) Get x;
 		 * 2) Get v;
@@ -93,43 +86,28 @@ void *robotLin(void *ptr)
 		 * 4) Send u;
 		 */
 
-		/* Get x from simulation thread*/
-		//robotGetPacket(&shared->rtnet, recvSim, (void*)linPacket->x);	
-
-		printf("RCTRL: node: 0x%lx port: %d\n\r", shared->rtnet.node, shared->rtnet.port);
-		RT_receivex(shared->rtnet.node, shared->rtnet.port, recvSim, (void*)linRemote->x, sizeof(linRemote->x), &len);
-
-		if( len != sizeof(linRemote->x) ) {
-			printf("len: %ld msg: %d\n\r", len, sizeof(linRemote->x));
-		}
-		else
-			memcpy(&linPacket->x, &linRemote->x, sizeof(linRemote->x));
-
+		/* get  x*/
+		//monitorControlMain(shared, local, MONITOR_GET_X);
 
 		/* Get v */
-		monitorControlMain(shared, local, MONITOR_GET_V);
+		//monitorControlMain(shared, local, MONITOR_GET_V);
 
 		/* Copy v into packet */
-		memcpy(linPacket->v, local->lin_t.v, sizeof(st_robotLin_t));
+		//memcpy(linPacket->v, local->lin_t.v, sizeof(st_robotLin_t));
 
 		/* Generate u*/
-		robotGenU(linPacket);
+		//robotGenU(linPacket);
 
 		/* send u */
-		//robotSendPacket(&shared->rtnet, sendSim, (void*)linPacket->u);
-		RT_sendx(shared->rtnet.node, shared->rtnet.port, sendSim, (void*)linPacket->u, sizeof(linPacket->u));
-
+		//monitorControlMain(shared, local, MONITOR_SET_U);
+		
 		lastT = currentT;
 		total = currentT / SEC2NANO(1); 	
 		rt_task_wait_period();
-
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
-	rtnetPacketFinish(&shared->rtnet);
-	taskFinishRtai(lintask, started_timer);
-	free(local);
-	free(linPacket);
-	free(linRemote);
+	//rtnetPacketFinish(&shared->rtnet);
+	//taskFinishRtai(lintask, started_timer);
 	return NULL;
 }
 

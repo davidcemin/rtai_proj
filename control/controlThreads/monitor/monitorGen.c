@@ -60,7 +60,7 @@ inline int monitorGenSetY(st_robotControlShared *shared, st_robotControl *local)
  * \return 0
  */
 inline int monitorGenGetX(st_robotControl *local, st_robotControlShared *shared)
-{	
+{
 	pthread_mutex_lock(&shared->mutex.mutexGen);
 
 	local->generation_t.ref[XREF_POSITION] = shared->control.generation_t.ref[XREF_POSITION];
@@ -85,7 +85,6 @@ inline int monitorGenGetY(st_robotControl *local, st_robotControlShared *shared)
 	local->generation_t.ref[YREF_POSITION] = shared->control.generation_t.ref[YREF_POSITION];
 
 	pthread_mutex_unlock(&shared->mutex.mutexGen);
-
 	return 0;
 }
 

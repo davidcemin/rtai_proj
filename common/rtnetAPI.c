@@ -21,11 +21,12 @@
 inline void rtnetPacketInit(st_rtnetRobot *rtnet)
 {
 	printf("rtnet packet init\n\r");
+
 	inet_aton("127.0.0.1", &rtnet->addr.sin_addr);
 	rtnet->node = rtnet->addr.sin_addr.s_addr;
 	printf("0x%lx\n\r", rtnet->node);
 	
-	rtnet->port = rt_request_port(rtnet->node);
+	rtnet->port = 0;
 	while ( (rtnet->port = rt_request_port(rtnet->node)) <= 0) {	
 		switch(rtnet->port) {
 			case -EINVAL:
@@ -37,7 +38,8 @@ inline void rtnetPacketInit(st_rtnetRobot *rtnet)
 				usleep(100000);
 				break;
 			case -ETIMEDOUT:
-				printf("Timeout receiving port");
+				printf("Timeout receiving port\n\r");
+				usleep(100000);
 				break;
 			default:
 				printf("I should not be here!\n\r");

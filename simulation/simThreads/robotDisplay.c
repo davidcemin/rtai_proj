@@ -65,6 +65,7 @@ void *robotThreadDisplay(void *ptr)
 
 	memset(packet, 0, sizeof(packet));
 
+	sem_wait(&shared->sm_disp);
 	/*time init*/
 	tInit = getTimeMilisec();
 	do {

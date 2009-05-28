@@ -73,6 +73,7 @@ void *robotRefModSimX(void *ptr)
 	memset(local, 0, sizeof(local));
 	memset(refmod, 0, sizeof(refmod));
 
+	rt_sem_wait(shared->sem.sm_refx);
 	printf("REFMODX\n\r");
 	tInit = rt_get_time_ns();
 	do {

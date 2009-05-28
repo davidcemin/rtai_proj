@@ -24,6 +24,7 @@
 
 /*rtai includes*/
 #include <rtai_lxrt.h>
+#include <rtai_sem.h>
 
 /*****************************************************************************/
 
@@ -57,6 +58,7 @@ void *robotGeneration(void *ptr)
 
 	memset(local, 0, sizeof(local));
 
+	rt_sem_wait(shared->sem.sm_gen);
 	printf("GENERATION\n");
 	tInit = rt_get_time_ns();
 	do {
@@ -67,6 +69,7 @@ void *robotGeneration(void *ptr)
 		 * 2) Put it inside shared memory
 		 */
 		robotRefGen(local, total);
+		//printf("%f %f\n\r", local->generation_t.ref[0], local->generation_t.ref[1]);
 
 		/*Set xref and yref into shared memory*/
 		monitorControlMain(shared, local, MONITOR_SET_REFERENCE_X);
@@ -77,6 +80,7 @@ void *robotGeneration(void *ptr)
 		rt_task_wait_period();
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
+	printf("END GEN\n\r");
 	taskFinishRtai(gentask, started_timer);
 	return NULL;
 }
