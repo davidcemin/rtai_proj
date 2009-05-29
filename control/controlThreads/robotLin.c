@@ -31,7 +31,7 @@
 
 void *robotLin(void *ptr)
 {
-	//st_robotControlShared *shared = ptr;
+	st_robotControlShared *shared = ptr;
 	st_robotControl *local;
 	st_robotLinPacket *linPacket;
 	st_robotLinPacket *linRemote;
@@ -70,10 +70,10 @@ void *robotLin(void *ptr)
 	}
 	
 	/*sync*/
-	//rt_sem_wait(shared->sem.sm_lin);
+	rt_sem_wait(shared->sem.sm_lin);
 	
 	/*make task real time*/
-	//mkTaksRealTime(lintask, STEPTIMELINNANO, LINEARTSK);
+	mkTaksRealTime(lintask, STEPTIMELINNANO, LINEARTSK);
 	
 	printf("LIN\n\r");
 	tInit = rt_get_time_ns();
@@ -106,8 +106,7 @@ void *robotLin(void *ptr)
 		rt_task_wait_period();
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
-	//rtnetPacketFinish(&shared->rtnet);
-	//taskFinishRtai(lintask, started_timer);
+	taskFinishRtai(lintask, started_timer);
 	return NULL;
 }
 

@@ -52,9 +52,7 @@ void *robotGeneration(void *ptr)
 	mkTaksRealTime(gentask, STEPTIMEGENERNANO, GENTASK);
 
 	rt_sem_signal(shared->sem.sm_refx);
-	printf("release x..\n\r");
 	rt_sem_signal(shared->sem.sm_refy);
-	printf("reelase y...");
 
 	memset(local, 0, sizeof(local));
 
@@ -69,7 +67,7 @@ void *robotGeneration(void *ptr)
 		 * 2) Put it inside shared memory
 		 */
 		robotRefGen(local, total);
-		//printf("%f %f\n\r", local->generation_t.ref[0], local->generation_t.ref[1]);
+		printf("GEN: %f %f\n\r", local->generation_t.ref[0], local->generation_t.ref[1]);
 
 		/*Set xref and yref into shared memory*/
 		monitorControlMain(shared, local, MONITOR_SET_REFERENCE_X);

@@ -60,10 +60,8 @@ void *robotRefModSimX(void *ptr)
 		return NULL;
 	}
 	
-	printf("X: wait sem..\n\r");
 	/*wait sync*/
 	rt_sem_wait(shared->sem.sm_refx);
-	printf("release control: x\n\r");
 	rt_sem_signal(shared->sem.sm_control);
 
 	/*make it real time*/
@@ -90,26 +88,28 @@ void *robotRefModSimX(void *ptr)
 		refmod->ref[refmod->kIndex] = local->generation_t.ref[XREF_POSITION];
 	
 		/* Calculate ym' */
-		robotDxYm(refmod, local, XREF_POSITION);
+		//robotDxYm(refmod, local, XREF_POSITION);
 
 		/* Calculate ym */
-		robotNewYm(refmod);
+		//robotNewYm(refmod);
 				
 		/* Copy ym and ym' into local shared */
 		local->control_t.ym[XM_POSITION] = refmod->ym[refmod->kIndex];
 		local->control_t.dym[XM_POSITION] = refmod->dRef[refmod->kIndex];
 		
 		/*monitor set ym and ym'*/
-		monitorControlMain(shared, local, MONITOR_SET_YMX);
+		//monitorControlMain(shared, local, MONITOR_SET_YMX);
 
-		rt_task_wait_period();
 		refmod->timeInstant[refmod->kIndex] = currentT / SEC2NANO(1);	
 		
 		/*Timers procedure*/
 		lastT = currentT;
 		total = currentT / SEC2NANO(1);
+
+		rt_task_wait_period();
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
+	printf("finish x\n\r");
 	taskFinishRtai(simtask, started_timer);
 	return NULL;
 }

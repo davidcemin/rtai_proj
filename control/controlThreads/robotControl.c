@@ -126,8 +126,8 @@ void *robotControl(void *ptr)
 	unsigned long plantnode=0;
 	int plantport=0;
 	/*sync*/
-//	//rt_sem_wait(shared->sem.sm_control);
-//	//rt_sem_wait(shared->sem.sm_control);
+	rt_sem_wait(shared->sem.sm_control);
+	rt_sem_wait(shared->sem.sm_control);
 
 	/*init rtnet*/
 	rtnetPacketInit(&shared->rtnet);
@@ -143,10 +143,10 @@ void *robotControl(void *ptr)
 	/*make it real time*/
 	mkTaksRealTime(ctrltsk, STEPTIMECALCNANO, CONTROLTSK);
 
-	//rt_sem_signal(shared->sem.sm_gen);
-	//rt_sem_signal(shared->sem.sm_refx);
-	//rt_sem_signal(shared->sem.sm_refy);
-	//rt_sem_signal(shared->sem.sm_lin);
+	rt_sem_signal(shared->sem.sm_gen);
+	rt_sem_signal(shared->sem.sm_refx);
+	rt_sem_signal(shared->sem.sm_refy);
+	rt_sem_signal(shared->sem.sm_lin);
 
 	tInit = rt_get_time_ns();
 	do {
@@ -190,7 +190,7 @@ void *robotControl(void *ptr)
 		local->alpha[ALPHA_2] = 1;
 		
 		/*then calculate v */
-		robotCalcV(local, simulPacket->y);
+		//robotCalcV(local, simulPacket->y);
 		
 		/*send v*/
 		//monitorControlMain(shared, local, MONITOR_SET_V);
@@ -201,6 +201,8 @@ void *robotControl(void *ptr)
 		/*send u*/
 		double u[2];
 		
+		u[1] = 1;
+		u[2] = 2;
 		printf("Sending\n\r");
 		/* send v to control thread*/
 		RT_sendx(plantnode,plantport,planttsk,u,sizeof(u));
@@ -218,6 +220,5 @@ void *robotControl(void *ptr)
 
 	rtnetPacketFinish(&shared->rtnet);
 	taskFinishRtai(ctrltsk, started_timer);
-
 	return 0;
 }

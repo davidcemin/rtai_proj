@@ -136,21 +136,21 @@ void *robotSimulation(void *ptr)
 	//	robotNewX(robot);
 
 		/* get u from lin thread*/
-		//robotGetPacket(&shared->rtnet, recvLin, (void*)simulPack->u);
+		long len;
+		double u[2];
 	
-		//printf("RSIM: node: 0x%lx port: %d\n\r", shared->rtnet.node, shared->rtnet.port);
-		//RT_receivex_if(shared->rtnet.node, shared->rtnet.port, recvLin, (void*)simRemote->u, sizeof(simRemote->u), &len);
-		//rt_receivex_if(0, (void*)simRemote->u, sizeof(simRemote->u), &len);
+		/* get y */
+		printf("Receiving..\n\r");
+		RT_receivex(ctrlnode,ctrlport,ctrltsk,u,sizeof(u),&len);
 
-	//	if( len != sizeof(simRemote->u) ) {
-	//		//printf("len: %ld msg: %d\n\r", len, sizeof(simRemote->u));
-	//	}
-		//else
-		//	memcpy(&simulPack->u, &simRemote->u, sizeof(simRemote->u));
+		if(len != sizeof(u))
+			printf("%ld != %d\n\r", len, sizeof(u));
+		else{
+			printf("%f %f \n\r", u[0], u[1]);
+			/*Copy u into robot structure*/
+			//cpUIntoRobot(robot, u);
+		}
 
-		/*Copy u into robot structure*/
-	//	cpUIntoRobot(robot, simulPack->u);
-	//	
 		/* Calculates x' from x and u*/
 	//	robotDxSim(robot);
 
@@ -169,18 +169,6 @@ void *robotSimulation(void *ptr)
 		/* send xy to control thread*/
 		RT_sendx(ctrlnode,ctrlport,ctrltsk,xy,sizeof(xy));
 	
-		long len;
-		double v[2];
-	
-		/* get y */
-		printf("Receiving..\n\r");
-		RT_receivex(ctrlnode,ctrlport,ctrltsk,v,sizeof(v),&len);
-
-		if(len != sizeof(v))
-			printf("%ld != %d\n\r", len, sizeof(v));
-		else{
-			printf("%f %f \n\r", v[0], v[1]);
-		}
 		/*monitor set shared to display*/
 		//monitorSimMain(shared, simulPack, MONITOR_SET_SIM_SHARED);
 
