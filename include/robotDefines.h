@@ -19,6 +19,20 @@
 #define FINAL_TIME			2.0
 #define TOTAL_TIME	 ( FINAL_TIME - INIT_TIME ) 
 
+//! 1m tick
+#define TICK 1000000
+
+//! Step times of each task (all in miliseconds)
+#define TIMECTRL	5 
+#define TIMESIM		3
+#define TIMELIN		4
+#define TIMEGEN		120
+#define TIMEMODX	5
+#define TIMEMODY	5
+
+//! Dummy packet. Used to finish threads
+#define DUMMYPACK	0xffff
+
 //! Step times
 #define STEPTIMECALC		0.05
 //#define STEPTIMESIM			0.03
@@ -38,7 +52,7 @@
 
 //! Priorities
 #define SIMPRIORITY	1
-#define CALCPRIORITY	(SIMPRIORITY + 1)
+#define CTRLPRIORITY	(SIMPRIORITY + 1)
 #define GENPRIORITY		(SIMPRIORITY + 2)
 #define REFMODXPRIORITY	(SIMPRIORITY + 3)
 #define REFMODYPRIORITY	(SIMPRIORITY + 4)
@@ -57,6 +71,7 @@
 
 //! Dimensions
 #define REF_DIMENSION	2
+#define XY_DIMENSION	4
 #define X_DIMENSION		3
 #define Y_DIMENSION		2
 #define U_DIMENSION		2
@@ -85,6 +100,9 @@
 
 //! Maximum quantity of data
 #define MAX_DATA_VALUE	(int)(ceil( ( (double)( (TOTAL_TIME) / (STEPTIMESIM) ) ) ) + 1 )
+
+//! Macro that returns the number of elements from a vector
+#define NMEMB(x)   ((sizeof(x))/(sizeof(*x)))
 
 //! Monitor defines
 #define MONITOR_GET_REFERENCE_X	0

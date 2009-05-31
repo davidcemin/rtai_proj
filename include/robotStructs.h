@@ -64,7 +64,6 @@ typedef struct {
 	st_robotControl_t control_t;
 	st_robotLin_t lin_t;
 	unsigned char alpha[ALPHA_DIMENSION];
-	int running;
 } st_robotControl;	
 
 //! Control structure with mutexes
@@ -72,25 +71,22 @@ typedef struct {
 	pthread_mutex_t mutexControl;
 	pthread_mutex_t	mutexGen;
 	pthread_mutex_t mutexLin;
-	pthread_mutex_t mutexPorts;
-	pthread_mutex_t isCtrlRunning;
 } st_controlMutex;
 
 //! Control structure with semaphores
-typedef struct {	
+typedef struct {
+	SEM *sm_control;
+	SEM *sm_gen;
+	SEM *sm_lin;
 	SEM *sm_refx;
 	SEM *sm_refy;
-	SEM *sm_control;
-	SEM *sm_lin;
-	SEM *sm_gen;
 } st_controlSem;
 
 //! Monitor shared structure
 typedef struct {
-	st_robotControl control;
-	st_rtnetRobot rtnet;
-	st_controlMutex mutex;
-	st_controlSem sem;
+	st_robotControl control;	//! Control structure
+	st_controlMutex mutex;		//! mutex structure
+	st_controlSem sem;			//! semaphore structure
 } st_robotControlShared;
 
 //! Linearization packet structure
@@ -99,6 +95,13 @@ typedef struct {
 	double u[U_DIMENSION];
 	double x[X_DIMENSION];
 } st_robotLinPacket;
+
+typedef struct {
+	int tick;	//! tick of the tasks
+	RTIME time;
+	st_controlSem sem;
+} st_robotControlStack;
+
 
 /************************* simulation structures ****************************/
 
@@ -123,10 +126,15 @@ typedef struct {
 typedef struct {
 	double t;
 	st_robotSimulPacket simul_t;
-	st_rtnetRobot rtnet;
 	pthread_mutex_t mutexSim;
 	sem_t sm_disp;
 } st_robotSimulShared;
+
+//! Simulation stack packet
+typedef struct {
+	int tick;	//! tick of the tasks
+	RTIME time;
+} st_robotSimulStack;
 
 /******************************************************************************/
 

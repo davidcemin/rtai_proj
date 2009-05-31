@@ -31,54 +31,49 @@
 
 void *robotLin(void *ptr)
 {
-	st_robotControlShared *shared = ptr;
+	st_robotControlStack *stack = ptr;
 	st_robotControl *local;
 	st_robotLinPacket *linPacket;
-	st_robotLinPacket *linRemote;
+	RT_TASK *task = NULL;
 	
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
-	double tInit = 0;
 
 	if ( (linPacket = (st_robotLinPacket*)malloc(sizeof(linPacket)) ) == NULL ) {
 		fprintf(stderr, "Error in linPacket malloc\n");
 		return NULL;
 	}	
-	if ( (linRemote = (st_robotLinPacket*)malloc(sizeof(linRemote)) ) == NULL ) {
-		fprintf(stderr, "Error in linPacket malloc\n");
-		return NULL;
-	}
-	
 	if ( (local = (st_robotControl*)malloc(sizeof(local))) == NULL ) {
 		fprintf(stderr, "Error in generation structure memory allocation\n");
 		free(local);
 		return NULL;
 	}
 
-	memset(linPacket, 0, sizeof(linPacket));
-	memset(linRemote, 0, sizeof(linRemote));
-	memset(local, 0, sizeof(local));
+	mlockall(MCL_CURRENT | MCL_FUTURE);	
 
-	RT_TASK *lintask = NULL;
-	int started_timer = 0;	
+	memset(linPacket, 0, sizeof(linPacket));
+	memset(local, 0, sizeof(local));
 	
-	/*init task*/
-	if( (started_timer = taskCreateRtai(lintask, LINEARTSK, LINPRIORITY, STEPTIMELINNANO, 0)) < 0) {
-		fprintf(stderr, "Linearization!\n");
+	/*registering real time task*/
+	if((task = rt_thread_init(nam2num(LINEARTSK), LINPRIORITY, 0, SCHED_FIFO, 0xFF)) == 0){
+		fprintf(stderr,"refY task init error!\n\r");
 		return NULL;
 	}
-	
+
 	/*sync*/
-	rt_sem_wait(shared->sem.sm_lin);
+	printf("L: waiting control\n\r");
+	rt_sem_wait(stack->sem.sm_lin);
+		
+	/*make it hard real time*/
+	rt_make_hard_real_time();
 	
-	/*make task real time*/
-	mkTaksRealTime(lintask, STEPTIMELINNANO, LINEARTSK);
-	
+	/*and finally make it periodic*/
+	rt_task_make_periodic(task, nano2count(stack->time), TIMELIN*stack->tick);
+
 	printf("LIN\n\r");
-	tInit = rt_get_time_ns();
 	do {
-		currentT = rt_get_time_ns() - tInit;
+		currentT = rt_get_time_ns() - stack->time;
 		/*Algorithm:
 		 * 1) Get x;
 		 * 2) Get v;
@@ -87,10 +82,10 @@ void *robotLin(void *ptr)
 		 */
 
 		/* get  x*/
-		//monitorControlMain(shared, local, MONITOR_GET_X);
+		//monitorControlMain(local, MONITOR_GET_X);
 
 		/* Get v */
-		//monitorControlMain(shared, local, MONITOR_GET_V);
+		//monitorControlMain(local, MONITOR_GET_V);
 
 		/* Copy v into packet */
 		//memcpy(linPacket->v, local->lin_t.v, sizeof(st_robotLin_t));
@@ -99,14 +94,21 @@ void *robotLin(void *ptr)
 		//robotGenU(linPacket);
 
 		/* send u */
-		//monitorControlMain(shared, local, MONITOR_SET_U);
+		//monitorControlMain(local, MONITOR_SET_U);
 		
 		lastT = currentT;
 		total = currentT / SEC2NANO(1); 	
 		rt_task_wait_period();
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
-	taskFinishRtai(lintask, started_timer);
+	munlockall();
+	printf("L: waiting control signal\n\r");
+	rt_sem_wait(stack->sem.sm_lin);
+	printf("finish Lina\n\r");
+	
+	rt_make_soft_real_time();
+	rt_task_delete(task);
+	printf("finish Linb\n\r");
 	return NULL;
 }
 

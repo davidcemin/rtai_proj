@@ -15,6 +15,7 @@
 
 /*robot includes*/
 #include "libRobot.h"
+#include "monitorControlMain.h"
 #include "robotThreads.h"
 #include "simulCalcsUtils.h"
 #include "robotControl.h"
@@ -23,6 +24,7 @@
 #include "robotRefModels.h"
 #include "robotStructs.h"
 #include "rtnetAPI.h"
+#include "rtaiCtrl.h"
 
 /*rtai includes*/
 #include <rtai_sem.h>
@@ -31,24 +33,17 @@
 /*****************************************************************************/
 
 /**
- * \brief  Initializes shared memory
- * \param  shared Void pointer to shared memory
- * \return 
+ * \brief  Initialize the stack pointer
+ * \param  *stack pointer to stack
+ * \return void
  */
-static int robotSharedInit(void *ptr)
+static void robotStackInit(st_robotControlStack *stack)
 {
-	st_robotControlShared *shared = (st_robotControlShared*)ptr;
-	int ret = 0;
-
-	ret += pthread_mutex_init(&shared->mutex.mutexControl, NULL);
-	ret += pthread_mutex_init(&shared->mutex.mutexLin, NULL);
-	ret += pthread_mutex_init(&shared->mutex.mutexGen, NULL);
-
-	shared->sem.sm_refx = rt_sem_init(nam2num("1g"), 0);	
-	shared->sem.sm_refy = rt_sem_init(nam2num("2g"), 0);
-	shared->sem.sm_control = rt_sem_init(nam2num("3g"), 0);
-	shared->sem.sm_lin = rt_sem_init(nam2num("4g"), 0);
-	shared->sem.sm_gen = rt_sem_init(nam2num("5g"), 0);
+	stack->sem.sm_refx = rt_sem_init(nam2num("1g"), 0);	
+	stack->sem.sm_refy = rt_sem_init(nam2num("2g"), 0);
+	stack->sem.sm_control = rt_sem_init(nam2num("3g"), 0);
+	stack->sem.sm_lin = rt_sem_init(nam2num("4g"), 0);
+	stack->sem.sm_gen = rt_sem_init(nam2num("5g"), 0);
 
 //	if(shared->sem.sm_refx == NULL)
 //		printf("sem x null\n\r");
@@ -57,8 +52,6 @@ static int robotSharedInit(void *ptr)
 	//	fprintf(stderr, "Error in sem_init: %d\n", errno);
 	//	return -1;
 	//}
-
-	return 0;
 }
 
 /*****************************************************************************/
@@ -68,93 +61,77 @@ static int robotSharedInit(void *ptr)
  * \param shared void pointer to shared memory
  * \return void
  */
-static void robotSharedCleanUp(void *ptr)
+static void robotStackCleanUp(st_robotControlStack *stack)
 {
-	st_robotControlShared *shared = (st_robotControlShared*)ptr;
-
-	pthread_mutex_destroy(&shared->mutex.mutexGen);
-	pthread_mutex_destroy(&shared->mutex.mutexControl);
-	pthread_mutex_destroy(&shared->mutex.mutexLin);
-	pthread_mutex_destroy(&shared->mutex.mutexPorts);
-	rt_sem_delete(shared->sem.sm_refx);
-	rt_sem_delete(shared->sem.sm_refy);
-	rt_sem_delete(shared->sem.sm_control);
-	rt_sem_delete(shared->sem.sm_lin);
-	rt_sem_delete(shared->sem.sm_gen);
-	//stop_rt_timer();
-	free(shared);
+	rt_sem_delete(stack->sem.sm_refx);
+	rt_sem_delete(stack->sem.sm_refy);
+	rt_sem_delete(stack->sem.sm_control);
+	rt_sem_delete(stack->sem.sm_lin);
+	rt_sem_delete(stack->sem.sm_gen);
 }
 
 /*****************************************************************************/
 
 void robotControlThreadsMain(void)
 {
-	void *shared; 
-	
-	int rt_genTask_thread;
-	int rt_refXTask_thread;
-	int rt_refYTask_thread;
-	int rt_controlTask_thread;
-	int rt_linTask_thread;
-	int stkSize;
+	st_robotControlStack stack;
+	//int rt_genTask_thread = 0;
+	//int rt_refXTask_thread = 0;   
+	//int rt_refYTask_thread = 0;
+	int rt_controlTask_thread = 0;
+	//int rt_linTask_thread = 0;
+	int i;
+	int stkSize = sizeof(stack);
 
-	if ( (shared = (st_robotControlShared*) malloc(sizeof(st_robotControlShared)) ) == NULL ) { 
-		fprintf(stderr, "Not possible to allocate memory to shared!\n\r");
+	struct {
+		char *name;
+		int thread;
+		void *(*func)(void*);
+	} rt_threads[] = {
+	//	{"generation", rt_genTask_thread    , robotGeneration },
+	//	{"refModX"   , rt_refXTask_thread   , robotRefModSimX },
+	//	{"refModY"   , rt_refYTask_thread   , robotRefModSimY },
+		{"control"   , rt_controlTask_thread, robotControl    },
+	//	{"linear"    , rt_linTask_thread    , robotLin        },
+	};
+	
+	/*shared init*/
+	robotControlSharedInit();
+	
+	/* stack init */
+	memset(&stack, 0, sizeof(stack) );
+	robotStackInit(&stack);
+
+	RT_TASK *mainTask = NULL;
+	int tick = (int)nano2count((RTIME)TICK);
+	int started_timer = 0;
+	
+	if( !(started_timer = taskCreateRtai(mainTask, "tsct", 1, tick)) ) {
+		printf("aaz\n\r");
 		return;
 	}
+	stack.tick = tick;
+	stack.time = rt_get_time_ns() + (RTIME)TICK;
 	
-	/* shared init */
-	memset(shared, 0, sizeof(st_robotControlShared) );
-	if( robotSharedInit(shared) < 0){
-		free(shared);
-		return;
+	/*rt threads init*/
+	for (i = 0; i < NMEMB(rt_threads); i++) {
+		printf("Creating thread: %s\n\r", rt_threads[i].name);
+		if( (rt_threads[i].thread = rt_thread_create(rt_threads[i].func, &stack, stkSize)) == 0) {
+			fprintf(stderr, "Error creating %s thread\n\r", rt_threads[i].name);
+			return;
+		}
 	}
 
-	/*Start timer*/
-    rt_set_oneshot_mode(); 	
-	start_rt_timer(0);
-
-	stkSize = sizeof(st_robotControlShared) + 10000;
-
-	if(!(rt_genTask_thread = rt_thread_create(robotGeneration, shared, stkSize))) {
-		fprintf(stderr, "Error Creating generation Thread!!\n");
-		robotSharedCleanUp(shared);
-		return;
-	}	
-
-	if(!(rt_refXTask_thread = rt_thread_create(robotRefModSimX, shared, stkSize))) {
-		fprintf(stderr, "Error Creating refX Thread!!\n");
-		robotSharedCleanUp(shared);
-		return;
-	}		
-	
-	if(!(rt_refYTask_thread = rt_thread_create(robotRefModSimY, shared, stkSize))) {
-		fprintf(stderr, "Error Creating refY Thread!!\n");
-		robotSharedCleanUp(shared);
-		return;
-	}	
-
-	if(!(rt_controlTask_thread = rt_thread_create(robotControl, shared, stkSize))) {
-		fprintf(stderr, "Error Creating control Thread!!\n");
-		robotSharedCleanUp(shared);
-		return;
-	}	
-	
-	if(!(rt_linTask_thread = rt_thread_create(robotLin, shared, stkSize))) {
-		fprintf(stderr, "Error Creating linearization Thread!!\n");
-		robotSharedCleanUp(shared);
-		return;
+	/*rt threads join*/
+	for (i = 0; i < NMEMB(rt_threads); i++) {
+		printf("Joining thread: %s\n\r", rt_threads[i].name);
+		rt_thread_join(rt_threads[i].thread);
 	}
-	
-	/* Wait for all threads to complete */
-	rt_thread_join(rt_genTask_thread);
-	rt_thread_join(rt_refXTask_thread);
-	rt_thread_join(rt_refYTask_thread);
-	rt_thread_join(rt_controlTask_thread);
-	rt_thread_join(rt_linTask_thread);
-	
-	/* Clean up and exit */
-	robotSharedCleanUp(shared);
+
+	/*stop timer, delete task, shared finish and permit pagination noch einmal*/
+	robotControlSharedFinish();
+	robotStackCleanUp(&stack);
+	taskFinishRtai(mainTask, started_timer);
 	return; 
 }
 /*****************************************************************************/

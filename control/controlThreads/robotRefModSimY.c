@@ -20,7 +20,6 @@
 #include "robotStructs.h"
 #include "robotThreads.h"
 #include "rtaiCtrl.h"
-#include "simulCalcsUtils.h"
 
 /*rtai includes*/
 #include <rtai_lxrt.h>
@@ -29,15 +28,13 @@
 
 void *robotRefModSimY(void *ptr)
 {	
-	st_robotControlShared *shared = ptr;
+	st_robotControlStack *stack = ptr;
 	st_robotControl *local;
 	st_robotRefMod *refmod;
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
-	double tInit = 0;
-	RT_TASK *simtask = NULL;
-	int started_timer = 0;
+	RT_TASK *task = NULL;
 
 	if ( (refmod = (st_robotRefMod*)malloc(sizeof(st_robotRefMod))) == NULL ) {
 		fprintf(stderr, "Error in refmod memory allocation!\n");
@@ -50,36 +47,39 @@ void *robotRefModSimY(void *ptr)
 		return NULL;
 	}
 	
-	/*init task*/
-	if( (started_timer = taskCreateRtai(simtask, REFMODY, REFMODYPRIORITY, STEPTIMEREFMODELYNANO, sizeof(st_robotControlShared) ) < 0)) {
-		fprintf(stderr, "Reference model Y\n");
-		free(refmod);
-		return NULL;
-	}	
-	
-	/*wait sync*/
-	rt_sem_wait(shared->sem.sm_refy);
-	rt_sem_signal(shared->sem.sm_control);
-	
-	/*make it real time */
-	mkTaksRealTime(simtask, STEPTIMEGENERNANO, REFMODY);
+	mlockall(MCL_CURRENT | MCL_FUTURE);	
 
 	/*init some pointers..*/
 	memset(local, 0, sizeof(local));
 	memset(refmod, 0, sizeof(st_robotRefMod));
 
-	rt_sem_wait(shared->sem.sm_refy);
+	/*registering real time task*/
+	if((task = rt_thread_init(nam2num(REFMODY), REFMODYPRIORITY, 0, SCHED_FIFO, 0xFF)) == 0){
+		fprintf(stderr,"refY task init error!\n\r");
+		return NULL;
+	}
+
+	printf("Y: waiting control\n\r");
+	/*wait sync*/
+	rt_sem_wait(stack->sem.sm_refy);
+	
+	/*make it hard real time*/
+	rt_make_hard_real_time();
+	
+	/*and finally make it periodic*/
+	rt_task_make_periodic(task, nano2count(stack->time), TIMEMODY*stack->tick);
+
 	printf("REFMODY\n\r");
-	tInit = rt_get_time_ns();
 	do {
-		currentT = rt_get_time_ns() - tInit;
+		currentT = rt_get_time_ns() - stack->time;
 		refmod->kIndex++;
-			
+		
+#if 0	
 		/*get alpha*/
 		local->alpha[YREF_POSITION] = 1;
 
 		/* Monitor get ref*/
-		monitorControlMain(shared, local, MONITOR_GET_REFERENCE_Y);
+		monitorControlMain(local, MONITOR_GET_REFERENCE_Y);
 
 		/* Copy reference from local memory */
 		refmod->ref[refmod->kIndex] = local->generation_t.ref[YREF_POSITION];
@@ -95,9 +95,10 @@ void *robotRefModSimY(void *ptr)
 		local->control_t.dym[YM_POSITION] = refmod->dRef[refmod->kIndex];
 		
 		/*monitor set ym and ym'*/
-		//monitorControlMain(shared, local, MONITOR_SET_YMY);
+		//monitorControlMain(local, MONITOR_SET_YMY);
 
 		refmod->timeInstant[refmod->kIndex] = currentT / SEC2NANO(1);	
+#endif
 		/*Timers procedure*/
 		lastT = currentT;
 		total = currentT / SEC2NANO(1);
@@ -105,8 +106,13 @@ void *robotRefModSimY(void *ptr)
 		rt_task_wait_period();
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
-	printf("finish y\n\r");
-	taskFinishRtai(simtask, started_timer);
+	munlockall();
+	printf("Y: waiting control signal\n\r");
+	rt_sem_wait(stack->sem.sm_refy);
+	printf("finish ya\n\r");
+	rt_make_soft_real_time();
+	rt_task_delete(task);
+	printf("finish yb\n\r");
 	return NULL;
 }
 

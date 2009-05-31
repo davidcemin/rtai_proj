@@ -14,10 +14,12 @@
 #include <sys/time.h> 
 
 /*robot includes*/
+#include "monitorSimMain.h"
 #include "robotStructs.h"
 #include "robotSimulation.h"
 #include "simThreads.h"
 #include "robotDisplay.h"
+#include "rtaiCtrl.h"
 #include "rtnetAPI.h"
 
 /*rtai includes*/
@@ -26,81 +28,55 @@
 
 /*****************************************************************************/
 
-/**
- * \brief  Initializes shared memory
- * \param  shared Void pointer to shared memory
- * \return 0 Ok, -1 Error. 
- */
-static int robotSimSharedInit(void *ptr)
-{
-	st_robotSimulShared *shared = ptr;
-
-	pthread_mutex_init(&shared->mutexSim, NULL);
-
-	if ( (sem_init(&shared->sm_disp, 0, 0) < 0) ) {
-		fprintf(stderr, "Error in sem_init: %d\n", errno);
-		return -1;
-	}
-
-	return 0;
-}
-
-/*****************************************************************************/
-
-/**
- * \brief Cleans up shared memory.
- * \param shared void pointer to shared memory
- * \return void
- */
-static void robotSimSharedCleanUp(void *ptr)
-{
-	st_robotSimulShared *shared = ptr;
-
-	pthread_mutex_destroy(&shared->mutexSim);
-	sem_destroy(&shared->sm_disp);
-	stop_rt_timer();
-	free(shared);
-}
-
-/*****************************************************************************/
-
 void robotSimThreadsMain(void)
 {
-	void *shared; 
-	
-	int rt_simTask_thread;
-	int stkSize;
+	st_robotSimulStack stack;
+	int rt_simTask_thread = 0;
+	int stkSize = sizeof(stack);
+	int i;
+
+	struct {
+		char *name;
+		int thread;
+		void *(*func)(void*);
+	} rt_threads[] = {
+		{"simulation", rt_simTask_thread, robotSimulation},
+	};
 
 	//pthread_t threadDisplay;
 	//pthread_attr_t attr;
 	//int ret;
 	
-	if ( (shared = (st_robotSimulShared*) malloc(sizeof(st_robotSimulShared)) ) == NULL ) { 
-		fprintf(stderr, "Not possible to allocate memory to shared!\n\r");
-		return;
-	}
-	
 	/* shared init */
-	memset(shared, 0, sizeof(st_robotSimulShared) );
-	if( robotSimSharedInit(shared) < 0){
-		free(shared);
+	robotSimSharedInit();
+	memset(&stack, 0, sizeof(stack) );
+
+	RT_TASK *task = NULL;
+	int tick = (int)nano2count((RTIME)TICK);
+	int started_timer = 0;
+
+	if ( !(started_timer = taskCreateRtai(task, "tssi", 1, tick))) {
+		printf("asdg\n\r");
 		return;
 	}
+	stack.tick = tick;
+	stack.time = rt_get_time_ns() + (RTIME)TICK;
 
-	/*Start timer*/
-    rt_set_oneshot_mode(); 	
-	start_rt_timer(0);
-
-	stkSize = sizeof(st_robotSimulShared) + 10000;
-
-
-	/*rtai simulation thread*/
-	if(!(rt_simTask_thread = rt_thread_create(robotSimulation, shared, stkSize))) {
-		fprintf(stderr, "Error Creating Simulation Thread!!\n");
-		robotSimSharedCleanUp(shared);
-		return;
-	}	
+	/*rt threads init*/
+	for (i = 0; i < NMEMB(rt_threads); i++) {
+		printf("Creating thread: %s\n\r", rt_threads[i].name);
+		if( (rt_threads[i].thread = rt_thread_create(rt_threads[i].func, &stack, stkSize)) == 0) {
+			fprintf(stderr, "Error creating %s thread\n\r", rt_threads[i].name);
+			return;
+		}
+	}
 	
+	/*rt threads join*/
+	for (i = 0; i < NMEMB(rt_threads); i++) {
+		printf("Joining thread: %s\n\r", rt_threads[i].name);
+		rt_thread_join(rt_threads[i].thread);
+	}
+
 	/*Create display thread*/
 	
 	/* For portability, explicitly create threads in a joinable state */
@@ -115,12 +91,12 @@ void robotSimThreadsMain(void)
 	//}
 
 	/* Wait for all threads to complete */
-	rt_thread_join(rt_simTask_thread);
 	//pthread_join(threadDisplay, NULL);
 
 	/* Clean up and exit */
 	//pthread_attr_destroy(&attr);
-	robotSimSharedCleanUp(shared);
+	robotSimSharedFinish();
+	taskFinishRtai(task, started_timer);
 	return; 
 }
 /*****************************************************************************/

@@ -17,6 +17,13 @@
 /*****************************************************************************/
 
 /**
+ * \brief  
+ */
+extern int rtai_init_task(RT_TASK *task, int tick, char *name);
+
+	
+/*****************************************************************************/
+/**
  * \brief  It creates a rtai task
  * \param  task Pointer to task 
  * \param  taskName Task's name
@@ -24,7 +31,7 @@
  * \param  stepTick Step timer
  * \return -1 error, 0 ok, 1 started_timer.
  */
-extern inline int taskCreateRtai(RT_TASK *task, char *task_name, char priority, double stepTick, int msgSize);
+extern inline int taskCreateRtai(RT_TASK *task, char *task_name, char priority, double stepTick);
 
 /*****************************************************************************/
 

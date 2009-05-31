@@ -75,7 +75,7 @@ void *robotThreadDisplay(void *ptr)
 
 			t = currentT / 1000.0;
 
-			monitorSimMain(shared, packet, MONITOR_GET_SIM_SHARED);
+			monitorSimMain(packet, MONITOR_GET_SIM_SHARED);
 
 			printDisplay(packet, t);
 

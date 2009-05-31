@@ -13,16 +13,34 @@
 
 /******************************************************************************/
 
+/**
+ * \brief Initialization of robot shared memory
+ * \param void
+ * \return void
+ */
+extern void robotSimSharedInit(void);
 
-extern inline void monitorSimMain(st_robotSimulShared *shared, st_robotSimulPacket *packet, int type);
+/******************************************************************************/
+
+/**
+ * \brief  Clean of robot shared memory
+ * \param  void
+ * \return void
+ */
+extern void robotSimSharedFinish(void);
+
+/******************************************************************************/
+
+/**
+ * \brief  Simulation monitor
+ * \param  packet Pointer to local structure
+ * \param  type Type used
+ */
+extern inline void monitorSimMain(st_robotSimulPacket *packet, int type);
 
 /******************************************************************************/
 
 
 #endif /*_MONITORCONTROLMAIN_H*/
-
-
-
-
 
 
