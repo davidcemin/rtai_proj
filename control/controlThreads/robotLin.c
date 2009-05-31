@@ -82,33 +82,31 @@ void *robotLin(void *ptr)
 		 */
 
 		/* get  x*/
-		//monitorControlMain(local, MONITOR_GET_X);
+		monitorControlMain(local, MONITOR_GET_X);
+		linPacket->x[0] = local->lin_t.x[0];
+		linPacket->x[1] = local->lin_t.x[1];
 
 		/* Get v */
-		//monitorControlMain(local, MONITOR_GET_V);
-
-		/* Copy v into packet */
-		//memcpy(linPacket->v, local->lin_t.v, sizeof(st_robotLin_t));
+		monitorControlMain(local, MONITOR_GET_V);
+		linPacket->v[0] = local->lin_t.v[0];
+		linPacket->v[1] = local->lin_t.v[1];
 
 		/* Generate u*/
-		//robotGenU(linPacket);
+		robotGenU(linPacket);
 
 		/* send u */
-		//monitorControlMain(local, MONITOR_SET_U);
+		monitorControlMain(local, MONITOR_SET_U);
 		
 		lastT = currentT;
 		total = currentT / SEC2NANO(1); 	
 		rt_task_wait_period();
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
-	munlockall();
 	printf("L: waiting control signal\n\r");
 	rt_sem_wait(stack->sem.sm_lin);
-	printf("finish Lina\n\r");
 	
 	rt_make_soft_real_time();
 	rt_task_delete(task);
-	printf("finish Linb\n\r");
 	return NULL;
 }
 

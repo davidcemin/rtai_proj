@@ -20,7 +20,7 @@
  * \param local Pointer to local structure
  * \return 0
  */
-extern inline int monitorLinSet(st_robotControlShared *shared, st_robotControl *local);
+extern inline int monitorLinSetV(st_robotControlShared *shared, st_robotControl *local);
 
 /******************************************************************************/
 
@@ -30,7 +30,7 @@ extern inline int monitorLinSet(st_robotControlShared *shared, st_robotControl *
  * \param  local Pointer to local memory
  * \return 0
  */
-extern inline int monitorLinGet(st_robotControl *local, st_robotControlShared *shared);
+extern inline int monitorLinGetV(st_robotControl *local, st_robotControlShared *shared);
 
 /******************************************************************************/
 

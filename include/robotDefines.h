@@ -16,27 +16,26 @@
 
 //! Simulation timers
 #define INIT_TIME			0.0
-#define FINAL_TIME			2.0
+#define FINAL_TIME			10.0
 #define TOTAL_TIME	 ( FINAL_TIME - INIT_TIME ) 
 
 //! 1m tick
-#define TICK 1000000
+#define TICK 1000000000
 
 //! Step times of each task (all in miliseconds)
-#define TIMECTRL	5 
-#define TIMESIM		3
-#define TIMELIN		4
-#define TIMEGEN		120
-#define TIMEMODX	5
-#define TIMEMODY	5
+#define TIMECTRL	0.05 
+#define TIMESIM		0.03
+#define TIMELIN		0.04
+#define TIMEGEN		0.120
+#define TIMEMODX	0.05
+#define TIMEMODY	0.05
 
 //! Dummy packet. Used to finish threads
 #define DUMMYPACK	0xffff
 
 //! Step times
 #define STEPTIMECALC		0.05
-//#define STEPTIMESIM			0.03
-#define STEPTIMESIM			0.05
+#define STEPTIMESIM			0.03
 #define STEPTIMELIN			0.04
 #define STEPTIMEGENERATION	0.120
 #define STEPTIMEREFMODELX	0.05

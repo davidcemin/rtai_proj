@@ -69,11 +69,11 @@ void *robotGeneration(void *ptr)
 		 * 1) Generate xref and yref;
 		 * 2) Put it inside shared memory
 		 */
-		//robotRefGen(local, total);
+		robotRefGen(local, total);
 
 		/*Set xref and yref into shared memory*/
-	//	monitorControlMain(local, MONITOR_SET_REFERENCE_X);
-	//	monitorControlMain(local, MONITOR_SET_REFERENCE_Y);
+		monitorControlMain(local, MONITOR_SET_REFERENCE_X);
+		monitorControlMain(local, MONITOR_SET_REFERENCE_Y);
 
 		lastT = currentT;
 		total = currentT / SEC2NANO(1); 	
@@ -86,8 +86,6 @@ void *robotGeneration(void *ptr)
 	rt_make_soft_real_time();
 	rt_task_delete(gentask);
 
-	munlockall();
-	
-	printf("END GENb\n\r");
+	printf("END GEN\n\r");
 	return NULL;
 }

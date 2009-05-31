@@ -152,7 +152,7 @@ void *robotSimulation(void *ptr)
 		/* get u from lin thread*/
 			
 		/* get y */
-		printf("Receiving..\n\r");
+		//printf("Receiving..\n\r");
 		RT_receivex(ctrlnode,ctrlport,ctrltsk,u,sizeof(u),&len);
 
 		if(len != sizeof(u))
@@ -162,7 +162,7 @@ void *robotSimulation(void *ptr)
 			break;
 		}
 		else{
-			printf("%f %f \n\r", u[0], u[1]);
+		//	printf("%f %f \n\r", u[0], u[1]);
 			/*Copy u into robot structure*/
 			//cpUIntoRobot(robot, u);
 		}
@@ -181,13 +181,13 @@ void *robotSimulation(void *ptr)
 		xy[2] = robot->kIndex*0.3;
 		xy[3] = robot->kIndex*0.4;
 
-		printf("Sending\n\r");
+		//printf("Sending\n\r");
 		/* send xy to control thread*/
-		RT_sendx(ctrlnode,ctrlport,ctrltsk,xy,sizeof(xy));
+		RT_sendx(ctrlnode,-ctrlport,ctrltsk,xy,sizeof(xy));
 	
 		/*monitor set shared to display*/
 		//monitorSimMain(simulPack, MONITOR_SET_SIM_SHARED);
-		//printf("k: %d\n\r", robot->kIndex);
+		printf("k: %d\n\r", robot->kIndex);
 
 		robot->kIndex++;
 		robot->timeInstant[robot->kIndex] = currentT / SEC2NANO(1);	

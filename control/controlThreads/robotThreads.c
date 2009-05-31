@@ -75,11 +75,11 @@ static void robotStackCleanUp(st_robotControlStack *stack)
 void robotControlThreadsMain(void)
 {
 	st_robotControlStack stack;
-	//int rt_genTask_thread = 0;
-	//int rt_refXTask_thread = 0;   
-	//int rt_refYTask_thread = 0;
+	int rt_genTask_thread = 0;
+	int rt_refXTask_thread = 0;   
+	int rt_refYTask_thread = 0;
 	int rt_controlTask_thread = 0;
-	//int rt_linTask_thread = 0;
+	int rt_linTask_thread = 0;
 	int i;
 	int stkSize = sizeof(stack);
 
@@ -88,11 +88,11 @@ void robotControlThreadsMain(void)
 		int thread;
 		void *(*func)(void*);
 	} rt_threads[] = {
-	//	{"generation", rt_genTask_thread    , robotGeneration },
-	//	{"refModX"   , rt_refXTask_thread   , robotRefModSimX },
-	//	{"refModY"   , rt_refYTask_thread   , robotRefModSimY },
+		{"generation", rt_genTask_thread    , robotGeneration },
+		{"refModX"   , rt_refXTask_thread   , robotRefModSimX },
+		{"refModY"   , rt_refYTask_thread   , robotRefModSimY },
 		{"control"   , rt_controlTask_thread, robotControl    },
-	//	{"linear"    , rt_linTask_thread    , robotLin        },
+		{"linear"    , rt_linTask_thread    , robotLin        },
 	};
 	
 	/*shared init*/

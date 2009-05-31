@@ -168,23 +168,20 @@ void *robotControl(void *ptr)
 		 * 3) get y vector;
 		 * 4) calculate v vector;
 		 * 5) send v vector;
-		 		 */
-		/* get references */
-		//monitorControlMain(local, MONITOR_GET_YMX);
-		//monitorControlMain(local, MONITOR_GET_YMY);
-
+		*/
+		
 		/*get u*/
-		//monitorControlMain(local, MONITOR_GET_U);
+		monitorControlMain(local, MONITOR_GET_U);
 	
 		/*send u*/
-		u[0] = 0.11 *sample->kIndex;
-		u[1] = 0.212 * sample->kIndex;
-		printf("Sending\n\r");
+		u[0] = local->lin_t.u[0];
+		u[1] = local->lin_t.u[1];
+		//printf("Sending\n\r");
 		/* send v to control thread*/
 		RT_sendx(plantnode,-plantport,planttsk,u,sizeof(u));
 
-			/* get xy */
-		printf("Receiving..\n\r");
+		/* get xy */
+		//printf("Receiving..\n\r");
 		RT_receivex(plantnode,plantport,planttsk,xy,sizeof(xy),&len);
 
 		if(len != sizeof(xy))
@@ -194,24 +191,30 @@ void *robotControl(void *ptr)
 			break;
 		}
 		else{
-			printf("%f %f %f %f\n\r", xy[0], xy[1], xy[2], xy[3]);
-			//simulPacket->x[0] = xy[0];
-			//simulPacket->x[1] = xy[1];
-			//simulPacket->y[0] = xy[2];
-			//simulPacket->y[1] = xy[3];
+			//printf("%f %f %f %f\n\r", xy[0], xy[1], xy[2], xy[3]);
+			simulPacket->x[0] = xy[0];
+			simulPacket->x[1] = xy[1];
+			simulPacket->y[0] = xy[2];
+			simulPacket->y[1] = xy[3];
 		}
 		
-		//monitorControlMain(local, MONITOR_SET_X);
+		/* get references */
+		monitorControlMain(local, MONITOR_GET_YMX);
+		monitorControlMain(local, MONITOR_GET_YMY);
+
+		printf("%f %f\n\r", local->control_t.ym[XM_POSITION], local->control_t.ym[YM_POSITION]);
+
+		monitorControlMain(local, MONITOR_SET_X);
 		
 		//TODO: Get alpha
-		//local->alpha[ALPHA_1] = 1;
-		//local->alpha[ALPHA_2] = 1;
+		local->alpha[ALPHA_1] = 1;
+		local->alpha[ALPHA_2] = 1;
 		
 		/*then calculate v */
-		//robotCalcV(local, simulPacket->y);
+		robotCalcV(local, simulPacket->y);
 		
 		/*send v*/
-		//monitorControlMain(local, MONITOR_SET_V);
+		monitorControlMain(local, MONITOR_SET_V);
 	
 		
 		//printf("k: %d\n\r", sample->kIndex);
@@ -243,8 +246,8 @@ void *robotControl(void *ptr)
 	printf("finishing lin\n\r");
 	rt_sem_signal(stack->sem.sm_lin);
 
+	munlockall();
 	rtnetPacketFinish(&rtnet);
-
 	/*Not real time anymore*/
 	rt_make_soft_real_time();
 	rt_task_delete(ctrltsk);

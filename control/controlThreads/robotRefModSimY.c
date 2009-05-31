@@ -74,7 +74,6 @@ void *robotRefModSimY(void *ptr)
 		currentT = rt_get_time_ns() - stack->time;
 		refmod->kIndex++;
 		
-#if 0	
 		/*get alpha*/
 		local->alpha[YREF_POSITION] = 1;
 
@@ -85,20 +84,20 @@ void *robotRefModSimY(void *ptr)
 		refmod->ref[refmod->kIndex] = local->generation_t.ref[YREF_POSITION];
 
 		/* Calculate ym' */
-		//robotDxYm(refmod, local, YREF_POSITION);
+		robotDxYm(refmod, local, YREF_POSITION);
 
 		/* Calculate ym */
-		//robotNewYm(refmod);
+		robotNewYm(refmod);
 
 		/* Copy ym and ym' into local shared */
 		local->control_t.ym[YM_POSITION] = refmod->ym[refmod->kIndex];
 		local->control_t.dym[YM_POSITION] = refmod->dRef[refmod->kIndex];
 		
 		/*monitor set ym and ym'*/
-		//monitorControlMain(local, MONITOR_SET_YMY);
+		monitorControlMain(local, MONITOR_SET_YMY);
 
-		refmod->timeInstant[refmod->kIndex] = currentT / SEC2NANO(1);	
-#endif
+		refmod->timeInstant[refmod->kIndex] = currentT / SEC2NANO(1);
+		
 		/*Timers procedure*/
 		lastT = currentT;
 		total = currentT / SEC2NANO(1);
@@ -106,13 +105,10 @@ void *robotRefModSimY(void *ptr)
 		rt_task_wait_period();
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
-	munlockall();
 	printf("Y: waiting control signal\n\r");
 	rt_sem_wait(stack->sem.sm_refy);
-	printf("finish ya\n\r");
 	rt_make_soft_real_time();
 	rt_task_delete(task);
-	printf("finish yb\n\r");
 	return NULL;
 }
 
