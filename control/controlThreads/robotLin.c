@@ -43,7 +43,7 @@ void *robotLin(void *ptr)
 	double tInit = 0;
 	
 	double u[U_DIMENSION];
-	double xy[XY_DIMENSION];
+	double xy[XY_DIM_PACKET];
 	long len;
 	int i =0;
 
@@ -118,7 +118,6 @@ void *robotLin(void *ptr)
 		/* send u */
 		u[0] = linPacket->u[0];
 		u[1] = linPacket->u[1];
-		printf("%f %f\n\r", u[0], u[1]);
 		RT_sendx(plantnode,-plantport,planttsk,u,sizeof(u));
 
 		/* get  x and y*/
@@ -126,17 +125,15 @@ void *robotLin(void *ptr)
 
 		if(len != sizeof(xy))
 			printf("%ld != %d\n\r", len, sizeof(xy));
-		else if (xy[0] == DUMMYPACK || xy[1] == DUMMYPACK || xy[2] == DUMMYPACK || xy[3] == DUMMYPACK) {
+		else if (xy[0] == DUMMYPACK || xy[1] == DUMMYPACK || xy[2] == DUMMYPACK) {
 			printf("Dummy pack received. Breaking now..\n\r");
 			break;
 		}
 		else{
-			//printf("%d %f %f %f %f %f\n\r", i, xy[0], xy[1], xy[2], xy[3], xy[4]);
-			linPacket->x[0] = xy[0];
-			linPacket->x[1] = xy[1];
-			linPacket->x[2] = xy[2];
-			local->lin_t.y[0] = xy[3];
-			local->lin_t.y[1] = xy[4];
+			printf("%d %f %f %f\n\r", i, xy[0], xy[1], xy[2]);
+			linPacket->x[2] = xy[0];
+			local->lin_t.y[0] = xy[1];
+			local->lin_t.y[1] = xy[2];
 		}
 	
 		/* set y*/

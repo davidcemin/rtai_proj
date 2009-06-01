@@ -78,7 +78,7 @@ void *robotSimulation(void *ptr)
 	double total = 0;
 	long len;
 	double u[U_DIMENSION];
-	double xy[XY_DIMENSION];
+	double xy[XY_DIM_PACKET];
 		
 	/* Allocates memory to robot structure */
 	if ( (robot = (st_robotMainArrays*) malloc(sizeof(robot)) ) == NULL ) { 
@@ -136,6 +136,14 @@ void *robotSimulation(void *ptr)
 		currentT = rt_get_time_ns() - stack->time;
 		robot->kIndex++;
 		robot->timeInstant[robot->kIndex] = currentT / SEC2NANO(1);	
+
+		/* Algorithm:
+		 * 1) get u from lin thread;
+		 * 2) calculate new x value;
+		 * 3) calculate x' from x and u;
+		 * 4) calculate y from x and u
+		 * 5) send x and y to control
+		 */
 		
 		/* get u from lin thread*/
 		RT_receivex(ctrlnode,ctrlport,ctrltsk,u,sizeof(u),&len);
@@ -151,14 +159,14 @@ void *robotSimulation(void *ptr)
 			/*Copy u into robot structure*/
 			cpUIntoRobot(robot, u);
 		}
-		
-		/* New X value */
-		robotNewX(robot);
-
+	
 		/* Calculates x' from x and u*/
 		robotDxSim(robot);
-		
-		/* Calculates y from x and the inputs */
+	
+		/* New X value */
+		robotNewX(robot);
+	
+		/* Calculates y from x*/
 		robotCalcYFromX(robot);
 			
 		/*copy x and y into packet structure*/
@@ -167,12 +175,10 @@ void *robotSimulation(void *ptr)
 		/*monitor set shared to display*/
 		//monitorSimMain(simulPack, MONITOR_SET_SIM_SHARED);
 
-		xy[0] = robot->xVal[0][robot->kIndex];
-		xy[1] = robot->xVal[1][robot->kIndex];
-		xy[2] = robot->xVal[2][robot->kIndex];
-		xy[3] = robot->yVal[0][robot->kIndex];
-		xy[4] = robot->yVal[1][robot->kIndex];
-		printf("%d %f %f %f %f %f\n\r", robot->kIndex, xy[0], xy[1], xy[2], xy[3], xy[4]);
+		xy[0] = robot->xVal[2][robot->kIndex];
+		xy[1] = robot->yVal[0][robot->kIndex];
+		xy[2] = robot->yVal[1][robot->kIndex];
+		printf("%d %f %f %f\n\r", robot->kIndex, xy[0], xy[1], xy[2]);
 		/* send xy to control thread*/
 		RT_sendx(ctrlnode,-ctrlport,ctrltsk,xy,sizeof(xy));
 
@@ -186,10 +192,7 @@ void *robotSimulation(void *ptr)
 	xy[0] = DUMMYPACK;
 	xy[1] = DUMMYPACK;
 	xy[2] = DUMMYPACK;
-	xy[3] = DUMMYPACK;
-
 	printf("Sending dummy\n\r");
-	/* send xy to control thread*/
 	RT_sendx(ctrlnode,ctrlport,ctrltsk,xy,sizeof(xy));
 
 //#ifdef CALC_DATA

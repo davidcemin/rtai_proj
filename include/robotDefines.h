@@ -75,6 +75,7 @@
 #define XY_DIMENSION	(X_DIMENSION + Y_DIMENSION)
 #define U_DIMENSION		2
 #define V_DIMENSION		2
+#define XY_DIM_PACKET	3
 
 //!ym vector
 #define YM_DIMENSION	2
