@@ -53,9 +53,8 @@ typedef struct {
 
 //! Linearization structure
 typedef struct {
-	double u[U_DIMENSION];
 	double v[V_DIMENSION];
-	double x[X_DIMENSION];
+	double y[Y_DIMENSION];
 } st_robotLin_t;
 
 //! Main control shared structure
@@ -127,13 +126,13 @@ typedef struct {
 	double t;
 	st_robotSimulPacket simul_t;
 	pthread_mutex_t mutexSim;
-	sem_t sm_disp;
 } st_robotSimulShared;
 
 //! Simulation stack packet
 typedef struct {
 	int tick;	//! tick of the tasks
 	RTIME time;
+	sem_t sm_disp;
 } st_robotSimulStack;
 
 /******************************************************************************/

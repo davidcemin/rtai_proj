@@ -67,85 +67,56 @@ inline void monitorControlMain(st_robotControl *local, int type)
 
 	switch (type) {
 		case MONITOR_GET_REFERENCE_X:
-	//		if( !(rt_sem_wait(Shared.sem.sm_refx) ) )
-	//			break;
 			monitorGenGetX(local, &Shared);
 			break;
 
 		case MONITOR_SET_REFERENCE_X:
 			monitorGenSetX(&Shared, local);
-	//		rt_sem_signal(Shared.sem.sm_refx);
 			break;	
 		
 		case MONITOR_GET_REFERENCE_Y:
-	//		if( !(rt_sem_wait(Shared.sem.sm_refy) ) )
-	//			break;
 			monitorGenGetY(local, &Shared);
 			break;
 
 		case MONITOR_SET_REFERENCE_Y:
 			monitorGenSetY(&Shared, local);
-	//		rt_sem_signal(Shared.sem.sm_refy);
 			break;
 
 		case MONITOR_GET_YMX:
-	//		if( !(rt_sem_wait(Shared.sem.sm_control)) )
-	//			break;
 			monitorRefXGet(local, &Shared);
 			break;
 
 		case MONITOR_SET_YMX:
 			monitorRefXSet(&Shared, local);
-	//		rt_sem_signal(Shared.sem.sm_control);
 			break;
 
 		case MONITOR_GET_YMY:
-	//		if( !(rt_sem_wait(Shared.sem.sm_control) ) )
 			monitorRefYGet(local, &Shared);
 			break;
 
 		case MONITOR_SET_YMY:
 			monitorRefYSet(&Shared, local);
-	//		rt_sem_signal(Shared.sem.sm_control);
 			break;
 
 		case MONITOR_GET_V:
-	//		if( !(rt_sem_wait(Shared.sem.sm_lin) ) )
-	//			break;
 			monitorLinGetV(local, &Shared);
 			break;	
 		
 		case MONITOR_SET_V:
 			monitorLinSetV(&Shared, local);
-	//		rt_sem_signal(Shared.sem.sm_lin);
 			break;
 	
-		case MONITOR_GET_U:
-	//		if( !(rt_sem_wait(Shared.sem.sm_lin) ) )
-	//			break;
-			monitorLinGetU(local, &Shared);
+		case MONITOR_GET_Y:
+			monitorLinGetY(local, &Shared);
 			break;	
 		
-		case MONITOR_SET_U:
-			monitorLinSetU(&Shared, local);
-	//		rt_sem_signal(Shared.sem.sm_lin);
+		case MONITOR_SET_Y:
+			monitorLinSetY(&Shared, local);
 			break;	
 		
-		case MONITOR_GET_X:
-	//		if( !(rt_sem_wait(Shared.sem.sm_lin) ) )
-	//			break;
-			monitorLinGetX(local, &Shared);
-			break;	
-		
-		case MONITOR_SET_X:
-			monitorLinSetX(&Shared, local);
-	//		rt_sem_signal(Shared.sem.sm_lin);
-			break;
-
 		default:
 			fprintf(stderr, "Error in monitor Main. I should not be here!\n\r");
 			break;
 	}
-
 }
 

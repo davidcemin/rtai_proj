@@ -47,7 +47,7 @@ static inline void printDisplay(st_robotSimulPacket *packet, double t)
  */
 void *robotThreadDisplay(void *ptr)
 {
-	st_robotSimulShared *shared = ptr;
+	st_robotSimulStack *stack = ptr;
 	st_robotSimulPacket *packet;
 	double tInit = 0;
 	double lastT = 0;
@@ -56,18 +56,20 @@ void *robotThreadDisplay(void *ptr)
 
 	mlockall(MCL_CURRENT | MCL_FUTURE);
 
-	printf("display\n");
 	/* Allocates memory to shared's copy structure */
 	if ( (packet = (st_robotSimulPacket*) malloc(sizeof(packet)) ) == NULL ) { 
 		fprintf(stderr, "Not possible to allocate memory to display packet!\n\r");
 		return NULL;
 	}
-
+	
 	memset(packet, 0, sizeof(packet));
 
-	sem_wait(&shared->sm_disp);
+	sem_wait(&stack->sm_disp);
+
+	printf("display\n");
+	
 	/*time init*/
-	tInit = getTimeMilisec();
+	tInit = stack->time;
 	do {
 		/* update the current Time */
 		currentT = getTimeMilisec() - tInit;

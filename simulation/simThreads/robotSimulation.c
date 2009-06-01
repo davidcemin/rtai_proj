@@ -71,7 +71,6 @@ void *robotSimulation(void *ptr)
 {	
 	st_robotSimulStack *stack = ptr;
 	st_robotSimulPacket *simulPack;
-	st_robotSimulPacket *simRemote;
 	st_robotMainArrays *robot;
 
 	double currentT = 0;
@@ -92,11 +91,6 @@ void *robotSimulation(void *ptr)
 		return NULL;
 	}	
 
-	if ( (simRemote = (st_robotSimulPacket*) malloc(sizeof(simRemote)) ) == NULL ) { 
-		fprintf(stderr, "Not possible to allocate memory to simul packet!\n\r");
-		return NULL;
-	}	
-
 	mlockall(MCL_CURRENT | MCL_FUTURE);	
 
 	/*pointers init*/
@@ -104,19 +98,12 @@ void *robotSimulation(void *ptr)
 	memset(simulPack, 0, sizeof(simulPack));
 
 	RT_TASK *planttsk = NULL;
-	/*init task*/
-	int started_timer=0;
+	
 	/*registering realtime task*/
 	if((planttsk = rt_thread_init(nam2num(SIMTSK), SIMPRIORITY, 0, SCHED_FIFO, 0xFF)) == 0) {
 		printf("sim task init error\n\r");
 		return NULL;
 	}
-
-	//if( (started_timer = taskCreateRtai(planttsk, SIMTSK, SIMPRIORITY, STEPTIMESIMNANO ) ) < 0) {
-	//	fprintf(stderr, "Simulation!\n");
-//		free(robot);
-	//	return NULL;
-	//}
 
 	st_rtnetRobot rtnet;
 	unsigned long ctrlnode = 0;
@@ -129,30 +116,28 @@ void *robotSimulation(void *ptr)
 	
 	RT_TASK *ctrltsk=NULL;
 	
-	while((ctrltsk=(RT_TASK *)RT_get_adr(ctrlnode,ctrlport,CONTROLTSK))==NULL) {
+	while((ctrltsk=(RT_TASK *)RT_get_adr(ctrlnode,ctrlport,LINEARTSK))==NULL) {
 		usleep(100000);
-	//	printf("Cant find task %s\n\r", CONTROLTSK);	
+		printf("Waiting %s to be up...\n\r", LINEARTSK);
 	}
 
 	rt_make_hard_real_time();
 
 	rt_task_make_periodic(planttsk, nano2count(stack->time), TIMESIM*stack->tick);
-
-	/*make it real time*/
-	//mkTaksRealTime(planttsk, STEPTIMESIMNANO, SIMTSK);
-
+	
+	simulPack->x[0] = 0;
+	simulPack->x[1] = 1;
+	simulPack->x[2] = 0;
 	stack->time = rt_get_time_ns();
+	sem_post(&stack->sm_disp);
+
 	printf("SIMULATION\n\r");
 	do {
 		currentT = rt_get_time_ns() - stack->time;
+		robot->kIndex++;
+		robot->timeInstant[robot->kIndex] = currentT / SEC2NANO(1);	
 		
-		/* New X value */
-	//	robotNewX(robot);
-
 		/* get u from lin thread*/
-			
-		/* get y */
-		//printf("Receiving..\n\r");
 		RT_receivex(ctrlnode,ctrlport,ctrltsk,u,sizeof(u),&len);
 
 		if(len != sizeof(u))
@@ -162,35 +147,35 @@ void *robotSimulation(void *ptr)
 			break;
 		}
 		else{
-		//	printf("%f %f \n\r", u[0], u[1]);
+			//printf("%f %f \n\r", u[0], u[1]);
 			/*Copy u into robot structure*/
-			//cpUIntoRobot(robot, u);
+			cpUIntoRobot(robot, u);
 		}
+		
+		/* New X value */
+		robotNewX(robot);
 
 		/* Calculates x' from x and u*/
-	//	robotDxSim(robot);
-
+		robotDxSim(robot);
+		
 		/* Calculates y from x and the inputs */
-	//	robotCalcYFromX(robot);
-
-	
+		robotCalcYFromX(robot);
+			
 		/*copy x and y into packet structure*/
-	//	cpXYIntoPacket(simulPack, robot);
-		xy[0] = robot->kIndex*0.1;
-		xy[1] = robot->kIndex*0.2;
-		xy[2] = robot->kIndex*0.3;
-		xy[3] = robot->kIndex*0.4;
-
-		//printf("Sending\n\r");
-		/* send xy to control thread*/
-		RT_sendx(ctrlnode,-ctrlport,ctrltsk,xy,sizeof(xy));
-	
+		//cpXYIntoPacket(simulPack, robot);
+			
 		/*monitor set shared to display*/
 		//monitorSimMain(simulPack, MONITOR_SET_SIM_SHARED);
-		printf("k: %d\n\r", robot->kIndex);
 
-		robot->kIndex++;
-		robot->timeInstant[robot->kIndex] = currentT / SEC2NANO(1);	
+		xy[0] = robot->xVal[0][robot->kIndex];
+		xy[1] = robot->xVal[1][robot->kIndex];
+		xy[2] = robot->xVal[2][robot->kIndex];
+		xy[3] = robot->yVal[0][robot->kIndex];
+		xy[4] = robot->yVal[1][robot->kIndex];
+		printf("%d %f %f %f %f %f\n\r", robot->kIndex, xy[0], xy[1], xy[2], xy[3], xy[4]);
+		/* send xy to control thread*/
+		RT_sendx(ctrlnode,-ctrlport,ctrltsk,xy,sizeof(xy));
+
 		
 		/*Timers procedure*/
 		lastT = currentT;
@@ -216,8 +201,9 @@ void *robotSimulation(void *ptr)
 //	}
 //#endif /*CALC_DATA*/
 
+	munlockall();
 	rtnetPacketFinish(&rtnet);
-	taskFinishRtai(planttsk, started_timer);
-
+	rt_make_soft_real_time();
+	rt_task_delete(planttsk);
 	return 0;
 }

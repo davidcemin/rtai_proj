@@ -37,25 +37,13 @@ extern inline int monitorLinGetV(st_robotControl *local, st_robotControlShared *
 /**
  * \brief  
  */
-extern inline int monitorLinGetX(st_robotControl *local, st_robotControlShared *shared);
+extern inline int monitorLinGetY(st_robotControl *local, st_robotControlShared *shared);
 
 /******************************************************************************/
 /**
  * \brief  
  */
-extern inline int monitorLinSetX(st_robotControlShared *shared, st_robotControl *local);
-/******************************************************************************/
-
-/**
- * \brief  
- */
-extern inline int monitorLinGetU(st_robotControl *local, st_robotControlShared *shared);
-
-/******************************************************************************/
-/**
- * \brief  
- */
-extern inline int monitorLinSetU(st_robotControlShared *shared, st_robotControl *local);
+extern inline int monitorLinSetY(st_robotControlShared *shared, st_robotControl *local);
 /******************************************************************************/
 
 

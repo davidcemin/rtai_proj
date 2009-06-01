@@ -45,9 +45,6 @@ static void robotStackInit(st_robotControlStack *stack)
 	stack->sem.sm_lin = rt_sem_init(nam2num("4g"), 0);
 	stack->sem.sm_gen = rt_sem_init(nam2num("5g"), 0);
 
-//	if(shared->sem.sm_refx == NULL)
-//		printf("sem x null\n\r");
-
 	//if ( (sem_init(&robotShared->sem.disp_sem, 0, 0) < 0) ) {
 	//	fprintf(stderr, "Error in sem_init: %d\n", errno);
 	//	return -1;

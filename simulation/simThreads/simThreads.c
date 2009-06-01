@@ -32,6 +32,10 @@ void robotSimThreadsMain(void)
 {
 	st_robotSimulStack stack;
 	int rt_simTask_thread = 0;
+//	pthread_t threadDisplay;
+//	pthread_attr_t attrd;
+//	int retd = 0;
+
 	int stkSize = sizeof(stack);
 	int i;
 
@@ -43,10 +47,6 @@ void robotSimThreadsMain(void)
 		{"simulation", rt_simTask_thread, robotSimulation},
 	};
 
-	//pthread_t threadDisplay;
-	//pthread_attr_t attr;
-	//int ret;
-	
 	/* shared init */
 	robotSimSharedInit();
 	memset(&stack, 0, sizeof(stack) );
@@ -57,19 +57,34 @@ void robotSimThreadsMain(void)
 
 	if ( !(started_timer = taskCreateRtai(task, "tssi", 1, tick))) {
 		printf("asdg\n\r");
+		robotSimSharedFinish();
 		return;
 	}
 	stack.tick = tick;
 	stack.time = rt_get_time_ns() + (RTIME)TICK;
+	
+	sem_init(&stack.sm_disp, 0, 0);
 
 	/*rt threads init*/
 	for (i = 0; i < NMEMB(rt_threads); i++) {
 		printf("Creating thread: %s\n\r", rt_threads[i].name);
 		if( (rt_threads[i].thread = rt_thread_create(rt_threads[i].func, &stack, stkSize)) == 0) {
 			fprintf(stderr, "Error creating %s thread\n\r", rt_threads[i].name);
+			robotSimSharedFinish();
 			return;
 		}
 	}
+
+	/*Create posix threads*/
+//	pthread_attr_init(&attrd);
+//	pthread_attr_setdetachstate(&attrd, PTHREAD_CREATE_JOINABLE);
+//		
+//	if ( (retd = pthread_create(&threadDisplay, &attrd, robotThreadDisplay , &stack))) {
+//		fprintf(stderr, "Error Creating display Thread: %d\n", retd);
+//		pthread_attr_destroy(&attrd);
+//		robotSimSharedFinish();
+//		return;
+//	}
 	
 	/*rt threads join*/
 	for (i = 0; i < NMEMB(rt_threads); i++) {
@@ -77,26 +92,16 @@ void robotSimThreadsMain(void)
 		rt_thread_join(rt_threads[i].thread);
 	}
 
-	/*Create display thread*/
-	
-	/* For portability, explicitly create threads in a joinable state */
-	//pthread_attr_init(&attr);
-	//pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
-	//if ( (ret = pthread_create(&threadDisplay, &attr, robotThreadDisplay, shared) ) ) {
-	//	fprintf(stderr, "Error Creating Display Thread: %d\n", ret);
-	//	pthread_attr_destroy(&attr);
-	//	robotSimSharedCleanUp(shared);
-	//	return;
-	//}
-
-	/* Wait for all threads to complete */
-	//pthread_join(threadDisplay, NULL);
+	/*posix threads join*/
+//	printf("Joining thread display\n\r");
+//	pthread_join(threadDisplay, NULL);
 
 	/* Clean up and exit */
-	//pthread_attr_destroy(&attr);
+//	pthread_attr_destroy(&attrd);
+
 	robotSimSharedFinish();
 	taskFinishRtai(task, started_timer);
+	sem_destroy(&stack.sm_disp);
 	return; 
 }
 /*****************************************************************************/

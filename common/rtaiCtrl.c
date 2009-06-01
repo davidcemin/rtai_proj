@@ -111,8 +111,6 @@ inline void mkTaksRealTime(RT_TASK *task, double stepTick, char *task_name)
 inline void taskFinishRtai(RT_TASK *task, int started_timer)
 {
 	rt_make_soft_real_time();
-	//if(started_timer)
-	   	//stop_rt_timer();
 	rt_task_delete(task);
 	munlockall();
 }

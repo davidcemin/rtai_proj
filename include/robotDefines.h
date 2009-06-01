@@ -58,21 +58,21 @@
 #define LINPRIORITY		(SIMPRIORITY + 5)
 
 //! Tasks names
-#define GENTASK		"GEN5"
-#define REFMODX		"REFX5"
-#define REFMODY		"REFY5"
-#define CONTROLTSK	"CTRL5"
-#define LINEARTSK	"LIN5"
-#define SIMTSK		"SIM5"
+#define GENTASK		"GEN"
+#define REFMODX		"REFX"
+#define REFMODY		"REFY"
+#define CONTROLTSK	"CTRL"
+#define LINEARTSK	"LIN"
+#define SIMTSK		"SIM"
 
 //! below this value I consider that it equals to zero
 #define	CALCERROR	0.00001
 
 //! Dimensions
 #define REF_DIMENSION	2
-#define XY_DIMENSION	4
 #define X_DIMENSION		3
 #define Y_DIMENSION		2
+#define XY_DIMENSION	(X_DIMENSION + Y_DIMENSION)
 #define U_DIMENSION		2
 #define V_DIMENSION		2
 
@@ -122,11 +122,8 @@
 #define MONITOR_GET_SIM_SHARED	10
 #define MONITOR_SET_SIM_SHARED	11
 
-#define MONITOR_GET_U			12
-#define MONITOR_SET_U			13
-
-#define MONITOR_GET_X			14
-#define MONITOR_SET_X			15
+#define MONITOR_GET_Y			12
+#define MONITOR_SET_Y			13
 
 
 #endif //! _ROBOTDEFINES_H
