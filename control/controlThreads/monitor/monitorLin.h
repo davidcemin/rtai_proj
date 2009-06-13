@@ -6,8 +6,8 @@
  */
 /******************************************************************************/
 
-#ifndef _MONITORCONTROL_H
-#define _MONITORCONTROL_H
+#ifndef _MONITORLIN_H
+#define _MONITORLIN_H
 
 /*robot includes*/
 #include "robotStructs.h"

@@ -25,6 +25,7 @@
 #include "robotStructs.h"
 #include "rtnetAPI.h"
 #include "rtaiCtrl.h"
+#include "robotDispCtrl.h"
 
 /*rtai includes*/
 #include <rtai_sem.h>
@@ -44,11 +45,7 @@ static void robotStackInit(st_robotControlStack *stack)
 	stack->sem.sm_control = rt_sem_init(nam2num("3g"), 0);
 	stack->sem.sm_lin = rt_sem_init(nam2num("4g"), 0);
 	stack->sem.sm_gen = rt_sem_init(nam2num("5g"), 0);
-
-	//if ( (sem_init(&robotShared->sem.disp_sem, 0, 0) < 0) ) {
-	//	fprintf(stderr, "Error in sem_init: %d\n", errno);
-	//	return -1;
-	//}
+	sem_init(&stack->sem.sm_disp, 0, 0);
 }
 
 /*****************************************************************************/
@@ -65,11 +62,12 @@ static void robotStackCleanUp(st_robotControlStack *stack)
 	rt_sem_delete(stack->sem.sm_control);
 	rt_sem_delete(stack->sem.sm_lin);
 	rt_sem_delete(stack->sem.sm_gen);
+	sem_destroy(&stack->sem.sm_disp);
 }
 
 /*****************************************************************************/
 
-void robotControlThreadsMain(void)
+void robotControlThreadsMain(char *ip)
 {
 	st_robotControlStack stack;
 	int rt_genTask_thread = 0;
@@ -78,7 +76,10 @@ void robotControlThreadsMain(void)
 	int rt_controlTask_thread = 0;
 	int rt_linTask_thread = 0;
 	int i;
-	int stkSize = sizeof(stack);
+	int stkSize = sizeof(stack) + sizeof(st_robotControl);
+	pthread_t threadCtrldisp;
+	pthread_attr_t attrd;
+	int retd = 0;
 
 	struct {
 		char *name;
@@ -99,16 +100,8 @@ void robotControlThreadsMain(void)
 	memset(&stack, 0, sizeof(stack) );
 	robotStackInit(&stack);
 
-	RT_TASK *mainTask = NULL;
-	int tick = (int)nano2count((RTIME)TICK);
-	int started_timer = 0;
-	
-	if( !(started_timer = taskCreateRtai(mainTask, "tsct", 1, tick)) ) {
-		printf("aaz\n\r");
-		return;
-	}
-	stack.tick = tick;
-	stack.time = rt_get_time_ns() + (RTIME)TICK;
+	rt_allow_nonroot_hrt();
+	stack.ip = ip;
 	
 	/*rt threads init*/
 	for (i = 0; i < NMEMB(rt_threads); i++) {
@@ -119,16 +112,36 @@ void robotControlThreadsMain(void)
 		}
 	}
 
+	/*Create posix threads*/
+	pthread_attr_init(&attrd);
+	pthread_attr_setdetachstate(&attrd, PTHREAD_CREATE_JOINABLE);
+		
+	if ( (retd = pthread_create(&threadCtrldisp, &attrd, robotDispCtrl, &stack))) {
+		fprintf(stderr, "Error Creating display Thread: %d\n", retd);
+		robotControlSharedFinish();
+		robotStackCleanUp(&stack);
+		//taskFinishRtai(mainTask, started_timer);
+		pthread_attr_destroy(&attrd);
+		return;
+	}
+	
 	/*rt threads join*/
 	for (i = 0; i < NMEMB(rt_threads); i++) {
 		printf("Joining thread: %s\n\r", rt_threads[i].name);
 		rt_thread_join(rt_threads[i].thread);
 	}
 
+	/*posix thread join*/
+	printf("Joining thread display\n\r");
+	pthread_join(threadCtrldisp, NULL);
+
+	/* Clean up and exit */
+	pthread_attr_destroy(&attrd);
+
 	/*stop timer, delete task, shared finish and permit pagination noch einmal*/
 	robotControlSharedFinish();
 	robotStackCleanUp(&stack);
-	taskFinishRtai(mainTask, started_timer);
+	//taskFinishRtai(mainTask, started_timer);
 	return; 
 }
 /*****************************************************************************/

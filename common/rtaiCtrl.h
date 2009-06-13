@@ -43,6 +43,7 @@ extern inline int taskCreateRtai(RT_TASK *task, char *task_name, char priority, 
  * \return void
  */
 extern inline void mkTaksRealTime(RT_TASK *task, double stepTick, char *task_name);
+extern inline void rtaiMakeHard(RT_TASK *task, char *taskname, int period);
 
 /*****************************************************************************/
 /**

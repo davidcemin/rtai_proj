@@ -15,6 +15,7 @@
 #include "monitorGen.h"
 #include "monitorLin.h"
 #include "monitorRefModels.h"
+#include "monitorCtrlAlpha.h"
 #include "robotDefines.h"
 #include "robotStructs.h"
 
@@ -29,35 +30,47 @@ static st_robotControlShared Shared;
 
 void robotControlSharedInit(void)
 {
+	int i;
+	struct {
+		pthread_mutex_t mutex;
+	} tableInit [] = {
+		{Shared.mutex.mutexRefX  },
+		{Shared.mutex.mutexRefY  },
+		{Shared.mutex.mutexYmx   },
+		{Shared.mutex.mutexYmy   },
+		{Shared.mutex.mutexV     },
+		{Shared.mutex.mutexY     },
+		{Shared.mutex.mutexAlpha },
+	};
+
 	memset(&Shared.control, 0, sizeof(Shared.control));
 
-	Shared.control.alpha[ALPHA_1] = 1;
-	Shared.control.alpha[ALPHA_2] = 1;
-	
-	pthread_mutex_init(&Shared.mutex.mutexControl, NULL);
-	pthread_mutex_init(&Shared.mutex.mutexGen, NULL);
-	pthread_mutex_init(&Shared.mutex.mutexLin, NULL);
+	Shared.control.alpha[ALPHA_1] = ALPHA_1_INIT;
+	Shared.control.alpha[ALPHA_2] = ALPHA_2_INIT;
 
-	Shared.sem.sm_control = rt_sem_init(nam2num("sma"), 0);
-	Shared.sem.sm_gen = rt_sem_init(nam2num("smb"), 0);
-	Shared.sem.sm_lin = rt_sem_init(nam2num("smc"), 0);
-	Shared.sem.sm_refx = rt_sem_init(nam2num("smd"), 0);
-	Shared.sem.sm_refy = rt_sem_init(nam2num("sme"), 0);
+	for (i = 0; i < NMEMB(tableInit); i++)
+		pthread_mutex_init(&tableInit[i].mutex, NULL);
 }
 
 /******************************************************************************/
 
 void robotControlSharedFinish(void)
-{
-	pthread_mutex_destroy(&Shared.mutex.mutexControl);
-	pthread_mutex_destroy(&Shared.mutex.mutexGen);
-	pthread_mutex_destroy(&Shared.mutex.mutexLin);
-	
-	rt_sem_delete(Shared.sem.sm_control);
-	rt_sem_delete(Shared.sem.sm_gen);
-	rt_sem_delete(Shared.sem.sm_lin);
-	rt_sem_delete(Shared.sem.sm_refx);
-	rt_sem_delete(Shared.sem.sm_refy);
+{	
+	int i;
+	struct {
+		pthread_mutex_t mutex;
+	} tableInit [] = {
+		{Shared.mutex.mutexRefX  },
+		{Shared.mutex.mutexRefY  },
+		{Shared.mutex.mutexYmx   },
+		{Shared.mutex.mutexYmy   },
+		{Shared.mutex.mutexV     },
+		{Shared.mutex.mutexY     },
+		{Shared.mutex.mutexAlpha },
+	};
+
+	for (i = 0; i < NMEMB(tableInit); i++)
+		pthread_mutex_destroy(&tableInit[i].mutex);
 }
 
 /******************************************************************************/
@@ -112,6 +125,14 @@ inline void monitorControlMain(st_robotControl *local, int type)
 		
 		case MONITOR_SET_Y:
 			monitorLinSetY(&Shared, local);
+			break;	
+		
+		case MONITOR_GET_ALPHA:
+			monitorGetAlpha(&Shared, local);
+			break;	
+
+		case MONITOR_SET_ALPHA:
+			monitorSetAlpha(local, &Shared);
 			break;	
 		
 		default:

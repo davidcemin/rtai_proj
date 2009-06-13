@@ -10,9 +10,10 @@
 
 /**
  * \brief Threads main function. This function initializes all the other threads.
+ * \param  ip Ip remote
  * \return void
  */
-extern void robotControlThreadsMain(void);
+extern void robotControlThreadsMain(char *ip);
 
 /*****************************************************************************/
 

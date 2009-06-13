@@ -103,6 +103,18 @@ inline void mkTaksRealTime(RT_TASK *task, double stepTick, char *task_name)
 
 /*****************************************************************************/
 
+inline void rtaiMakeHard(RT_TASK *task, char *taskname, int period)
+{
+	/*make it hard real time*/
+	rt_make_hard_real_time();
+	
+	/*and finally make it periodic*/
+	rt_task_make_periodic(task, rt_get_time(), nano2count(period));
+	printf("Make task %s HARD. Period: %d\n\r", taskname, period);
+}
+
+/*****************************************************************************/
+
 /**
  * \brief  It destroys a rtai task
  * \param  task pointer to task to be destroyed

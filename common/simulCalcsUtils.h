@@ -31,44 +31,22 @@ extern void robotInit(st_robotMainArrays *robotInit);
 /******************************************************************************/
 
 /**
- * \brief  It calculates the inputs
- * \param  robot Pointer to shared memory
- * \param  t current time
- * \return st_robotInput structure
- */
-//extern void robotInputCalc(st_robotShared *robot, double t);
-
-/******************************************************************************/
-
-/**
  * \brief Calculate mean, variance and jitter
- * \param robot pointer to robot structure
+ * \param tc Pointer to execution time
+ * \param nmemb Arrays number of members
+ * \param filename File name to save the file
  * \return 0 ok, -1 error
  */
-extern int robotCalcData(st_robotMainArrays *robot);
+extern int robotCalcData(double *tc, int nmemb, char *filename);
 
 /******************************************************************************/
 
 /**
- * \brief  Gets u array from shared memory
- * \param  robot Pointer to st_robotMainArrays memory
- * \param  shared Pointer to st_robotShared memory
+ * \brief  Save data into files. Used inside all threads
+ * \param  type Which thread we want to save data
+ * \param  ptr Pointer to data
  * \return void
  */
-//extern inline void getUFromShared(st_robotMainArrays *robot, st_robotShared *shared);
-
-/******************************************************************************/
-
-
-/**
- * \brief  It samples yf array to later save it in a file
- * \param  shared Pointer to st_robotShared memory
- * \param  sample Pointer to st_robotSample memory
- * \param  t Current simulation time
- * \return void
- */
-//extern inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample, double t);
-
-/******************************************************************************/
+extern inline void saveToFileGeneric(int type, void *ptr);
 
 #endif

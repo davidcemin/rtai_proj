@@ -8,6 +8,7 @@
 #include <sys/time.h> 
 #include <stdlib.h> 
 #include <stdio.h>
+#include <string.h>
 
 #include "robotStructs.h"
 #include "simulCalcsUtils.h"
@@ -29,65 +30,180 @@ double getTimeMilisec(void)
 
 /******************************************************************************/
 
-//void robotInit(st_robotMainArrays *robotInit)
-//{
-//	int i, j;
-//	robotInit->kIndex = 0;
-//	robotInit->timeInstant[0] = 0;
-//
-//	for (i = 0; i < 3; i++) {
-//		for(j = 0; j < MAX_DATA_VALUE; j++) {
-//			robotInit->xVal[i][j] = 0;
-//			robotInit->yVal[i][j] = 0;
-//			robotInit->dxVal[i][j] = 0;
-//		}
-//	}
-//	for (i = 0; i < 2; i++)
-//		for(j = 0; j < MAX_DATA_VALUE; j++)
-//			robotInit->uVal[i][j] = 0;
-//}
+/**
+ * \brief  
+ */
+static void robotSaveToFileSim(st_robotMain *data, char *name)
+{
+	FILE *fd;
+	int k;
+
+	/* Opens a file to write */
+	if ( (fd = fopen(name, "w+")) == NULL) { 
+		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
+	}
+	
+	fprintf(stdout, "Writing %s\n", name);
+
+	for(k = 2; k < data->k; k++)
+		fprintf(fd, "%f\t%f\t%f\t%f\t%f\t%f\t%f\n",
+				data->time[k], 
+				data->y[0][k], 
+				data->y[1][k], 
+				data->x[2][k], 
+				data->u[0][k], 
+				data->u[1][k],
+				data->tc[k]);
+	fclose(fd);
+}
 
 /******************************************************************************/
 
-//void robotInputCalc(st_robotShared *robot, double t)
-//{	
-//	if (t < 0.0) {
-//		robot->u[0] = 0;
-//		robot->u[1] = 0;
-//	}
-//	else if(t < 10.0)  {
-//		robot->u[0] = 1; 
-//		robot->u[1] = 0.2 * M_PI;
-//	}
-//	else { 
-//		/*t >=10 */
-//		robot->u[0] = 1;
-//		robot->u[1] = -0.2 * M_PI;
-//	}
-//}
+/**
+ * \brief  
+ */
+static void robotSaveToFileGen(st_robotGeneration_t *data, char *name)
+{
+	FILE *fd;
+	int k;
+
+	/* Opens a file to write */
+	if ( (fd = fopen(name, "w+")) == NULL) { 
+		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
+	}
+	
+	fprintf(stdout, "Writing %s\n", name);
+
+	for(k = 1; k < data->k; k++)
+		fprintf(fd, "%f\t%f\t%d\n", data->time[k], data->tc[k], k);
+	fclose(fd);
+}
 
 /******************************************************************************/
 
-//inline void getUFromShared(st_robotMainArrays *robot, st_robotShared *shared)
-//{
-//	int k = robot->kIndex;
-//	int i;
-//
-//	for (i = 0; i < U_DIMENSION; i++)
-//		robot->uVal[i][k] = shared->u[i];
-//}
+/**
+ * \brief  
+ */
+static void robotSaveToFileRefx(st_referenceModel_t *data, char *name)
+{
+	FILE *fd;
+	int k;
+
+	/* Opens a file to write */
+	if ( (fd = fopen(name, "w+")) == NULL) { 
+		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
+	}
+	
+	fprintf(stdout, "Writing %s\n", name);
+
+	for(k = 1; k < data->k; k++)
+		fprintf(fd, "%f\t%f\t%d\n", data->time[k], data->tc[k], k);
+	fclose(fd);
+}
 
 /******************************************************************************/
 
-//inline void robotSampleYf(st_robotShared *shared, st_robotSample *sample, double t)
-//{
-//	int i;
-//	sample->timeInstant[sample->kIndex] = t;
-//
-//	for(i = 0; i < 3; i++) //XY_DIMENSION
-//		sample->yVal[i][sample->kIndex] = shared->yf[i];
-//}
-//
+/**
+ * \brief  
+ */
+static void robotSaveToFileRefy(st_referenceModel_t *data, char *name)
+{
+	FILE *fd;
+	int k;
+
+	/* Opens a file to write */
+	if ( (fd = fopen(name, "w+")) == NULL) { 
+		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
+	}
+	
+	fprintf(stdout, "Writing %s\n", name);
+
+	for(k = 1; k < data->k; k++)
+		fprintf(fd, "%f\t%f\t%d\n", data->time[k], data->tc[k], k);
+	fclose(fd);
+}
+
+/******************************************************************************/
+
+/**
+ * \brief  
+ */
+static void robotSaveToFileCtrl(st_robotControl_t *data, char *name)
+{
+	FILE *fd;
+	int k;
+
+	/* Opens a file to write */
+	if ( (fd = fopen(name, "w+")) == NULL) { 
+		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
+	}
+	
+	fprintf(stdout, "Writing %s\n", name);
+
+	for(k = 1; k < data->k; k++)
+		fprintf(fd, "%f\t%f\t%d\n", data->time[k], data->tc[k], k);
+	fclose(fd);
+}
+
+/******************************************************************************/
+
+/**
+ * \brief  
+ */
+static void robotSaveToFileLin(st_robotLin_t *data, char *name)
+{
+	FILE *fd;
+	int k;
+
+	/* Opens a file to write */
+	if ( (fd = fopen(name, "w+")) == NULL) { 
+		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
+	}
+	
+	fprintf(stdout, "Writing %s\n", name);
+
+	for(k = 1; k < data->k; k++)
+		fprintf(fd, "%f\t%f\t%f\t%f\t%d\n", data->time[k], data->tc[k], data->alpha[ALPHA_1][k], data->alpha[ALPHA_2][k], k);
+	fclose(fd);
+}
+
+/******************************************************************************/
+
+/**
+ * \brief  
+ */
+inline void saveToFileGeneric(int type, void *ptr)
+{
+	switch (type) {
+		case FILE_GEN:
+			robotSaveToFileGen((st_robotGeneration_t*)ptr, "gen.dat");
+			break;
+
+		case FILE_REFX:
+			robotSaveToFileRefx((st_referenceModel_t*)ptr, "refx.dat");
+			break;
+
+		case FILE_REFY:
+			robotSaveToFileRefy((st_referenceModel_t*)ptr, "refy.dat");
+			break;
+
+		case FILE_CTRL:
+			robotSaveToFileCtrl((st_robotControl_t*)ptr, "ctrl.dat");
+			break;
+		
+		case FILE_LIN:
+			robotSaveToFileLin((st_robotLin_t*)ptr, "lin.dat");
+			break;
+		
+		case FILE_SIM:
+			robotSaveToFileSim((st_robotMain*)ptr, "sim.dat");
+			break;
+
+		default:
+			printf("File write error: I should not be here!\n\r");
+			break;
+	}
+}
 
 /*****************************************************************************/
 
@@ -96,28 +212,28 @@ double getTimeMilisec(void)
  * \param  period pointer to x array
  * \param  ret pointer to period's array
  * \param  nmemb number of members in x
+ * \param  filename name of file to concatenate
  * \return void
  */
-static int dataPeriod(double *period, double *ret, int nmemb)
+static int dataPeriod(double *period, int nmemb, char *filename)
 {
 	int i;
-	FILE *fd;
+	FILE *fd2;
+	char s[30] = "period_";
+
+	strcat(s, filename);
 
 	/* Opens a file to write */
-	if ( (fd = fopen("period.dat","w")) == NULL) { 
+	if ( (fd2 = fopen(s,"w+")) == NULL) { 
 		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
 		return -1;
 	}
 
-	ret[0] = 0.0;
-	ret[1] = STEPTIMESIM * 1000;
-
-	fprintf(stdout, "Writing period.dat\n");
+	fprintf(stdout, "Writing %s\n", s);
 	for (i = 2; i < nmemb; i++) {
-		ret[i] = 1000 * (period[i] - period[i-1]);
-		fprintf(fd, "%f\t%d\n", ret[i], i - 2);
+		fprintf(fd2, "%f\t%d\n", period[i], i -2);
 	}
-	fclose(fd);
+	fclose(fd2);
 	return 0;
 }
 
@@ -135,11 +251,12 @@ static void dataMean(double *val, int n, double *mean)
 	double ret;
 	int i;
 	double nmemb = n - 1;
+
 	ret = 0.0;
 	*mean = 0.0;
 
 	for (i = 0; i < n; i++)
-		ret += val[i];
+		ret += (val[i]);
 	
 	ret = ret / nmemb;
 	*mean = ret;
@@ -219,33 +336,37 @@ static void variance_stddev(double *period, int nmemb, double mean, double *vari
  * \param  period Pointer to period array
  * \param  nmemb Number of members in array
  * \param  jitter pointer to jitter array
+ * \param  filename name of file to write to
  * \return -1 Error, 0 ok
  */
-static int dataJitter(double *period, int nmemb, double *jitter)
+static int dataJitter(double *period, double mean, int nmemb, double *jitter, char *filename)
 {
 	int i;
-	FILE *fd;
+	FILE *fd1;	
+	char s[30] = "period_";
+
+	strcat(s, filename);
 
 	/* Opens a file to write */
-	if ( (fd = fopen("jitter.dat","w")) == NULL) { 
+	if ( (fd1 = fopen(s,"w+")) == NULL) { 
 		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
 		return -1;
 	}
-	fprintf(stdout, "Writing jitter.dat\n");
-	for (i = 2; i < nmemb; i++) {
-		jitter[i] = period[i] - (double)(STEPTIMESIM * 1000) ;
-		fprintf(fd, "%f\t%d\n", jitter[i], i - 2);
+	fprintf(stdout, "Writing %s\n", s);
+	for (i = 0; i < nmemb; i++) {
+		jitter[i] = period[i] - mean;
+		fprintf(fd1, "%f\t%d\n", jitter[i], i);
 	}
+	fclose(fd1);
 	return 0;
 }
 
 /******************************************************************************/
 
-int robotCalcData(st_robotMainArrays *robot)
+int robotCalcData(double *tc, int nmemb, char *filename)
 {
-	double nmemb = robot->kIndex;
-	double *period;
-	double *jitter;
+	//st_robotMain data;
+	double jitter[MAX_DATA_VALUE];
 	FILE *fd;
 	
 	double mean = 0.0;
@@ -254,34 +375,24 @@ int robotCalcData(st_robotMainArrays *robot)
 	double var  = 0.0;
 	double dev  = 0.0;
 
-	/* Allocate memory to period array */
-	if ( (period = (double*) malloc(robot->kIndex * sizeof(double)) ) == NULL ) { 
-		fprintf(stderr, "Not possible to allocate memory to period!\n\r");
-		return -1;
-	}
-
-	/* Allocate memory to jitter array */
-	if ( (jitter = (double*) malloc(robot->kIndex * sizeof(double)) ) == NULL ) { 
-		fprintf(stderr, "Not possible to allocate memory to jitter!\n\r");
-		return -1;
-	}
 	/* Opens a file to write */
-	if ( (fd = fopen("results.dat","w")) == NULL) { 
+	if ( (fd = fopen(filename,"w+")) == NULL) { 
 		fprintf(stderr, "Error! Cannot open a file to write!\n\r");
 		return -1;
 	}
 
-
-	if (dataPeriod(robot->timeInstant, period, nmemb) < 0) {
-		free(period);
-		free(jitter);
+	if (dataPeriod(tc, nmemb, filename) < 0) {
 		return -1;
 	}
 	
-	dataMean(period, nmemb, &mean);
-	maxValue(period, nmemb, &maxT);
-	minValue(period, nmemb, &minT);
-	variance_stddev(period, nmemb, mean, &var, &dev);
+	printf("mean\n\r");
+	dataMean(tc, nmemb, &mean);
+	printf("max\n\r");
+	maxValue(tc, nmemb, &maxT);
+	printf("min\n\r");
+	minValue(tc, nmemb, &minT);
+	printf("variance\n\r");
+	variance_stddev(tc, nmemb, mean, &var, &dev);
 	
 	fprintf(fd, "Period:\n");
 
@@ -291,9 +402,7 @@ int robotCalcData(st_robotMainArrays *robot)
 	fprintf(fd, "Var:  %f\n", var);
 	fprintf(fd, "Dev:  %f\n", dev);
 
-	if(dataJitter(period, nmemb, jitter) < 0) {
-		free(period);
-		free(period);
+	if(dataJitter(tc, mean, nmemb, jitter, filename) < 0) {
 		return -1;
 	}
 
@@ -319,7 +428,6 @@ int robotCalcData(st_robotMainArrays *robot)
 	fprintf(fd, "Dev:  %f\n", dev);
 
 	fclose(fd);
-	free(period);
-	free(jitter);
 	return 0;
 }
+

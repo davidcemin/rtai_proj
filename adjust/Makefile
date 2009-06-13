@@ -1,16 +1,15 @@
 #lab04 Makefile. It should be the last to be called
-TARGET := plant
+TARGET := adjust
 
 ########################################################################
 #Include dirs
-ROBOTHREAD = ./simThreads
+ROBOTHREAD = ./adjustThreads
 COMMON   = ../common
-MONITOR = $(ROBOTHREAD)/monitor
 
 ########################################################################
 #flags
 CFLAGS   := -O2 -Wall
-CINCLUDE := -I../include/ -I$(ROBOTHREAD) -I$(MONITOR) -I$(COMMON)
+CINCLUDE := -I../include/ -I$(ROBOTHREAD) -I$(COMMON)
 CLIBDIR  :=
 CLIBS    := -lm -lpthread
 DEPFLAGS := -MM
@@ -36,7 +35,7 @@ LDFLAGS  = ${LIBS}
 CSOURCES = $(wildcard *.c)
 OBJECTS  = $(CSOURCES:.c=.o)
 DEPS     = $(CSOURCES:.c=.d)
-OBSDEPS  = $(COMMON)/*.o $(MONITOR)/*.o $(ROBOTHREAD)/*.o
+OBSDEPS  = $(COMMON)/*.o  $(ROBOTHREAD)/*.o
 LIBFILES = $(LIBINCLUDE)/*.a 
 
 ########################################################################

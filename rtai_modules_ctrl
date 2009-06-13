@@ -1,32 +1,37 @@
 #!/bin/sh
 
-#MODDIR= "/usr/realtime"
-#MODULES= /usr/realtime/modules/rtai_hal.ko \
-#		 /usr/realtime/modules/rtai_lxrt.ko 
+RTAIDIR=`rtai-config --prefix`
 
 usage () {
 	echo "Usage: "
-    echo "./rtai_modules_ctrl -l: load the modules"
-	echo "./rtai_modules_ctrl -r: remove the modules"
+    echo "./rtai_modules_ctrl load: load the modules"
+	echo "./rtai_modules_ctrl remove: remove the modules"
+	echo "./rtai_modules_ctrl status: status of the rtai modules loaded."
 	exit
 }
 
+status () {
+	lsmod | grep rtai
+}
+
 insmodules () {	
-	insmod /usr/realtime/modules/rtai_hal.ko
-	insmod /usr/realtime/modules/rtai_lxrt.ko
-	insmod /usr/realtime/modules/rtai_sem.ko
-	insmod /usr/realtime/modules/rtai_mbx.ko
-	insmod /usr/realtime/modules/rtai_msg.ko
-	insmod /usr/realtime/modules/rtai_netrpc.ko ThisSoftNode="127.0.0.1"
+	sudo insmod $RTAIDIR/modules/rtai_hal.ko
+	sudo insmod $RTAIDIR/modules/rtai_lxrt.ko
+	sudo insmod $RTAIDIR/modules/rtai_wd.ko Policy=0 Limit=-1 Safety=-1 LooperTimeLimit=1000
+	sudo insmod $RTAIDIR/modules/rtai_sem.ko
+	sudo insmod $RTAIDIR/modules/rtai_mbx.ko
+	sudo insmod $RTAIDIR/modules/rtai_msg.ko
+	sudo insmod $RTAIDIR/modules/rtai_netrpc.ko ThisSoftNode="127.0.0.1"
 }
 
 rmmodules() {
-	rmmod rtai_netrpc
-	rmmod rtai_msg
-	rmmod rtai_mbx
-	rmmod rtai_sem
-	rmmod rtai_lxrt
-	rmmod rtai_hal
+	sudo rmmod rtai_netrpc
+	sudo rmmod rtai_msg
+	sudo rmmod rtai_mbx
+	sudo rmmod rtai_sem
+	sudo rmmod rtai_wd
+	sudo rmmod rtai_lxrt
+	sudo rmmod rtai_hal
 }
 
 #Test permission
@@ -41,10 +46,15 @@ if [ $# -ne 1 ]; then
 	usage
 fi
 
-if [ "$1" = "-l" ]; then
+if [ "$1" = "load" ]; then
 	insmodules
-elif [ "$1" = "-r" ]; then
+
+elif [ "$1" = "remove" ]; then
 	rmmodules
+
+elif [ "$1" = "status" ]; then
+	status
+
 else
 	usage
 fi

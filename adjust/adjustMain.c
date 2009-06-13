@@ -9,7 +9,7 @@
 #include <stdio.h> 
 
 /*includes robot*/
-#include "simThreads.h"
+#include "adjustThread.h"
 
 /*rtai includes*/
 #include <rtai_lxrt.h>
@@ -22,7 +22,7 @@
  */
 int main(int argc, char *argv[]) 
 {
-	//int rt_simWd = 0;
+	int rt_adjustThread = 0;
 	if (argc != 2){
 		fprintf(stderr, "Usage: ./plant <ip remote>\n\r");
 		return -1;
@@ -35,14 +35,12 @@ int main(int argc, char *argv[])
 	rt_set_oneshot_mode();
 	start_rt_timer(0);
 
-	robotSimThreadsMain(ip);
-	
-	//if( (rt_simWd = rt_thread_create(robotSimThreadsMain, ip, 1000)) == 0) {
-	//		fprintf(stderr, "Error creating WD thread\n\r");
-	//		return -1;
-	//	}
+	if( (rt_adjustThread = rt_thread_create(adjustThread, ip, 1000)) == 0) {
+		fprintf(stderr, "Error creating adjust thread\n\r");
+		return -1;
+	}
 
-	//rt_thread_join(rt_simWd);
+	rt_thread_join(rt_adjustThread);
 
 	return 0;
 }

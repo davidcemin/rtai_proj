@@ -28,15 +28,15 @@
 
 /*****************************************************************************/
 
-void robotSimThreadsMain(void)
+void robotSimThreadsMain(char *ip)
 {
 	st_robotSimulStack stack;
 	int rt_simTask_thread = 0;
-//	pthread_t threadDisplay;
-//	pthread_attr_t attrd;
-//	int retd = 0;
+	pthread_t threadDisplay;
+	pthread_attr_t attrd;
+	int retd = 0;
 
-	int stkSize = sizeof(stack);
+	int stkSize = sizeof(stack) + 100000;
 	int i;
 
 	struct {
@@ -51,18 +51,9 @@ void robotSimThreadsMain(void)
 	robotSimSharedInit();
 	memset(&stack, 0, sizeof(stack) );
 
-	RT_TASK *task = NULL;
-	int tick = (int)nano2count((RTIME)TICK);
-	int started_timer = 0;
-
-	if ( !(started_timer = taskCreateRtai(task, "tssi", 1, tick))) {
-		printf("asdg\n\r");
-		robotSimSharedFinish();
-		return;
-	}
-	stack.tick = tick;
-	stack.time = rt_get_time_ns() + (RTIME)TICK;
+	stack.ip = ip;
 	
+	rt_allow_nonroot_hrt();
 	sem_init(&stack.sm_disp, 0, 0);
 
 	/*rt threads init*/
@@ -76,15 +67,15 @@ void robotSimThreadsMain(void)
 	}
 
 	/*Create posix threads*/
-//	pthread_attr_init(&attrd);
-//	pthread_attr_setdetachstate(&attrd, PTHREAD_CREATE_JOINABLE);
-//		
-//	if ( (retd = pthread_create(&threadDisplay, &attrd, robotThreadDisplay , &stack))) {
-//		fprintf(stderr, "Error Creating display Thread: %d\n", retd);
-//		pthread_attr_destroy(&attrd);
-//		robotSimSharedFinish();
-//		return;
-//	}
+	pthread_attr_init(&attrd);
+	pthread_attr_setdetachstate(&attrd, PTHREAD_CREATE_JOINABLE);
+		
+	if ( (retd = pthread_create(&threadDisplay, &attrd, robotThreadDisplay , &stack))) {
+		fprintf(stderr, "Error Creating display Thread: %d\n", retd);
+		pthread_attr_destroy(&attrd);
+		robotSimSharedFinish();
+		return;
+	}
 	
 	/*rt threads join*/
 	for (i = 0; i < NMEMB(rt_threads); i++) {
@@ -93,14 +84,14 @@ void robotSimThreadsMain(void)
 	}
 
 	/*posix threads join*/
-//	printf("Joining thread display\n\r");
-//	pthread_join(threadDisplay, NULL);
+	printf("Joining thread display\n\r");
+	pthread_join(threadDisplay, NULL);
 
 	/* Clean up and exit */
-//	pthread_attr_destroy(&attrd);
+	pthread_attr_destroy(&attrd);
 
 	robotSimSharedFinish();
-	taskFinishRtai(task, started_timer);
+	//taskFinishRtai(task, started_timer);
 	sem_destroy(&stack.sm_disp);
 	return; 
 }

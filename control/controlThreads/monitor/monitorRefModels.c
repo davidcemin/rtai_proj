@@ -19,12 +19,12 @@
 
 inline int monitorRefXSet(st_robotControlShared *shared, st_robotControl *local)
 {
-	pthread_mutex_lock(&shared->mutex.mutexControl);
+	pthread_mutex_lock(&shared->mutex.mutexYmx);
 
 	shared->control.control_t.ym[XM_POSITION] = local->control_t.ym[XM_POSITION];
 	shared->control.control_t.dym[XM_POSITION] = local->control_t.dym[XM_POSITION];
 
-	pthread_mutex_unlock(&shared->mutex.mutexControl);
+	pthread_mutex_unlock(&shared->mutex.mutexYmx);
 
 	return 0;
 }
@@ -33,12 +33,12 @@ inline int monitorRefXSet(st_robotControlShared *shared, st_robotControl *local)
 
 inline int monitorRefYSet(st_robotControlShared *shared, st_robotControl *local)
 {
-	pthread_mutex_lock(&shared->mutex.mutexControl);
+	pthread_mutex_lock(&shared->mutex.mutexYmy);
 
 	shared->control.control_t.ym[YM_POSITION] = local->control_t.ym[YM_POSITION];
 	shared->control.control_t.dym[YM_POSITION] = local->control_t.dym[YM_POSITION];
 
-	pthread_mutex_unlock(&shared->mutex.mutexControl);
+	pthread_mutex_unlock(&shared->mutex.mutexYmy);
 
 	return 0;
 }
@@ -47,12 +47,12 @@ inline int monitorRefYSet(st_robotControlShared *shared, st_robotControl *local)
 
 inline int monitorRefXGet(st_robotControl *local, st_robotControlShared *shared)
 {	
-	pthread_mutex_lock(&shared->mutex.mutexControl);
+	pthread_mutex_lock(&shared->mutex.mutexYmx);
 
 	local->control_t.ym[XM_POSITION] = shared->control.control_t.ym[XM_POSITION];
 	local->control_t.dym[XM_POSITION] = shared->control.control_t.dym[XM_POSITION]; 
 
-	pthread_mutex_unlock(&shared->mutex.mutexControl);
+	pthread_mutex_unlock(&shared->mutex.mutexYmx);
 
 	return 0;
 }
@@ -61,12 +61,12 @@ inline int monitorRefXGet(st_robotControl *local, st_robotControlShared *shared)
 
 inline int monitorRefYGet(st_robotControl *local, st_robotControlShared *shared)
 {
-	pthread_mutex_lock(&shared->mutex.mutexControl);
+	pthread_mutex_lock(&shared->mutex.mutexYmy);
 
 	local->control_t.ym[YM_POSITION] = shared->control.control_t.ym[YM_POSITION];
 	local->control_t.dym[YM_POSITION] = shared->control.control_t.dym[YM_POSITION]; 
 
-	pthread_mutex_unlock(&shared->mutex.mutexControl);
+	pthread_mutex_unlock(&shared->mutex.mutexYmy);
 
 	return 0;
 }

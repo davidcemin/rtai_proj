@@ -20,11 +20,12 @@
 
 inline void rtnetPacketInit(st_rtnetRobot *rtnet)
 {
-	printf("rtnet packet init\n\r");
+	char *ip = rtnet->ip;
+	printf("rtnet packet init. IP: %s\n\r", ip);
 
-	inet_aton("127.0.0.1", &rtnet->addr.sin_addr);
+	inet_aton(ip, &rtnet->addr.sin_addr);
 	rtnet->node = rtnet->addr.sin_addr.s_addr;
-	printf("0x%lx\n\r", rtnet->node);
+	printf("IP: %s NODE: 0x%lx\n\r", ip, rtnet->node);
 	
 	rtnet->port = 0;
 	while ( (rtnet->port = rt_request_port(rtnet->node)) <= 0) {	

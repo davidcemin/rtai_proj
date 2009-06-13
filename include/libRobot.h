@@ -87,7 +87,7 @@ extern void robotNewX(st_robotMainArrays *robotMain);
  * \param t current time
  * \return void 
  */
-extern void robotRefGen(st_robotControl *robot, double t);
+extern inline void robotRefGen(st_robotControl *robot, double t);
 
 /******************************************************************************/
 
@@ -96,19 +96,18 @@ extern void robotRefGen(st_robotControl *robot, double t);
  * \param  refmod Pointer to st_robotRefMod structure
  * \return void
  */
-extern void robotNewYm(st_robotRefMod *refmod);
+extern inline void robotNewYm(st_robotRefMod *refmod);
 
+extern inline void robotSetYm(st_robotControl *local, double ts, int type);
 /******************************************************************************/
 
 /**
  * \brief  It calculates the first derivative from ym
- * \param  refmod Pointer to st_robotRefMod structure 
  * \param  local Pointer to st_robotControl structure
  * \param  type xref or yref
-
  * \return void
  */
-extern void robotDxYm(st_robotRefMod *refmod, st_robotControl *local, int type);
+extern inline void robotDxYm(st_robotControl *local, int type);
 
 /******************************************************************************/
 
@@ -117,7 +116,29 @@ extern void robotDxYm(st_robotRefMod *refmod, st_robotControl *local, int type);
  * \param  linPacket Pointer to st_robotLinPacket structure
  * \return void
  */
-extern void robotGenU(st_robotLinPacket *linPacket);
+extern inline void robotGenU(st_robotLinPacket *linPacket);
+
+/********************************SIMULATION************************************/
+
+/**
+ * \brief  
+ */
+extern inline void robot_sim_calc_dx(st_robotSimulPacket *pack, int k);
+
+/******************************************************************************/
+
+/**
+ * \brief  
+ */
+extern inline void robot_sim_calc_x(st_robotSimulPacket *pack, int k, double ts);
+
+
+/******************************************************************************/
+
+/**
+ * \brief  
+ */
+extern inline void robot_sim_calc_y(st_robotSimulPacket *pack, int k);
 
 /******************************************************************************/
 

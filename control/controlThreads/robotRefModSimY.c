@@ -20,6 +20,7 @@
 #include "robotStructs.h"
 #include "robotThreads.h"
 #include "rtaiCtrl.h"
+#include "simulCalcsUtils.h"
 
 /*rtai includes*/
 #include <rtai_lxrt.h>
@@ -29,29 +30,17 @@
 void *robotRefModSimY(void *ptr)
 {	
 	st_robotControlStack *stack = ptr;
-	st_robotControl *local;
-	st_robotRefMod *refmod;
+	st_robotControl local;
 	double currentT = 0;
 	double lastT = 0;
 	double total = 0;
 	RT_TASK *task = NULL;
+	int i = 0;
 
-	if ( (refmod = (st_robotRefMod*)malloc(sizeof(st_robotRefMod))) == NULL ) {
-		fprintf(stderr, "Error in refmod memory allocation!\n");
-		return NULL;
-	}
-	
-	if ( (local = (st_robotControl*)malloc(sizeof(local))) == NULL ) {
-		fprintf(stderr, "Error in generation structure memory allocation\n");
-		free(local);
-		return NULL;
-	}
-	
 	mlockall(MCL_CURRENT | MCL_FUTURE);	
 
 	/*init some pointers..*/
-	memset(local, 0, sizeof(local));
-	memset(refmod, 0, sizeof(st_robotRefMod));
+	memset(&local, 0, sizeof(local));
 
 	/*registering real time task*/
 	if((task = rt_thread_init(nam2num(REFMODY), REFMODYPRIORITY, 0, SCHED_FIFO, 0xFF)) == 0){
@@ -63,52 +52,56 @@ void *robotRefModSimY(void *ptr)
 	/*wait sync*/
 	rt_sem_wait(stack->sem.sm_refy);
 	
-	/*make it hard real time*/
-	rt_make_hard_real_time();
+	rtaiMakeHard(task, REFMODY, STEPTIMEREFMODELYNANO);
 	
-	/*and finally make it periodic*/
-	rt_task_make_periodic(task, nano2count(stack->time), TIMEMODY*stack->tick);
-
 	printf("REFMODY\n\r");
+	double diff = 0;
+	lastT = rt_get_time_ns();
 	do {
-		currentT = rt_get_time_ns() - stack->time;
-		refmod->kIndex++;
+		currentT = rt_get_time_ns();
+		diff = currentT - lastT;
+		i++;
 		
 		/*get alpha*/
-		local->alpha[YREF_POSITION] = 1;
+		monitorControlMain(&local, MONITOR_GET_ALPHA);
 
 		/* Monitor get ref*/
-		monitorControlMain(local, MONITOR_GET_REFERENCE_Y);
-
-		/* Copy reference from local memory */
-		refmod->ref[refmod->kIndex] = local->generation_t.ref[YREF_POSITION];
-
-		/* Calculate ym' */
-		robotDxYm(refmod, local, YREF_POSITION);
+		monitorControlMain(&local, MONITOR_GET_REFERENCE_Y);
 
 		/* Calculate ym */
-		robotNewYm(refmod);
-
-		/* Copy ym and ym' into local shared */
-		local->control_t.ym[YM_POSITION] = refmod->ym[refmod->kIndex];
-		local->control_t.dym[YM_POSITION] = refmod->dRef[refmod->kIndex];
+		robotSetYm(&local, (diff/SEC2NANO(1)), YREF_POSITION);
 		
+		/*save last*/
+		local.refmod_t.ymLast = local.refmod_t.ym;
+
+		/* Calculate ym' */
+		robotDxYm(&local, YREF_POSITION);
+	
 		/*monitor set ym and ym'*/
-		monitorControlMain(local, MONITOR_SET_YMY);
+		monitorControlMain(&local, MONITOR_SET_YMY);
 
-		refmod->timeInstant[refmod->kIndex] = currentT / SEC2NANO(1);
-		
 		/*Timers procedure*/
+		total += diff / SEC2NANO(1);
 		lastT = currentT;
-		total = currentT / SEC2NANO(1);
-
+		local.refmod_t.k = i;
+		local.refmod_t.time[i] = total;
+		local.refmod_t.tc[i] = rt_get_time_ns() - currentT;
+		//local.refmod_t.period[i] = diff;
 		rt_task_wait_period();
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
 	printf("Y: waiting control signal\n\r");
 	rt_sem_wait(stack->sem.sm_refy);
+	
 	rt_make_soft_real_time();
 	rt_task_delete(task);
+
+#ifdef CALC_DATA
+	robotCalcData(local.refmod_t.tc, local.refmod_t.k, "results_refy_te.dat");
+	//robotCalcData(local.refmod_t.period, local.refmod_t.k, "results_refy_period.dat");
+	saveToFileGeneric(FILE_REFY, &local.refmod_t);
+#endif /*CALC_DATA*/
+	
 	return NULL;
 }
 

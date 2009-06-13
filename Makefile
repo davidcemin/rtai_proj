@@ -2,7 +2,8 @@
 
 #defines
 CONTROLDIR := control
-SIMULDIR := simulation
+SIMULDIR   := simulation
+ADJUSTDIR  := adjust
 
 #COMMON
 LIBDIR  := lib
@@ -20,11 +21,15 @@ SIMULTHREAD	:= $(SIMULDIR)/simThreads
 SIMULMONIT := $(SIMULTHREAD)/monitor
 SIMUL := $(SIMULMONIT) $(SIMULTHREAD) $(SIMULDIR)
 
+#Adjust
+ADJTHREAD := $(ADJUSTDIR)/adjustThreads
+ADJUST := $(ADJTHREAD) $(ADJUSTDIR)
+
 #General
 QUIET = @
 
 #All dirs
-ALLDIRS := $(UTIL) $(CONTROL) $(SIMUL)
+ALLDIRS := $(UTIL) $(CONTROL) $(SIMUL) $(ADJUST)
 
 .PHONY: all clean clobber doc 
 

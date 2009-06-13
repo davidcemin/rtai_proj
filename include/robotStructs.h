@@ -26,6 +26,7 @@ typedef struct {
 	unsigned long node;
 	int port;
 	struct sockaddr_in addr;
+	char *ip;
 } st_rtnetRobot;
 
 
@@ -40,36 +41,66 @@ typedef struct {
 	int kIndex;							
 } st_robotRefMod;
 
+typedef struct {
+	double ym;
+	double ymLast;
+	double dym;
+	double ts;
+	double time[MAX_DATA_VALUE];
+	double tc[MAX_DATA_VALUE];
+	//double period[MAX_DATA_VALUE];
+	int k;
+} st_referenceModel_t;
+
 //! Structure used in reference generation
 typedef struct {
 	double ref[REF_DIMENSION];
+	double time[MAX_DATA_VALUE];
+	double tc[MAX_DATA_VALUE];
+	//double period[MAX_DATA_VALUE];
+	int k;
 } st_robotGeneration_t;
 
 //! Control structure
 typedef struct {
 	double ym[YM_DIMENSION];
 	double dym[YM_DIMENSION];
+	double time[MAX_DATA_VALUE];
+	//double period[MAX_DATA_VALUE];
+	double tc[MAX_DATA_VALUE];
+	int k;
 } st_robotControl_t;
 
 //! Linearization structure
 typedef struct {
 	double v[V_DIMENSION];
 	double y[Y_DIMENSION];
+	double x[X_DIMENSION];
+	double alpha[ALPHA_DIMENSION][MAX_DATA_VALUE];
+	double time[MAX_DATA_VALUE];
+	double tc[MAX_DATA_VALUE];
+	//double period[MAX_DATA_VALUE];
+	int k;
 } st_robotLin_t;
 
 //! Main control shared structure
 typedef struct {
 	st_robotGeneration_t generation_t;
+	st_referenceModel_t refmod_t;
 	st_robotControl_t control_t;
 	st_robotLin_t lin_t;
-	unsigned char alpha[ALPHA_DIMENSION];
+	double alpha[ALPHA_DIMENSION];
 } st_robotControl;	
 
 //! Control structure with mutexes
 typedef struct {
-	pthread_mutex_t mutexControl;
-	pthread_mutex_t	mutexGen;
-	pthread_mutex_t mutexLin;
+	pthread_mutex_t mutexRefX;
+	pthread_mutex_t mutexRefY;
+	pthread_mutex_t mutexYmx;
+	pthread_mutex_t mutexYmy;
+	pthread_mutex_t mutexV;
+	pthread_mutex_t mutexY;
+	pthread_mutex_t mutexAlpha;
 } st_controlMutex;
 
 //! Control structure with semaphores
@@ -79,13 +110,13 @@ typedef struct {
 	SEM *sm_lin;
 	SEM *sm_refx;
 	SEM *sm_refy;
+	sem_t sm_disp;
 } st_controlSem;
 
 //! Monitor shared structure
 typedef struct {
 	st_robotControl control;	//! Control structure
 	st_controlMutex mutex;		//! mutex structure
-	st_controlSem sem;			//! semaphore structure
 } st_robotControlShared;
 
 //! Linearization packet structure
@@ -99,6 +130,7 @@ typedef struct {
 	int tick;	//! tick of the tasks
 	RTIME time;
 	st_controlSem sem;
+	char *ip;
 } st_robotControlStack;
 
 
@@ -114,11 +146,25 @@ typedef struct {
 	double uVal[U_DIMENSION][MAX_DATA_VALUE];
 } st_robotMainArrays;
 
+//! Main structure with arrays
+typedef struct {
+	int k;
+	double time[MAX_DATA_VALUE];              //!< Current time
+	double tc[MAX_DATA_VALUE];                //!< Execution data
+	double period[MAX_DATA_VALUE];            //!< Period data
+	double dx[X_DIMENSION][MAX_DATA_VALUE];   //!< x' data
+	double x[X_DIMENSION][MAX_DATA_VALUE];    //!< x data
+	double y[Y_DIMENSION][MAX_DATA_VALUE];    //!< y data
+	double u[U_DIMENSION][MAX_DATA_VALUE];    //!< u data
+} st_robotMain;
+
 //! Simulation structure base
 typedef struct {
-	double x[X_DIMENSION];
-	double y[Y_DIMENSION];
-	double u[U_DIMENSION];
+	double x[X_DIMENSION];	//!< current x value
+	double xl[X_DIMENSION];	//!< last x value
+	double xd[X_DIMENSION]; //!< current x' value
+	double y[Y_DIMENSION];	//!< current y value
+	double u[U_DIMENSION];	//!< current u value
 } st_robotSimulPacket;
 
 //! Simulation structure shared
@@ -131,6 +177,7 @@ typedef struct {
 //! Simulation stack packet
 typedef struct {
 	int tick;	//! tick of the tasks
+	char *ip;
 	RTIME time;
 	sem_t sm_disp;
 } st_robotSimulStack;

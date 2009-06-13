@@ -11,22 +11,24 @@
 
 /******************************************************************************/
 
-void robotNewYm(st_robotRefMod *refmod)
+inline void robotSetYm(st_robotControl *local, double ts, int type)
 {
-	int k = refmod->kIndex;
-	double ts = (refmod->timeInstant[k] - refmod->timeInstant[k-1]);
+	double tsA = ts * local->alpha[type];
 	
-	refmod->ym[k] = refmod->dRef[k] * ts;
+	local->control_t.ym[type] = (tsA / (tsA + 1)) * local->generation_t.ref[type] + (1/(tsA+1))*local->refmod_t.ymLast;
+
+	//printf("%s %f %f\n\r", type == XREF_POSITION ? "xref" : "yref", tsA, local->control_t.ym[type]);
 }
 
 /******************************************************************************/
 
-void robotDxYm(st_robotRefMod *refmod, st_robotControl *local, int type)
+inline void robotDxYm(st_robotControl *local, int type)
 {
-	int k = refmod->kIndex;
 	int alpha = local->alpha[type];
+	double ref = local->generation_t.ref[type];
+	double ym = local->control_t.ym[type];
 
-	refmod->dRef[k] = alpha * (refmod->ref[k] - refmod->ym[k]);
+	local->control_t.dym[type] = alpha*(ref - ym);
 }
 
 /******************************************************************************/

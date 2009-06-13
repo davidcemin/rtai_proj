@@ -16,7 +16,7 @@
 
 //! Simulation timers
 #define INIT_TIME			0.0
-#define FINAL_TIME			10.0
+#define FINAL_TIME			20.0
 #define TOTAL_TIME	 ( FINAL_TIME - INIT_TIME ) 
 
 //! 1m tick
@@ -50,12 +50,15 @@
 #define STEPTIMEREFMODELYNANO	SEC2NANO(STEPTIMEREFMODELY)
 
 //! Priorities
-#define SIMPRIORITY	1
-#define CTRLPRIORITY	(SIMPRIORITY + 1)
-#define GENPRIORITY		(SIMPRIORITY + 2)
-#define REFMODXPRIORITY	(SIMPRIORITY + 3)
-#define REFMODYPRIORITY	(SIMPRIORITY + 4)
-#define LINPRIORITY		(SIMPRIORITY + 5)
+enum PRIORITY {
+	SIMPRIORITY	= 1,
+	CTRLPRIORITY,	
+	LINPRIORITY,
+	REFMODXPRIORITY,
+	REFMODYPRIORITY,
+	GENPRIORITY,
+	ADJPRIORITY = 100,
+};
 
 //! Tasks names
 #define GENTASK		"GEN"
@@ -64,6 +67,7 @@
 #define CONTROLTSK	"CTRL"
 #define LINEARTSK	"LIN"
 #define SIMTSK		"SIM"
+#define ADJTSK		"ADJ"
 
 //! below this value I consider that it equals to zero
 #define	CALCERROR	0.00001
@@ -91,6 +95,8 @@
 #define ALPHA_DIMENSION	2
 #define ALPHA_1	0
 #define ALPHA_2	1
+#define ALPHA_1_INIT	3
+#define ALPHA_2_INIT	3
 
 //! Distance from the robot's front
 #define DIST	0.6
@@ -126,6 +132,19 @@
 #define MONITOR_GET_Y			12
 #define MONITOR_SET_Y			13
 
+#define MONITOR_GET_ALPHA		14
+#define MONITOR_SET_ALPHA		15
+
+//! Robot files defines
+#define FILE_SIM	0
+#define FILE_GEN	1
+#define FILE_REFX	2
+#define FILE_REFY	3
+#define FILE_CTRL	4
+#define FILE_LIN	5
+
+//! Defined used in jitter calculations and the like.
+#define CALC_DATA
 
 #endif //! _ROBOTDEFINES_H
 

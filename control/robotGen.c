@@ -11,6 +11,9 @@
 /*includes robot*/
 #include "robotThreads.h"
 
+/*rtai*/
+#include <rtai_lxrt.h>	
+
 /******************************************************************************/
 
 /**
@@ -20,12 +23,18 @@
  */
 int main(int argc, char *argv[]) 
 {
-	if (argc != 1){
-		fprintf(stderr, "Usage: ./robotSim\n\r");
+	if (argc != 2){
+		fprintf(stderr, "Usage: ./control <ip remote>\n\r");
 		return -1;
 	}
+
+	rt_allow_nonroot_hrt();
+	rt_set_oneshot_mode();
+	start_rt_timer(0);
 	
-	robotControlThreadsMain();
+	char *ip = argv[1];
+	
+	robotControlThreadsMain(ip);
 	return 0;
 }
 
