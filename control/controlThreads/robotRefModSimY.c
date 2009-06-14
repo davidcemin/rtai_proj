@@ -86,7 +86,7 @@ void *robotRefModSimY(void *ptr)
 		local.refmod_t.k = i;
 		local.refmod_t.time[i] = total;
 		local.refmod_t.tc[i] = rt_get_time_ns() - currentT;
-		//local.refmod_t.period[i] = diff;
+		local.refmod_t.period[i] = diff;
 		rt_task_wait_period();
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 
@@ -98,7 +98,7 @@ void *robotRefModSimY(void *ptr)
 
 #ifdef CALC_DATA
 	robotCalcData(local.refmod_t.tc, local.refmod_t.k, "results_refy_te.dat");
-	//robotCalcData(local.refmod_t.period, local.refmod_t.k, "results_refy_period.dat");
+	robotCalcData(local.refmod_t.period, local.refmod_t.k, "results_refy_pd.dat");
 	saveToFileGeneric(FILE_REFY, &local.refmod_t);
 #endif /*CALC_DATA*/
 	

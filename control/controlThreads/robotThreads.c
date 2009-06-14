@@ -76,7 +76,7 @@ void robotControlThreadsMain(char *ip)
 	int rt_controlTask_thread = 0;
 	int rt_linTask_thread = 0;
 	int i;
-	int stkSize = sizeof(stack) + sizeof(st_robotControl);
+	int stkSize = sizeof(stack) + 5*sizeof(st_robotControl) + 10000;
 	pthread_t threadCtrldisp;
 	pthread_attr_t attrd;
 	int retd = 0;

@@ -75,7 +75,7 @@ static void robotSaveToFileGen(st_robotGeneration_t *data, char *name)
 	fprintf(stdout, "Writing %s\n", name);
 
 	for(k = 1; k < data->k; k++)
-		fprintf(fd, "%f\t%f\t%d\n", data->time[k], data->tc[k], k);
+		fprintf(fd, "%f\t%f\t%f\t%f\t%d\n", data->time[k], data->ref[XREF_POSITION][k], data->ref[YREF_POSITION][k], data->tc[k], k);
 	fclose(fd);
 }
 
@@ -221,7 +221,9 @@ static int dataPeriod(double *period, int nmemb, char *filename)
 	FILE *fd2;
 	char s[30] = "period_";
 
+	printf("%s\n\r", filename);
 	strcat(s, filename);
+	printf("%s\n\r", s);
 
 	/* Opens a file to write */
 	if ( (fd2 = fopen(s,"w+")) == NULL) { 
@@ -295,9 +297,9 @@ static void minValue(double *period, int nmemb, double *min)
 {
 	int i;
 	
-	*min = fabs(period[1]);
+	*min = fabs(period[2]);
 
-	for (i = 1; i < nmemb; i++) 
+	for (i = 2; i < nmemb; i++) 
 		if (fabs(period[i]) < *min) 
 			*min = fabs(period[i]);
 }
@@ -319,13 +321,13 @@ static void variance_stddev(double *period, int nmemb, double mean, double *vari
 	double sum = 0.0;
 	double calc = 0.0;
 
-	for (i = 0; i < nmemb; i++){
+	for (i = 2; i < nmemb; i++){
 		calc = period[i] - mean;
 		if(calc < CALCERROR)
 			calc = 0;
 		sum += pow(calc, 2);
 	}
-	*variance = (double)(sum / (nmemb));
+	*variance = (double)(sum / (nmemb-2));
 	*stddev = (double)sqrt(*variance);
 }
 
@@ -353,9 +355,9 @@ static int dataJitter(double *period, double mean, int nmemb, double *jitter, ch
 		return -1;
 	}
 	fprintf(stdout, "Writing %s\n", s);
-	for (i = 0; i < nmemb; i++) {
+	for (i = 2; i < nmemb; i++) {
 		jitter[i] = period[i] - mean;
-		fprintf(fd1, "%f\t%d\n", jitter[i], i);
+		fprintf(fd1, "%f\t%d\n", jitter[i], i-2);
 	}
 	fclose(fd1);
 	return 0;
@@ -365,7 +367,6 @@ static int dataJitter(double *period, double mean, int nmemb, double *jitter, ch
 
 int robotCalcData(double *tc, int nmemb, char *filename)
 {
-	//st_robotMain data;
 	double jitter[MAX_DATA_VALUE];
 	FILE *fd;
 	
@@ -385,13 +386,9 @@ int robotCalcData(double *tc, int nmemb, char *filename)
 		return -1;
 	}
 	
-	printf("mean\n\r");
 	dataMean(tc, nmemb, &mean);
-	printf("max\n\r");
 	maxValue(tc, nmemb, &maxT);
-	printf("min\n\r");
 	minValue(tc, nmemb, &minT);
-	printf("variance\n\r");
 	variance_stddev(tc, nmemb, mean, &var, &dev);
 	
 	fprintf(fd, "Period:\n");
@@ -417,7 +414,6 @@ int robotCalcData(double *tc, int nmemb, char *filename)
 	minValue(jitter, nmemb, &minT);
 	variance_stddev(jitter, nmemb, mean, &var, &dev);
 	
-	fprintf(stdout, "Writing results.dat\n");
 	fprintf(fd, "\n");
 	fprintf(fd, "Jitter:\n");
 	

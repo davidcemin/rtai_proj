@@ -77,7 +77,7 @@ void *robotGeneration(void *ptr)
 		local.generation_t.tc[i] = rt_get_time_ns() - currentT;
 		local.generation_t.k = i;
 		local.generation_t.time[i] = total;
-		//local.generation_t.period[i] = diff;
+		local.generation_t.period[i] = diff;
 		rt_task_wait_period();
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
@@ -89,10 +89,9 @@ void *robotGeneration(void *ptr)
 	
 #ifdef CALC_DATA
 	robotCalcData(local.generation_t.tc, local.generation_t.k, "results_gen_te.dat");
-	//robotCalcData(local.generation_t.period, local.generation_t.k, "results_gen_period.dat");
+	robotCalcData(local.generation_t.period, local.generation_t.k, "results_gen_pd.dat");
 	saveToFileGeneric(FILE_GEN, &local.generation_t);
 #endif /*CALC_DATA*/
 
-	printf("END GEN\n\r");
 	return NULL;
 }

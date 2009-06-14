@@ -29,7 +29,6 @@ typedef struct {
 	char *ip;
 } st_rtnetRobot;
 
-
 /************************* control structures ****************************/
 
 //! Structure with reference models
@@ -39,7 +38,7 @@ typedef struct {
 	double ym[MAX_DATA_VALUE];			
 	double dRef[MAX_DATA_VALUE];		
 	int kIndex;							
-} st_robotRefMod;
+} __attribute__((__packed__)) st_robotRefMod;
 
 typedef struct {
 	double ym;
@@ -48,28 +47,28 @@ typedef struct {
 	double ts;
 	double time[MAX_DATA_VALUE];
 	double tc[MAX_DATA_VALUE];
-	//double period[MAX_DATA_VALUE];
+	double period[MAX_DATA_VALUE];
 	int k;
-} st_referenceModel_t;
+} __attribute__((__packed__)) st_referenceModel_t;
 
 //! Structure used in reference generation
 typedef struct {
-	double ref[REF_DIMENSION];
+	double ref[REF_DIMENSION][MAX_DATA_VALUE];
 	double time[MAX_DATA_VALUE];
 	double tc[MAX_DATA_VALUE];
-	//double period[MAX_DATA_VALUE];
+	double period[MAX_DATA_VALUE];
 	int k;
-} st_robotGeneration_t;
+} __attribute__((__packed__)) st_robotGeneration_t;
 
 //! Control structure
 typedef struct {
 	double ym[YM_DIMENSION];
 	double dym[YM_DIMENSION];
 	double time[MAX_DATA_VALUE];
-	//double period[MAX_DATA_VALUE];
+	double period[MAX_DATA_VALUE];
 	double tc[MAX_DATA_VALUE];
 	int k;
-} st_robotControl_t;
+} __attribute__((__packed__)) st_robotControl_t;
 
 //! Linearization structure
 typedef struct {
@@ -79,9 +78,9 @@ typedef struct {
 	double alpha[ALPHA_DIMENSION][MAX_DATA_VALUE];
 	double time[MAX_DATA_VALUE];
 	double tc[MAX_DATA_VALUE];
-	//double period[MAX_DATA_VALUE];
+	double period[MAX_DATA_VALUE];
 	int k;
-} st_robotLin_t;
+} __attribute__((__packed__)) st_robotLin_t;
 
 //! Main control shared structure
 typedef struct {
@@ -90,7 +89,7 @@ typedef struct {
 	st_robotControl_t control_t;
 	st_robotLin_t lin_t;
 	double alpha[ALPHA_DIMENSION];
-} st_robotControl;	
+} __attribute__((__packed__)) st_robotControl;	
 
 //! Control structure with mutexes
 typedef struct {

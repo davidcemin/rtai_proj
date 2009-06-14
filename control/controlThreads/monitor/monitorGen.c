@@ -24,8 +24,10 @@
 inline int monitorGenSetX(st_robotControlShared *shared, st_robotControl *local)
 {
 	pthread_mutex_lock(&shared->mutex.mutexRefX);
+	int k = local->generation_t.k;
 
-	shared->control.generation_t.ref[XREF_POSITION] = local->generation_t.ref[XREF_POSITION];
+	shared->control.generation_t.k = k;
+	shared->control.generation_t.ref[XREF_POSITION][k] = local->generation_t.ref[XREF_POSITION][k];
 
 	pthread_mutex_unlock(&shared->mutex.mutexRefX);
 
@@ -43,8 +45,10 @@ inline int monitorGenSetX(st_robotControlShared *shared, st_robotControl *local)
 inline int monitorGenSetY(st_robotControlShared *shared, st_robotControl *local)
 {
 	pthread_mutex_lock(&shared->mutex.mutexRefY);
-	
-	shared->control.generation_t.ref[YREF_POSITION] = local->generation_t.ref[YREF_POSITION];
+	int k = local->generation_t.k;
+
+	shared->control.generation_t.k = k;
+	shared->control.generation_t.ref[YREF_POSITION][k] = local->generation_t.ref[YREF_POSITION][k];
 
 	pthread_mutex_unlock(&shared->mutex.mutexRefY);
 
@@ -62,8 +66,10 @@ inline int monitorGenSetY(st_robotControlShared *shared, st_robotControl *local)
 inline int monitorGenGetX(st_robotControl *local, st_robotControlShared *shared)
 {
 	pthread_mutex_lock(&shared->mutex.mutexRefX);
+	int k = shared->control.generation_t.k;
 
-	local->generation_t.ref[XREF_POSITION] = shared->control.generation_t.ref[XREF_POSITION];
+	local->generation_t.k = k;
+	local->generation_t.ref[XREF_POSITION][k] = shared->control.generation_t.ref[XREF_POSITION][k];
 
 	pthread_mutex_unlock(&shared->mutex.mutexRefX);
 
@@ -81,8 +87,10 @@ inline int monitorGenGetX(st_robotControl *local, st_robotControlShared *shared)
 inline int monitorGenGetY(st_robotControl *local, st_robotControlShared *shared)
 {	
 	pthread_mutex_lock(&shared->mutex.mutexRefY);
+	int k = shared->control.generation_t.k;
 
-	local->generation_t.ref[YREF_POSITION] = shared->control.generation_t.ref[YREF_POSITION];
+	local->generation_t.k = k;
+	local->generation_t.ref[YREF_POSITION][k] = shared->control.generation_t.ref[YREF_POSITION][k];
 
 	pthread_mutex_unlock(&shared->mutex.mutexRefY);
 	return 0;

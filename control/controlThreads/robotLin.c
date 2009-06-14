@@ -152,7 +152,7 @@ void *robotLin(void *ptr)
 		local.lin_t.k = i;
 		local.lin_t.time[i] = total;
 		local.lin_t.tc[i] = rt_get_time_ns() - currentT;
-		//local.lin_t.period[i] = diff;
+		local.lin_t.period[i] = diff;
 		rt_task_wait_period();
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
@@ -179,7 +179,7 @@ void *robotLin(void *ptr)
 	
 #ifdef CALC_DATA
 	robotCalcData(local.lin_t.tc, local.lin_t.k, "results_lin_te.dat");
-	//robotCalcData(local.lin_t.period, local.lin_t.k, "results_lin_te.dat");
+	robotCalcData(local.lin_t.period, local.lin_t.k, "results_lin_pd.dat");
 	saveToFileGeneric(FILE_LIN, &local.lin_t);
 #endif /*CALC_DATA*/
 	return NULL;

@@ -122,11 +122,10 @@ void *robotControl(void *ptr)
 		local.control_t.k = i;
 		local.control_t.time[i] = total;
 		local.control_t.tc[i] = rt_get_time_ns() - currentT;
-		//local.control_t.period[i] = diff;
+		local.control_t.period[i] = diff;
 		rt_task_wait_period(); 
 	} while ( (fabs(total) <= (double)TOTAL_TIME) );
 	
-
 	/*sync*/
 	printf("C: Waiting signal..\n\r");
 	rt_sem_wait(stack->sem.sm_control);
@@ -137,7 +136,7 @@ void *robotControl(void *ptr)
 	
 #ifdef CALC_DATA
 	robotCalcData(local.control_t.tc, local.control_t.k, "results_ctrl_te.dat");
-	//robotCalcData(local.control_t.period, local.control_t.k, "results_ctrl_period.dat");
+	robotCalcData(local.control_t.period, local.control_t.k, "results_ctrl_pd.dat");
 	saveToFileGeneric(FILE_CTRL, &local.control_t);
 #endif /*CALC_DATA*/
 	

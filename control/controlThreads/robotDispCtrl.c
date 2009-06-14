@@ -35,7 +35,8 @@ static inline void printDisplayCtrl(st_robotControl *local, double t)
 		double alpha1;
 		double alpha2;
 	} disp = {local->lin_t.y[0], local->lin_t.y[1], local->lin_t.x[2],
-	   	local->generation_t.ref[0], local->generation_t.ref[1], local->alpha[0], local->alpha[1]};
+	   	local->generation_t.ref[0][local->generation_t.k], local->generation_t.ref[1][local->generation_t.k],
+	   	local->alpha[0], local->alpha[1]};
 
 	fprintf(stdout, "Y1:%03f\tY2:%03f\tX3:%03f\tRefx:%03f\tRefy:%03f\tT:%03f\tA1:%03f\tA2:%03f\n",
 		   	disp.y1, disp.y2, disp.x3, disp.refx, disp.refy, t, disp.alpha1, disp.alpha2);
