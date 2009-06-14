@@ -27,6 +27,5 @@ inline void robotRefGen(st_robotControl *robot, double t)
 		robot->generation_t.ref[XREF_POSITION][k] = ( (5/M_PI) * cos(0.2 * M_PI * t) ); 
 		robot->generation_t.ref[YREF_POSITION][k] = ( -(5/M_PI) * sin(0.2 * M_PI * t) ); 
 	}
-	//printf("%f %f %f\n\r", t, robot->generation_t.ref[0], robot->generation_t.ref[1]);
 }
 

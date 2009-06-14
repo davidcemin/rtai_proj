@@ -17,6 +17,7 @@
 
 /******************************************************************************/
 
+//! Shared memory. Static global variable accessed via monitor
 static st_robotSimulShared Shared;
 
 /******************************************************************************/

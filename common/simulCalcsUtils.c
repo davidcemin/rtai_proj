@@ -31,7 +31,10 @@ double getTimeMilisec(void)
 /******************************************************************************/
 
 /**
- * \brief  
+ * \brief  Function used to save simulation data into a file
+ * \param  data Pointer to simulation data
+ * \param  name filename
+ * \return void
  */
 static void robotSaveToFileSim(st_robotMain *data, char *name)
 {
@@ -60,7 +63,10 @@ static void robotSaveToFileSim(st_robotMain *data, char *name)
 /******************************************************************************/
 
 /**
- * \brief  
+ * \brief  Function used to save generation data into a file
+ * \param  data Pointer to simulation data
+ * \param  name filename
+ * \return void
  */
 static void robotSaveToFileGen(st_robotGeneration_t *data, char *name)
 {
@@ -82,7 +88,10 @@ static void robotSaveToFileGen(st_robotGeneration_t *data, char *name)
 /******************************************************************************/
 
 /**
- * \brief  
+ * \brief  Function used to save reference model x data into a file
+ * \param  data Pointer to simulation data
+ * \param  name filename
+ * \return void
  */
 static void robotSaveToFileRefx(st_referenceModel_t *data, char *name)
 {
@@ -104,7 +113,10 @@ static void robotSaveToFileRefx(st_referenceModel_t *data, char *name)
 /******************************************************************************/
 
 /**
- * \brief  
+ * \brief  Function used to save reference model y data into a file
+ * \param  data Pointer to simulation data
+ * \param  name filename
+ * \return void
  */
 static void robotSaveToFileRefy(st_referenceModel_t *data, char *name)
 {
@@ -126,7 +138,10 @@ static void robotSaveToFileRefy(st_referenceModel_t *data, char *name)
 /******************************************************************************/
 
 /**
- * \brief  
+ * \brief  Function used to save control data into a file
+ * \param  data Pointer to simulation data
+ * \param  name filename
+ * \return void
  */
 static void robotSaveToFileCtrl(st_robotControl_t *data, char *name)
 {
@@ -148,7 +163,10 @@ static void robotSaveToFileCtrl(st_robotControl_t *data, char *name)
 /******************************************************************************/
 
 /**
- * \brief  
+ * \brief  Function used to save linearization data into a file
+ * \param  data Pointer to simulation data
+ * \param  name filename
+ * \return void
  */
 static void robotSaveToFileLin(st_robotLin_t *data, char *name)
 {
@@ -170,7 +188,10 @@ static void robotSaveToFileLin(st_robotLin_t *data, char *name)
 /******************************************************************************/
 
 /**
- * \brief  
+ * \brief  Function used to save  data into a file
+ * \param  type Type of data to be saved data
+ * \param  ptr Pointer to data
+ * \return void
  */
 inline void saveToFileGeneric(int type, void *ptr)
 {
@@ -232,8 +253,8 @@ static int dataPeriod(double *period, int nmemb, char *filename)
 	}
 
 	fprintf(stdout, "Writing %s\n", s);
-	for (i = 2; i < nmemb; i++) {
-		fprintf(fd2, "%f\t%d\n", period[i], i -2);
+	for (i = 3; i < nmemb; i++) {
+		fprintf(fd2, "%f\t%d\n", period[i], i - 3);
 	}
 	fclose(fd2);
 	return 0;
@@ -252,12 +273,12 @@ static void dataMean(double *val, int n, double *mean)
 {	
 	double ret;
 	int i;
-	double nmemb = n - 1;
+	double nmemb = n - 2;
 
 	ret = 0.0;
 	*mean = 0.0;
 
-	for (i = 0; i < n; i++)
+	for (i = 2; i < n; i++)
 		ret += (val[i]);
 	
 	ret = ret / nmemb;
@@ -299,7 +320,7 @@ static void minValue(double *period, int nmemb, double *min)
 	
 	*min = fabs(period[2]);
 
-	for (i = 2; i < nmemb; i++) 
+	for (i = 3; i < nmemb; i++) 
 		if (fabs(period[i]) < *min) 
 			*min = fabs(period[i]);
 }
@@ -321,13 +342,13 @@ static void variance_stddev(double *period, int nmemb, double mean, double *vari
 	double sum = 0.0;
 	double calc = 0.0;
 
-	for (i = 2; i < nmemb; i++){
+	for (i = 3; i < nmemb; i++){
 		calc = period[i] - mean;
 		if(calc < CALCERROR)
 			calc = 0;
 		sum += pow(calc, 2);
 	}
-	*variance = (double)(sum / (nmemb-2));
+	*variance = (double)(sum / (nmemb-3));
 	*stddev = (double)sqrt(*variance);
 }
 
@@ -345,7 +366,7 @@ static int dataJitter(double *period, double mean, int nmemb, double *jitter, ch
 {
 	int i;
 	FILE *fd1;	
-	char s[30] = "period_";
+	char s[30] = "jitter_";
 
 	strcat(s, filename);
 
@@ -355,9 +376,9 @@ static int dataJitter(double *period, double mean, int nmemb, double *jitter, ch
 		return -1;
 	}
 	fprintf(stdout, "Writing %s\n", s);
-	for (i = 2; i < nmemb; i++) {
+	for (i = 3; i < nmemb; i++) {
 		jitter[i] = period[i] - mean;
-		fprintf(fd1, "%f\t%d\n", jitter[i], i-2);
+		fprintf(fd1, "%f\t%d\n", jitter[i], i-3);
 	}
 	fclose(fd1);
 	return 0;

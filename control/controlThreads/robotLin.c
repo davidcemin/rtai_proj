@@ -119,7 +119,6 @@ void *robotLin(void *ptr)
 				local.lin_t.y[1] = xy[4];
 			}
 			else if (len == 2*sizeof(double)) {
-				//printf("alfa1: %f alfa2: %f\n\r", xy[0], xy[1]);
 				local.alpha[ALPHA_1] = xy[0];
 				local.alpha[ALPHA_2] = xy[1];
 				monitorControlMain(&local, MONITOR_SET_ALPHA);

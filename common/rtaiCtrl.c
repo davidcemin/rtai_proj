@@ -96,7 +96,6 @@ inline void mkTaksRealTime(RT_TASK *task, double stepTick, char *task_name)
 	period = (int)nano2count((RTIME)stepTick);
 
 	/*start the task*/
-	//rt_task_make_periodic(task, rt_get_time()+period, period);
 	rt_task_make_periodic(task, rt_get_time(), period);
 	printf("tsk %s running in real time!\n\r", task_name);
 }
@@ -128,10 +127,4 @@ inline void taskFinishRtai(RT_TASK *task, int started_timer)
 }
 
 /*****************************************************************************/
-
-
-
-
-
-
 

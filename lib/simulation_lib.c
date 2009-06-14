@@ -20,7 +20,6 @@ inline void robot_sim_calc_dx(st_robotSimulPacket *pack, int k)
 	pack->xd[0] = cos(x3) * v;
 	pack->xd[1] = sin(x3) * v;
 	pack->xd[2] = w;
-	//printf("%d %f %f %f\n\r", k, robotMain->dxVal[0][k], robotMain->dxVal[1][k], robotMain->dxVal[2][k]);
 }
 
 /******************************************************************************/
@@ -31,7 +30,6 @@ inline void robot_sim_calc_x(st_robotSimulPacket *pack, int k, double ts)
 
 	for (i = 0; i < 3; i++)
 		pack->x[i] = pack->xd[i] * ts + pack->xl[i];
-	//printf("%d %f %f %f\n\r", k, robotMain->xVal[0][k],robotMain->xVal[1][k],robotMain->xVal[2][k] );
 }
 
 /******************************************************************************/

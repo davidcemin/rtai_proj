@@ -21,7 +21,6 @@ void robotNewX(st_robotMainArrays *robotMain)
 	/* dx/dt = (x[n] - x[n-1])Ts*/
 	for (i = 0; i < 3; i++)
 		robotMain->xVal[i][k] = robotMain->dxVal[i][k] * ts + robotMain->xVal[i][k - 1];
-	//printf("%d %f %f %f\n\r", k, robotMain->xVal[0][k],robotMain->xVal[1][k],robotMain->xVal[2][k] );
 }
 
 /******************************************************************************/

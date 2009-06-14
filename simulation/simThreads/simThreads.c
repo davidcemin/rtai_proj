@@ -91,7 +91,6 @@ void robotSimThreadsMain(char *ip)
 	pthread_attr_destroy(&attrd);
 
 	robotSimSharedFinish();
-	//taskFinishRtai(task, started_timer);
 	sem_destroy(&stack.sm_disp);
 	return; 
 }

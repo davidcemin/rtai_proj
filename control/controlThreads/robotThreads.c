@@ -120,7 +120,6 @@ void robotControlThreadsMain(char *ip)
 		fprintf(stderr, "Error Creating display Thread: %d\n", retd);
 		robotControlSharedFinish();
 		robotStackCleanUp(&stack);
-		//taskFinishRtai(mainTask, started_timer);
 		pthread_attr_destroy(&attrd);
 		return;
 	}
@@ -141,7 +140,6 @@ void robotControlThreadsMain(char *ip)
 	/*stop timer, delete task, shared finish and permit pagination noch einmal*/
 	robotControlSharedFinish();
 	robotStackCleanUp(&stack);
-	//taskFinishRtai(mainTask, started_timer);
 	return; 
 }
 /*****************************************************************************/

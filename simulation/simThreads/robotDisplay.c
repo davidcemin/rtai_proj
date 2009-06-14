@@ -24,6 +24,11 @@
 
 /*****************************************************************************/
 
+/**
+ * \brief Print data on display
+ * \param packet pointer to simulation packet
+ * \param t Current time
+ */
 static inline void printDisplay(st_robotSimulPacket *packet, double t)
 {
 	struct {
@@ -41,11 +46,6 @@ static inline void printDisplay(st_robotSimulPacket *packet, double t)
 
 /*****************************************************************************/
 
-/**
- * \brief  Thread used to show data on the screen. It is not a RTAI thread.
- * \param  ptr Pointer to shared memory
- * \return void
- */
 void *robotThreadDisplay(void *ptr)
 {
 	st_robotSimulStack *stack = ptr;
@@ -81,7 +81,6 @@ void *robotThreadDisplay(void *ptr)
 		}
 	} while (currentT < (double)TOTAL_TIME * 1000);
 	
-	//	sem_wait(&stack->sm_disp);
 	//munlockall();
 	pthread_exit(NULL);
 	//return NULL;

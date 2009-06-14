@@ -22,7 +22,6 @@
  */
 int main(int argc, char *argv[]) 
 {
-	//int rt_simWd = 0;
 	if (argc != 2){
 		fprintf(stderr, "Usage: ./plant <ip remote>\n\r");
 		return -1;
@@ -37,13 +36,6 @@ int main(int argc, char *argv[])
 
 	robotSimThreadsMain(ip);
 	
-	//if( (rt_simWd = rt_thread_create(robotSimThreadsMain, ip, 1000)) == 0) {
-	//		fprintf(stderr, "Error creating WD thread\n\r");
-	//		return -1;
-	//	}
-
-	//rt_thread_join(rt_simWd);
-
 	return 0;
 }
 

@@ -24,6 +24,12 @@
 
 /*****************************************************************************/
 
+/**
+ * \brief  Print data on display
+ * \param  local Pointer to control structure
+ * \param  t Current time
+ * \return void
+ */
 static inline void printDisplayCtrl(st_robotControl *local, double t)
 {
 	struct {
@@ -46,11 +52,6 @@ static inline void printDisplayCtrl(st_robotControl *local, double t)
 
 /*****************************************************************************/
 
-/**
- * \brief  Thread used to show data on the screen. It is not a RTAI thread.
- * \param  ptr Pointer to shared memory
- * \return void
- */
 void *robotDispCtrl(void *ptr)
 {
 	st_robotControlStack *stack = ptr;
@@ -89,9 +90,7 @@ void *robotDispCtrl(void *ptr)
 		}
 	} while (currentT < (double)TOTAL_TIME * 1000);
 	
-//	sem_wait(&stack->sem.sm_disp);
 	//munlockall();
 	pthread_exit(NULL);
-	//return NULL;
 }
 

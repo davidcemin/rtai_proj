@@ -47,8 +47,6 @@ static inline void robotCalcV(st_robotControl *local)
 	unsigned char alpha1 = local->alpha[ALPHA_1];
 	unsigned char alpha2 = local->alpha[ALPHA_2];
 
-	//printf("%f %f %f %f %f %f\n\r",dymx, dymy, ymx, ymy, local->lin_t.y[0], local->lin_t.y[1] );
-
 	local->lin_t.v[0] = dymx + alpha1*(ymx - y1);
 	local->lin_t.v[1] = dymy + alpha2*(ymy - y2);
 }
@@ -64,7 +62,6 @@ void *robotControl(void *ptr)
 	double lastT = 0;
 	double total = 0;
 	int i = 0;
-	//double tInit = 0;
 
 	mlockall(MCL_CURRENT | MCL_FUTURE);	
 	
@@ -85,7 +82,6 @@ void *robotControl(void *ptr)
 	rtaiMakeHard(ctrltsk, CONTROLTSK, STEPTIMECALCNANO);
 
 	printf("CTRL\n\r");
-	//tInit = stack->time;
 	double diff = 0;
 	lastT = rt_get_time_ns();
 	do {
