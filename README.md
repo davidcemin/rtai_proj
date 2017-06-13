@@ -13,7 +13,7 @@ The simulation is done using a modified Linux Kernel with [RTAI](https://www.rta
 This project explores concepts such as:
 - Real Time Threads using RTAI LXRT, controlling the threads at user space;
 - The use of shared resources and how to protect critial regions using semaphores and monitors;
-- Shared memory and message exchange between real time threads
+- Shared memory and message exchange across different processes and real-time threads.
 
 
 ## Quick How To
