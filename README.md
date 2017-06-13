@@ -3,7 +3,7 @@
 ## Introduction
 
 This project implements the distributed simulation of a mobile robot using a real time system.
-The processes are separated in 3 parts:
+The simulation is separated in 3 parts:
 - Plant: Implements the dynamic equations to simulate the robot;
 - Control: Implements the control signals and
 - Adjust: Implements the threads to adjust the controller's parameters.
@@ -12,7 +12,7 @@ The simulation is done using a modified Linux Kernel with [RTAI](https://www.rta
 
 This project explores concepts such as:
 - Real Time Threads using RTAI LXRT, controlling the threads at user space;
-- The use of shared resources and how to protect critial regions using semaphores and monitors;
+- The use of shared resources and how to protect critical regions using semaphores and monitors;
 - Shared memory and message exchange across different processes and real-time threads.
 
 
